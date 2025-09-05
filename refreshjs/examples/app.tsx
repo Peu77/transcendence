@@ -120,12 +120,79 @@ function PokemonViewer() {
     );
 }
 
+interface Todo { id: number; text: string; done: boolean }
+
+function TodoList() {
+    const [todos, setTodos] = useState<Todo[]>([
+        { id: 1, text: 'Learn refreshjs', done: true },
+        { id: 2, text: 'Build a tiny app', done: false },
+    ]);
+    const [text, setText] = useState('');
+    const nextId = useRef(3);
+
+    const add = () => {
+        const t = text.trim();
+        if (!t) return;
+        setTodos(list => [{ id: nextId.current++, text: t, done: false }, ...list]);
+        setText('');
+    };
+    const toggle = (id: number) => setTodos(list => list.map(td => td.id === id ? { ...td, done: !td.done } : td));
+    const remove = (id: number) => setTodos(list => list.filter(td => td.id !== id));
+    const moveUp = (index: number) => setTodos(list => {
+        if (index <= 0) return list;
+        const copy = list.slice();
+        const tmp = copy[index - 1];
+        copy[index - 1] = copy[index];
+        copy[index] = tmp;
+        return copy;
+    });
+    const moveDown = (index: number) => setTodos(list => {
+        if (index >= list.length - 1) return list;
+        const copy = list.slice();
+        const tmp = copy[index + 1];
+        copy[index + 1] = copy[index];
+        copy[index] = tmp;
+        return copy;
+    });
+
+    return (
+        <div style={{ marginTop: '1.5rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
+            <h2>Todos (keyed)</h2>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <input
+                    placeholder="New todo"
+                    value={text}
+                    onInput={(e: any) => setText(e.target.value)}
+                    onKeyDown={(e: any) => { if (e.key === 'Enter') add(); }}
+                    style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc', minWidth: '240px' }}
+                />
+                <button onClick={add}>Add</button>
+            </div>
+            <ul style={{ marginTop: '0.75rem', listStyle: 'none', padding: 0 }}>
+                {todos.map((td, i) => (
+                    <li key={td.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0' }}>
+                        <input type="checkbox" checked={td.done} onChange={() => toggle(td.id)} />
+                        <span style={{ textDecoration: td.done ? 'line-through' : 'none' }}>{td.text}</span>
+                        <span style={{ color: '#999', fontSize: '0.8rem' }}>#{td.id}</span>
+                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.25rem' }}>
+                            <button onClick={() => moveUp(i)} disabled={i === 0}>↑</button>
+                            <button onClick={() => moveDown(i)} disabled={i === todos.length - 1}>↓</button>
+                            <button onClick={() => remove(td.id)} style={{ color: 'crimson' }}>×</button>
+                        </div>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+
 function App() {
     return (
         <>
             <h1>refreshjs demo <Blinker/></h1>
             <Counter initial={1}/>
             <PokemonViewer/>
+            <TodoList/>
         </>
     );
 }

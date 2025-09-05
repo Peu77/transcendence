@@ -194,14 +194,78 @@ function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null
 }
 
 function patchChildren(parentDom: Element, oldChildren: any[], newChildren: any[], path: string) {
-  const maxLen = Math.max(oldChildren.length, newChildren.length);
-  for (let i = 0; i < maxLen; i++) {
-    const oldChild = oldChildren[i] || null;
-    const newChild = newChildren[i] || null;
-    const childPath = path + '/' + makeChildKey(newChild, i);
-    const childDom = diff(parentDom, oldChild, newChild, childPath);
-    if (!oldChild && childDom && childDom.parentNode !== parentDom) {
-      parentDom.appendChild(childDom);
+  const oldKeyMap = new Map<any, { vnode: VNode; index: number }>();
+  const oldUnkeyed: Array<{ vnode: VNode; index: number }> = [];
+  for (let i = 0; i < oldChildren.length; i++) {
+    const c = oldChildren[i];
+    if (!c) continue;
+    const k = c && c.props ? c.props.key : null;
+    if (k != null) oldKeyMap.set(k, { vnode: c, index: i });
+    else oldUnkeyed.push({ vnode: c, index: i });
+  }
+
+  const usedOld = new Set<number>();
+  const matchOld: Array<VNode | null> = new Array(newChildren.length).fill(null);
+
+  function takeNextUnkeyedMatch(newV: VNode | null): VNode | null {
+    if (!newV) return null;
+    for (let i = 0; i < oldUnkeyed.length; i++) {
+      const { vnode, index } = oldUnkeyed[i];
+      if (usedOld.has(index)) continue;
+      if (isSameType(vnode, newV)) {
+        usedOld.add(index);
+        return vnode;
+      }
+    }
+    return null;
+  }
+
+  for (let i = 0; i < newChildren.length; i++) {
+    const newV = newChildren[i] || null;
+    if (!newV) continue;
+    const k = newV && newV.props ? newV.props.key : null;
+    if (k != null && oldKeyMap.has(k)) {
+      const { vnode, index } = oldKeyMap.get(k)!;
+      usedOld.add(index);
+      matchOld[i] = vnode;
+    } else {
+      matchOld[i] = takeNextUnkeyedMatch(newV);
+    }
+  }
+
+  const doms: Array<Node | null> = new Array(newChildren.length).fill(null);
+  for (let i = 0; i < newChildren.length; i++) {
+    const newV = newChildren[i] || null;
+    const oldV = matchOld[i] || null;
+    const childPath = path + '/' + makeChildKey(newV, i);
+    const dom = diff(parentDom, oldV, newV, childPath);
+    doms[i] = dom;
+  }
+
+  for (let i = 0; i < oldChildren.length; i++) {
+    const oldV = oldChildren[i];
+    if (!oldV) continue;
+    if (!usedOld.has(i)) {
+      const oldPath = path + '/' + makeChildKey(oldV, i);
+      unmount(oldV, parentDom, oldPath);
+    }
+  }
+
+  const desired: Node[] = [];
+  for (let i = 0; i < newChildren.length; i++) {
+    const v = newChildren[i];
+    if (!v) continue;
+    if (v.type === Fragment) continue;
+    const node = doms[i];
+    if (node) desired.push(node);
+  }
+
+  let cursor: ChildNode | null = parentDom.firstChild;
+  for (const node of desired) {
+    if (node === cursor) {
+      cursor = cursor ? cursor.nextSibling : null;
+    } else {
+      parentDom.insertBefore(node, cursor);
     }
   }
 }
@@ -238,7 +302,7 @@ function createDom(vnode: VNode | null, parentDom: Element, path: string): Node 
     return fragMarker;
   }
   if (typeof vnode.type === 'function') {
-    const comp = vnode.type as Component<any>;
+    const comp = vnode.type as Component;
     const hookKey = makeHookKey(path, comp, vnode.props?.key);
     currentHookKey = hookKey;
     currentHookIndex = 0;
