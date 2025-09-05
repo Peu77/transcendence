@@ -1,0 +1,32 @@
+{
+  "name": "refreshjs",
+  "version": "0.1.0",
+  "description": "A tiny React-like library with a virtual DOM and hooks (useState, useRef, useEffect) supporting JSX/TSX.",
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "dist/refreshjs.cjs",
+  "module": "dist/refreshjs.mjs",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/refreshjs.mjs",
+      "require": "./dist/refreshjs.cjs"
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build:esm": "esbuild src/index.ts --bundle --format=esm --sourcemap --outfile=dist/refreshjs.mjs",
+    "build:cjs": "esbuild src/index.ts --bundle --format=cjs --sourcemap --outfile=dist/refreshjs.cjs",
+    "build:types": "tsc --emitDeclarationOnly --declaration --declarationDir dist/types",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs && npm run build:types",
+    "build:example": "esbuild examples/app.tsx --bundle --format=iife --global-name=ExampleApp --sourcemap --outfile=dist/example.js",
+    "dev:example": "npm run build && npm run build:example && (python3 -m http.server 5173 || python -m SimpleHTTPServer 5173)",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.4"
+  }
+}
