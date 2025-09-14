@@ -8,9 +8,10 @@
   "sideEffects": false,
   "main": "dist/refreshjs.cjs",
   "module": "dist/refreshjs.mjs",
-  "types": "dist/types/index.d.ts",
+  "types": "dist/types/src/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/types/src/index.d.ts",
       "import": "./dist/refreshjs.mjs",
       "require": "./dist/refreshjs.cjs"
     }
