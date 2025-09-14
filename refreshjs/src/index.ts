@@ -296,7 +296,8 @@ function createDom(vnode: VNode | null, parentDom: Element, path: string): Node 
     setVNodeDomRef(vnode, fragMarker);
     const children = (vnode.props.children as any[]) || [];
     for (let i = 0; i < children.length; i++) {
-      const child = createDom(children[i], parentDom, path + '/F');
+      const childPath = path + '/F/' + makeChildKey(children[i], i);
+      const child = createDom(children[i], parentDom, childPath);
       if (child) parentDom.appendChild(child);
     }
     return fragMarker;
@@ -320,7 +321,8 @@ function createDom(vnode: VNode | null, parentDom: Element, path: string): Node 
   updateProps(dom, {}, vnode.props || {});
   const children = (vnode.props.children as any[]) || [];
   for (let i = 0; i < children.length; i++) {
-    const child = createDom(children[i], dom, path + '/H:' + String(vnode.type));
+    const childPath = path + '/H:' + String(vnode.type) + '/' + makeChildKey(children[i], i);
+    const child = createDom(children[i], dom, childPath);
     if (child) dom.appendChild(child);
   }
   setVNodeDomRef(vnode, dom);
