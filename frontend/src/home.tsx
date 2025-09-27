@@ -1,4 +1,4 @@
-import {h, Fragment, Link} from 'refreshjs';
+import {h, Link} from 'refreshjs';
 import { useState, useEffect } from 'refreshjs';
 
 const authors = ['Emil', 'Kira', 'Konrad', 'Matthias'];
@@ -7,6 +7,9 @@ const githubUrl = 'https://github.com/peu77/transcendence'; // Replace with actu
 export default function Home() {
   const fullText = 'Transcendence';
   const [displayed, setDisplayed] = useState('');
+  const [isDark, setIsDark] = useState(() =>
+    typeof window !== 'undefined' ? document.documentElement.classList.contains('dark') : false
+  );
 
   useEffect(() => {
     let i = 0;
@@ -18,6 +21,13 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  const toggleDarkMode = () => {
+    if (typeof window !== 'undefined') {
+      document.documentElement.classList.toggle('dark');
+      setIsDark(document.documentElement.classList.contains('dark'));
+    }
+  };
+
   return (
     <div class="h-screen flex flex-col items-center justify-center bg-background">
       <h1 class="text-4xl font-bold mb-8">
@@ -28,6 +38,13 @@ export default function Home() {
         <Link to="/login" class="px-6 py-2 bg-primary hover:bg-primary rounded text-primary-foreground font-semibold shadow transition duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg clip-pixel-corners-btn">Login</Link>
         <Link to={githubUrl} target="_blank" rel="noopener" class="px-6 py-2 bg-secondary hover:bg-secondary rounded text-secondary-foreground font-semibold shadow transition duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg clip-pixel-corners-btn">GitHub</Link>
       </div>
+      <button
+        onClick={toggleDarkMode}
+        class="absolute top-6 right-6 px-3 py-2 bg-card text-card-foreground rounded shadow transition duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg clip-pixel-corners-btn"
+        aria-label="Toggle dark mode"
+      >
+        {isDark ? "White" : "Dark"}
+      </button>
       <footer class="absolute bottom-6 text-gray-400 text-sm">
         Project by {authors.join(', ')}
       </footer>
