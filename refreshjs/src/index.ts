@@ -332,7 +332,7 @@ function createDom(vnode: VNode | null, parentDom: Element, path: string): Node 
 function unmount(vnode: VNode, parentDom: Element, path: string) {
   if (!vnode) return;
   if (typeof vnode.type === 'function') {
-    const comp = vnode.type as Component<any>;
+    const comp = vnode.type as Component;
     const hookKey = makeHookKey(path, comp, vnode.props?.key);
     const oldArr = oldHooksMap?.get(hookKey) || [];
     for (const h of oldArr) {
@@ -526,6 +526,9 @@ function depsChanged(a: any[], b: any[]): boolean {
 // Re-export router primitives so consumers can import from the package root
 export { Router, Link, navigate, useLocation } from './router';
 export type { RouteObject, Params } from './router';
+
+// Re-export store primitives
+export { createStore, useStore, shallowEqual, useStoreValue, useStoreSetter } from './store';
 
 // JSX typings
 declare global {
