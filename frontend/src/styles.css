@@ -170,3 +170,41 @@
         @apply bg-background text-foreground;
     }
 }
+
+@layer components {
+  .retro-input {
+    @apply text-foreground shadow-md transition-colors duration-200 ease-in-out;
+
+    outline: none;
+    image-rendering: pixelated;
+    background-image:
+      linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.04)),
+      repeating-linear-gradient(
+        0deg,
+        rgba(255,255,255,0.05) 0px,
+        rgba(255,255,255,0.05) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    box-shadow:
+      inset 0 0 0 2px rgba(12,12,24,0.55),
+      inset 0 0 0 1px var(--color-border);
+  }
+  .retro-input::placeholder {
+    @apply text-muted-foreground tracking-wider;
+  }
+  .retro-input:focus,
+  .retro-input:focus-visible {
+    box-shadow:
+      inset 0 0 0 2px rgba(34,211,238,0.5),
+      inset 0 0 0 1px color-mix(in oklab, var(--color-primary) 85%, transparent),
+      inset 0 0 10px rgba(34,211,238,0.15);
+    text-shadow: 0 0 6px rgba(34,211,238,0.6);
+  }
+  .retro-input[aria-invalid="true"] {
+    box-shadow:
+      inset 0 0 0 2px rgba(255,84,112,0.5),
+      inset 0 0 0 1px var(--color-destructive),
+      inset 0 0 10px rgba(255,84,112,0.12);
+  }
+}
