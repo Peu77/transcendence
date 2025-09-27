@@ -58,7 +58,11 @@ export default function Home() {
       <div class="mb-8">
         <button
           class={buttonClasses("secondary", "sm")}
-          onClick={() => toast.success("Retro toast online!", { description: "This is a demo message." })}
+          onClick={() =>
+            toast.success("Retro toast online!", {
+              description: "This is a demo message.",
+            })
+          }
         >
           Show toast
         </button>

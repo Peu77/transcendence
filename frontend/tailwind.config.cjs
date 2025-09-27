@@ -67,7 +67,8 @@ module.exports = {
       animation: {
         "scale-in": "scale-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1)",
         "toast-in": "toast-in-right 180ms cubic-bezier(0.2, 0.8, 0.2, 1)",
-        "toast-out": "toast-out-right 180ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards",
+        "toast-out":
+          "toast-out-right 180ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards",
       },
     },
   },
