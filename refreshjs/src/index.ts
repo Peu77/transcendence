@@ -523,6 +523,10 @@ function depsChanged(a: any[], b: any[]): boolean {
   return false;
 }
 
+// Re-export router primitives so consumers can import from the package root
+export { Router, Link, navigate, useLocation } from './router';
+export type { RouteObject, Params } from './router';
+
 // JSX typings
 declare global {
   namespace JSX {
