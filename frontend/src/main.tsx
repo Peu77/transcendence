@@ -1,5 +1,5 @@
 import {h, render, Router} from 'refreshjs';
-import Home from './Home';
+import Home from './home';
 import './styles.css';
 
 function NotFound() {

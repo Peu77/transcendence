@@ -154,8 +154,16 @@
 }
 
 @layer base {
+    @font-face {
+        font-family: 'ArcadeClassic';
+        src: url('/public/arcadeclassic.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+    }
+
     * {
         @apply border-border;
+        font-family: ArcadeClassic;
     }
 
     body {
