@@ -15,12 +15,12 @@ const routes = [
   },
   {
     path: "login",
-    component: Login
+    component: Login,
   },
   {
     path: "register",
-    component: Register
-  }
+    component: Register,
+  },
 ];
 
 const root = document.getElementById("root")!;

@@ -15,19 +15,25 @@ export default function Card(props: { children: any; className?: string }) {
         {children}
       </div>
     </div>
-
   );
 }
 
 export function CardHeader(props: { children: any; className?: string }) {
   const { children, className } = props;
-  return <div className={cn("flex flex-col gap-1.5 p-6", className)}>{children}</div>;
+  return (
+    <div className={cn("flex flex-col gap-1.5 p-6", className)}>{children}</div>
+  );
 }
 
 export function CardTitle(props: { children: any; className?: string }) {
   const { children, className } = props;
   return (
-    <h3 className={cn("text-xl font-semibold leading-none tracking-tight", className)}>
+    <h3
+      className={cn(
+        "text-xl font-semibold leading-none tracking-tight",
+        className,
+      )}
+    >
       {children}
     </h3>
   );
@@ -47,6 +53,9 @@ export function CardContent(props: { children: any; className?: string }) {
 
 export function CardFooter(props: { children: any; className?: string }) {
   const { children, className } = props;
-  return <div className={cn("flex items-center p-6 pt-0", className)}>{children}</div>;
+  return (
+    <div className={cn("flex items-center p-6 pt-0", className)}>
+      {children}
+    </div>
+  );
 }
-

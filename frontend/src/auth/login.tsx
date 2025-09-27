@@ -22,10 +22,7 @@ export default function Login() {
           <Button size={"sm"}>login</Button>
           <p className="text-sm text-muted-foreground mt-2 text-center">
             Don’t have an account?{" "}
-            <Link
-              to="/register"
-              className="text-primary hover:underline"
-            >
+            <Link to="/register" className="text-primary hover:underline">
               Create one
             </Link>
           </p>
