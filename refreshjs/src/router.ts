@@ -42,3 +42,21 @@ export function navigate(to: string, opts?: { replace?: boolean }) {
   notify(currentPath());
 }
 
+export function Link(props: any) {
+    const { to, replace = false, onClick, children, ...rest } = props || {};
+    const href = String(to ?? '#');
+    function handleClick(e: MouseEvent) {
+        if (onClick) try { (onClick as any)(e); } catch {}
+        if (
+            !e.defaultPrevented && e.button === 0 &&
+            !(e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) &&
+            href && href.startsWith('/')
+        ) {
+            e.preventDefault();
+            navigate(href, { replace });
+        }
+    }
+    return h('a', { href, onClick: handleClick, ...rest }, children);
+}
+
+
