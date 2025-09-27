@@ -1,5 +1,10 @@
 import { h, Link } from "refreshjs";
-import Card, { CardContent, CardDescription, CardHeader, CardTitle } from "../components/Card";
+import Card, {
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/Card";
 import Input from "../components/Input";
 import Button from "../components/Button";
 
@@ -17,11 +22,13 @@ export default function Register() {
           <Input placeholder={"confirm password"} type="password" />
           <Button size={"sm"}>create account</Button>
           <p className="text-sm text-muted-foreground mt-2 text-center">
-            Already have an account? <Link to="/login" className="text-primary hover:underline">Log in</Link>
+            Already have an account?{" "}
+            <Link to="/login" className="text-primary hover:underline">
+              Log in
+            </Link>
           </p>
         </CardContent>
       </Card>
     </div>
   );
 }
-
