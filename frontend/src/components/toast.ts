@@ -60,25 +60,33 @@ export default function toast(opts: ToastOptions | string): string {
   const id = typeof opts === "string" ? genId() : opts.id || genId();
   const title = typeof opts === "string" ? opts : opts.title;
   const description = typeof opts === "string" ? undefined : opts.description;
-  const variant = typeof opts === "string" ? "default" : opts.variant || "default";
-  const duration = typeof opts === "string" ? 3000 : opts.duration ?? 3000;
+  const variant =
+    typeof opts === "string" ? "default" : opts.variant || "default";
+  const duration = typeof opts === "string" ? 3000 : (opts.duration ?? 3000);
 
   enqueue({ id, title, description, variant });
   if (duration > 0) startAutoDismiss(id, duration);
   return id;
 }
 
-toast.success = (message: string, opt: Omit<ToastOptions, "title" | "variant"> = {}) =>
-  toast({ ...opt, title: message, variant: "success" });
+toast.success = (
+  message: string,
+  opt: Omit<ToastOptions, "title" | "variant"> = {},
+) => toast({ ...opt, title: message, variant: "success" });
 
-toast.error = (message: string, opt: Omit<ToastOptions, "title" | "variant"> = {}) =>
-  toast({ ...opt, title: message, variant: "error" });
+toast.error = (
+  message: string,
+  opt: Omit<ToastOptions, "title" | "variant"> = {},
+) => toast({ ...opt, title: message, variant: "error" });
 
-toast.warning = (message: string, opt: Omit<ToastOptions, "title" | "variant"> = {}) =>
-  toast({ ...opt, title: message, variant: "warning" });
+toast.warning = (
+  message: string,
+  opt: Omit<ToastOptions, "title" | "variant"> = {},
+) => toast({ ...opt, title: message, variant: "warning" });
 
-toast.info = (message: string, opt: Omit<ToastOptions, "title" | "variant"> = {}) =>
-  toast({ ...opt, title: message, variant: "info" });
+toast.info = (
+  message: string,
+  opt: Omit<ToastOptions, "title" | "variant"> = {},
+) => toast({ ...opt, title: message, variant: "info" });
 
 export { remove };
-
