@@ -42,8 +42,14 @@ export default function Input(props: {
     ...rest
   } = props as any;
 
-  const ariaInvalid = (props as any)["aria-invalid"] as boolean | "true" | "false" | undefined;
-  const ariaDescribedBy = (props as any)["aria-describedby"] as string | undefined;
+  const ariaInvalid = (props as any)["aria-invalid"] as
+    | boolean
+    | "true"
+    | "false"
+    | undefined;
+  const ariaDescribedBy = (props as any)["aria-describedby"] as
+    | string
+    | undefined;
 
   return (
     <input

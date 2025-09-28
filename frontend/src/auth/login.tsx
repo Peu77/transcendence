@@ -42,46 +42,54 @@ export default function Login() {
           <CardDescription>sign in into your account</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-            <form
-              onSubmit={form.handleSubmit(handleSubmit)}
-              noValidate
-              className="flex flex-col gap-3 w-72"
-            >
-              <FormField
-                form={form}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor={field.id}>Email</FormLabel>
-                      <Input {...field} autoFocus={true} placeholder="enter email"/>
-                    <FormMessage form={form} name="email"/>
-                  </FormItem>
-                )}
-              />
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            noValidate
+            className="flex flex-col gap-3 w-72"
+          >
+            <FormField
+              form={form}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor={field.id}>Email</FormLabel>
+                  <Input
+                    {...field}
+                    autoFocus={true}
+                    placeholder="enter email"
+                  />
+                  <FormMessage form={form} name="email" />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                form={form}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor={field.id}>Password</FormLabel>
-                    <Input {...field} type="password" placeholder="enter password" />
-                    <FormMessage form={form} name="password" />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              form={form}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor={field.id}>Password</FormLabel>
+                  <Input
+                    {...field}
+                    type="password"
+                    placeholder="enter password"
+                  />
+                  <FormMessage form={form} name="password" />
+                </FormItem>
+              )}
+            />
 
-              <Button size={"sm"} disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "logging in…" : "login"}
-              </Button>
+            <Button size={"sm"} disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? "logging in…" : "login"}
+            </Button>
 
-              <p className="text-sm text-muted-foreground mt-2 text-center">
-                Don’t have an account?{" "}
-                <Link to="/register" className="text-primary hover:underline">
-                  Create one
-                </Link>
-              </p>
-            </form>
+            <p className="text-sm text-muted-foreground mt-2 text-center">
+              Don’t have an account?{" "}
+              <Link to="/register" className="text-primary hover:underline">
+                Create one
+              </Link>
+            </p>
+          </form>
         </CardContent>
       </Card>
     </div>
