@@ -11,7 +11,6 @@ import Button from "../components/Button";
 import toast from "../store/toast";
 import {
   useForm,
-  FormProvider,
   FormField,
   FormItem,
   FormLabel,
@@ -43,7 +42,6 @@ export default function Login() {
           <CardDescription>sign in into your account</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <FormProvider form={form}>
             <form
               onSubmit={form.handleSubmit(handleSubmit)}
               noValidate
@@ -84,7 +82,6 @@ export default function Login() {
                 </Link>
               </p>
             </form>
-          </FormProvider>
         </CardContent>
       </Card>
     </div>
