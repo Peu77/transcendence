@@ -219,10 +219,6 @@ export function useForm<S extends z.ZodTypeAny>(opts: UseFormOptions<S>): UseFor
   } as any;
 }
 
-export function FormProvider(props: { form: UseFormReturn<any>; children: any }) {
-  return <div>{props.children}</div>;
-}
-
 export function FormField(props: {
   form: UseFormReturn<any>;
   name: string;
