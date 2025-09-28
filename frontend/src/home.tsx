@@ -1,7 +1,7 @@
 import { h, Link } from "refreshjs";
 import { useState, useEffect } from "refreshjs";
 import { buttonClasses } from "./components/Button";
-import toast from "./components/toast";
+import toast from "./store/toast";
 
 const authors = ["Emil", "Kira", "Konrad", "Matthias"];
 const githubUrl = "https://github.com/peu77/transcendence";

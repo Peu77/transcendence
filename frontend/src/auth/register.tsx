@@ -7,7 +7,7 @@ import Card, {
 } from "../components/Card";
 import Input from "../components/Input";
 import Button from "../components/Button";
-import toast from "../components/toast";
+import toast from "../store/toast";
 
 export default function Register() {
   function handleRegister() {
