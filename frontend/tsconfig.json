@@ -13,7 +13,7 @@
     "jsxFactory": "h",
     "jsxFragmentFactory": "Fragment",
     "types": [],
-    "baseUrl": ".",
+    "baseUrl": "."
   },
   "include": ["src", "index.html"],
   "references": []
