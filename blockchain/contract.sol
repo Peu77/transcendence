@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract PongScores {
-    constructor() {
-     }
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
+contract PongScores is Ownable {
+   constructor(address initialOwner) Ownable(initialOwner) {}
+
+    function seetHighScore() public onlyOwner{}
+
+    function getHighScore() public {}
 }
