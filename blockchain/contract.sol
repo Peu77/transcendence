@@ -13,6 +13,12 @@ contract PongScores {
 
     ScoreData public scoreData;
 
+    event HighScoreUpdate(
+        uint128 indexed score,
+        uint128 indexed uuid,
+        bytes32 nickName
+    );
+
     error NotOwner();
 
     constructor() {
@@ -30,9 +36,11 @@ contract PongScores {
         scoreData.highScore = _score;
         scoreData.uuid = _uuid;
         scoreData.nickName = _nickName;
+
+        emit HighScoreUpdate(_score, _uuid, _nickName);
     }
 
-    function getHighScore() external view returns (uint128, uint128, bytes32) {
+    function getHighScore() external view returns (uint128 score, uint128 uuid, bytes32 nickName) {
         return (scoreData.highScore, scoreData.uuid, scoreData.nickName);
     }
 }
