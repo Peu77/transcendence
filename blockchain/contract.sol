@@ -1,27 +1,38 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+contract PongScores {
 
-contract PongScores is Ownable {
-
-    struct ScoreData {
+    struct ScoreData { // occupies 2x256bit slot
     uint128 highScore;
     uint128 uuid;
-    bytes32 nickName;
+    bytes32 nickName;  // usernames limited to 32 chars
     }
+
+    address public immutable owner;
 
     ScoreData public scoreData;
 
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    error NotOwner();
 
-    function setHighScore(uint128 _score, uint128 _uuid, bytes32 _nickName) public onlyOwner {
+    constructor() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        if (msg.sender != owner) {
+            revert NotOwner();
+        }
+        _;
+    }
+
+    function setHighScore(uint128 _score, uint128 _uuid, bytes32 _nickName) external onlyOwner {
         scoreData.highScore = _score;
         scoreData.uuid = _uuid;
         scoreData.nickName = _nickName;
     }
 
     function getHighScore() external view returns (uint128, uint128, bytes32) {
-        return (highScore, uuid, nickName);
+        return (scoreData.highScore, scoreData.uuid, scoreData.nickName);
     }
 }
