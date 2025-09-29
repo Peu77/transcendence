@@ -50,6 +50,26 @@ module.exports = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      keyframes: {
+        "scale-in": {
+          "0%": { opacity: "0", transform: "scale(0.80)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "toast-in-right": {
+          "0%": { opacity: "0", transform: "translateX(8px) scale(0.98)" },
+          "100%": { opacity: "1", transform: "translateX(0) scale(1)" },
+        },
+        "toast-out-right": {
+          "0%": { opacity: "1", transform: "translateX(0) scale(1)" },
+          "100%": { opacity: "0", transform: "translateX(8px) scale(0.98)" },
+        },
+      },
+      animation: {
+        "scale-in": "scale-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "toast-in": "toast-in-right 180ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "toast-out":
+          "toast-out-right 180ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards",
+      },
     },
   },
   plugins: [
