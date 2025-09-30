@@ -22,7 +22,9 @@ async function registerHandler(request: FastifyRequest, reply: FastifyReply) {
         return reply.code(HttpStatusCode.CONFLICT).send({message: 'Email already registered'});
     }
 
-    return reply.code(HttpStatusCode.CREATED).send({token: createUserToken(id)});
+    const token = createUserToken(id);
+    reply.header("Set-Cookie", `token=${token}; HttpOnly; Path=/; Max-Age=86400`);
+    return reply.code(HttpStatusCode.CREATED).send({});
 }
 
 async function loginHandler(request: FastifyRequest, reply: FastifyReply) {
@@ -39,8 +41,9 @@ async function loginHandler(request: FastifyRequest, reply: FastifyReply) {
         return reply.code(HttpStatusCode.UNAUTHORIZED).send({error: 'Invalid credentials'});
 
     if (!user.twoFaEnabled) {
-        const token = await createUserToken(user.id);
-        return reply.send({token: token});
+        const token = createUserToken(user.id);
+        reply.header("Set-Cookie", `token=${token}; HttpOnly; Path=/; Max-Age=86400`);
+        return reply.send({});
     }
 
     const twoFaSession = create2FaSession(user.id);

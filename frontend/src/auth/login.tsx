@@ -40,13 +40,11 @@ export default function Login() {
         return;
       }
 
-      if ((data as any)?.token) {
-        toast.success("Logged in!", {
-          description: `Welcome back, ${vars.email}.`,
-          duration: 3000,
-        });
-        navigate("/app");
-      }
+      toast.success("Logged in!", {
+        description: `Welcome back, ${vars.email}.`,
+        duration: 3000,
+      });
+      navigate("/app");
     },
     onError: (err: any) => {
       const description =
