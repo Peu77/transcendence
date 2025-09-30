@@ -3,7 +3,7 @@ import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
 import type {FastifyInstance} from 'fastify';
-import {SCHEMA} from "../schema";
+import {SCHEMA} from "../db/schema";
 
 export interface SqlitePluginOptions {
     databaseFile?: string;
