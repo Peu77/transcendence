@@ -81,7 +81,11 @@ export default function Register() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel htmlFor={field.id}>Email</FormLabel>
-                  <Input {...field} autoFocus={true} placeholder="enter email" />
+                  <Input
+                    {...field}
+                    autoFocus={true}
+                    placeholder="enter email"
+                  />
                   <FormMessage form={form} name="email" />
                 </FormItem>
               )}
@@ -93,7 +97,11 @@ export default function Register() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel htmlFor={field.id}>Password</FormLabel>
-                  <Input {...field} type="password" placeholder="enter password" />
+                  <Input
+                    {...field}
+                    type="password"
+                    placeholder="enter password"
+                  />
                   <FormMessage form={form} name="password" />
                 </FormItem>
               )}
@@ -105,7 +113,11 @@ export default function Register() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel htmlFor={field.id}>Confirm password</FormLabel>
-                  <Input {...field} type="password" placeholder="confirm password" />
+                  <Input
+                    {...field}
+                    type="password"
+                    placeholder="confirm password"
+                  />
                   <FormMessage form={form} name="confirmPassword" />
                 </FormItem>
               )}
