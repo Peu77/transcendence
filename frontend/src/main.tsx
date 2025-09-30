@@ -1,6 +1,9 @@
-import { h, render, Router } from "refreshjs";
+import { h, render, Router, Fragment } from "refreshjs";
 import Home from "./home";
 import "./styles.css";
+import Login from "./auth/login";
+import Register from "./auth/register";
+import Toaster from "./components/Toaster";
 
 function NotFound() {
   return <p class="text-red-600">404: Page not found</p>;
@@ -11,7 +14,21 @@ const routes = [
     path: "",
     component: Home,
   },
+  {
+    path: "login",
+    component: Login,
+  },
+  {
+    path: "register",
+    component: Register,
+  },
 ];
 
 const root = document.getElementById("root")!;
-render(<Router routes={routes} notFound={NotFound} />, root);
+render(
+  <Fragment>
+    <Router routes={routes} notFound={NotFound} />
+    <Toaster />
+  </Fragment>,
+  root,
+);

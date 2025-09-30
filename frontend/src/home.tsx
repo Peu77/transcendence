@@ -1,6 +1,7 @@
 import { h, Link } from "refreshjs";
 import { useState, useEffect } from "refreshjs";
 import { buttonClasses } from "./components/Button";
+import toast from "./store/toast";
 
 const authors = ["Emil", "Kira", "Konrad", "Matthias"];
 const githubUrl = "https://github.com/peu77/transcendence";
@@ -41,7 +42,7 @@ export default function Home() {
           {displayed.length < fullText.length ? "|" : ""}
         </span>
       </h1>
-      <div class="flex gap-4 mb-8">
+      <div class="flex gap-4 mb-4">
         <Link to="/login" class={buttonClasses()}>
           Login
         </Link>
@@ -53,6 +54,18 @@ export default function Home() {
         >
           GitHub
         </Link>
+      </div>
+      <div class="mb-8">
+        <button
+          class={buttonClasses("secondary", "sm")}
+          onClick={() =>
+            toast.success("Retro toast online!", {
+              description: "This is a demo message.",
+            })
+          }
+        >
+          Show toast
+        </button>
       </div>
       <button
         onClick={toggleDarkMode}
