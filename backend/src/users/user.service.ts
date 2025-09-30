@@ -45,7 +45,7 @@ export function isValidTwoFaToken(twoFaSecret: string, twoFaId: string, userId: 
     if (!result) return false;
 
     const user = getUserById(userId);
-    if (!user || !user.twoFaEnabled || !user.twoFaEnabled || new Date(result.expiredAt) < new Date()) {
+    if (!user || !user.twoFaEnabled || !user.twoFaSecret || new Date(result.expiredAt) < new Date()) {
         delete2FaSession(twoFaId);
         return false;
     }
