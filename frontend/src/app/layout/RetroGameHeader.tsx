@@ -1,4 +1,4 @@
-import { h } from 'refreshjs';
+import { h } from "refreshjs";
 
 export function RetroGameHeader() {
   return (
@@ -9,8 +9,12 @@ export function RetroGameHeader() {
             <div className="w-4 h-4 bg-black" />
           </div>
           <div>
-            <h1 className="text-cyan-400 font-mono tracking-wider">PING PONG ARENA</h1>
-            <div className="text-xs text-gray-400 font-mono">v2.0.03 • RETRO EDITION</div>
+            <h1 className="text-cyan-400 font-mono tracking-wider">
+              PING PONG ARENA
+            </h1>
+            <div className="text-xs text-gray-400 font-mono">
+              v2.0.03 • RETRO EDITION
+            </div>
           </div>
         </div>
         <div className="flex items-center space-x-6 text-xs font-mono">
