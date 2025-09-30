@@ -52,6 +52,16 @@ interface ContainerState {
   rerender: () => void;
 }
 
+interface InstanceRecord {
+  container: Element;
+  parentDom: Element;
+  comp: Component;
+  vnode: VNode;
+  path: string;
+  childPath: string;
+}
+const instanceRegistry = new Map<string, InstanceRecord>();
+
 const containerStates = new WeakMap<Element, ContainerState>();
 
 export function render(vnode: VNode, container: Element) {
@@ -80,6 +90,7 @@ let oldHooksMap: Map<string, HookState[]> | null = null;
 let currentEffectQueue: ContainerState['effectQueue'] | null = null;
 let currentHookKey: string | null = null;
 let currentHookIndex = 0;
+let lastRenderedContainer: Element | null = null;
 
 function internalRender(vnode: VNode, container: Element) {
   const state = containerStates.get(container)!;
@@ -109,6 +120,9 @@ function internalRender(vnode: VNode, container: Element) {
   (container as any).__prevVNode = vnode;
   state.hooks = currentHooksMap!;
   state.effectQueue = currentEffectQueue!;
+
+  // record last rendered container for fallback partial updates
+  lastRenderedContainer = container;
 
   currentContainer = null;
   oldHooksMap = null;
@@ -176,6 +190,18 @@ function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null
     const childPath = path + '/C:' + getComponentId(comp, newVNode.props?.key);
     const oldChildVNode = (oldVNode as any).__child as VNode | null;
     const childDom = diff(parentDom, oldChildVNode, childVNode, childPath);
+
+    // Record/update instance for targeted rerenders
+    if (currentContainer) {
+      instanceRegistry.set(hookKey, {
+        container: currentContainer,
+        parentDom,
+        comp,
+        vnode: newVNode,
+        path,
+        childPath,
+      });
+    }
 
     (newVNode as any).__child = childVNode;
     setVNodeDomRef(newVNode, childDom);
@@ -313,6 +339,17 @@ function createDom(vnode: VNode | null, parentDom: Element, path: string): Node 
     (vnode as any).__child = childVNode;
     const childPath = path + '/C:' + getComponentId(comp, vnode.props?.key);
     const childDom = createDom(childVNode, parentDom, childPath);
+    // Record instance on mount
+    if (currentContainer) {
+      instanceRegistry.set(hookKey, {
+        container: currentContainer,
+        parentDom,
+        comp,
+        vnode,
+        path,
+        childPath,
+      });
+    }
     setVNodeDomRef(vnode, childDom);
     return childDom;
   }
@@ -334,6 +371,7 @@ function unmount(vnode: VNode, parentDom: Element, path: string) {
   if (typeof vnode.type === 'function') {
     const comp = vnode.type as Component;
     const hookKey = makeHookKey(path, comp, vnode.props?.key);
+    // cleanup effects
     const oldArr = oldHooksMap?.get(hookKey) || [];
     for (const h of oldArr) {
       if (h && typeof h.cleanup === 'function') {
@@ -344,6 +382,8 @@ function unmount(vnode: VNode, parentDom: Element, path: string) {
         }
       }
     }
+    // remove instance record
+    instanceRegistry.delete(hookKey);
     const child = (vnode as any).__child as VNode | null;
     if (child) unmount(child, parentDom, path + '/C:' + getComponentId(comp, vnode.props?.key));
     const dom = getDomNodeForVNode(vnode);
@@ -448,6 +488,66 @@ function makeHookKey(path: string, comp: Function, key?: any): string {
   return path + '/HOOKS:' + getComponentId(comp, key);
 }
 
+// Targeted re-render of a single function component instance by hook key
+function rerenderComponent(hookKey: string) {
+  const inst = instanceRegistry.get(hookKey);
+  if (!inst) {
+    // Fallback to full container render if instance is gone
+    const container = lastRenderedContainer;
+    if (container) {
+      const st = containerStates.get(container)!;
+      if (st.prevVNode) internalRender(st.prevVNode, container);
+    }
+    return;
+  }
+  const container = inst.container;
+  const state = containerStates.get(container);
+  if (!state) return;
+
+  // Prepare hook environment limited to this component
+  currentContainer = container;
+  oldHooksMap = state.hooks;
+  currentHooksMap = new Map(oldHooksMap);
+  currentEffectQueue = [];
+
+  currentHookKey = hookKey;
+  currentHookIndex = 0;
+
+  const newHooks: HookState[] = [];
+  currentHooksMap.set(hookKey, newHooks);
+
+  // Render child vnode with this hook context
+  const props = inst.vnode.props || {};
+  const childVNode = withHookContext(hookKey, () => inst.comp({ ...(props || {}), children: props?.children || [] }));
+  const oldChildVNode = (inst.vnode as any).__child as VNode | null;
+  const childDom = diff(inst.parentDom, oldChildVNode, childVNode, inst.childPath);
+  (inst.vnode as any).__child = childVNode;
+  setVNodeDomRef(inst.vnode, childDom);
+
+  // Flush effects queued by this render
+  for (const { hook } of currentEffectQueue!) {
+    queueMicrotask(() => {
+      try {
+        const cleanup = hook.effect ? hook.effect() : undefined;
+        hook.cleanup = cleanup;
+      } catch (e) {
+        console.error('[refreshjs] useEffect error:', e);
+      }
+    });
+  }
+
+  // Commit updated hooks map back to container state (only this key changed)
+  state.hooks = currentHooksMap!;
+
+  // Reset temp globals
+  currentContainer = null;
+  oldHooksMap = null;
+  currentHooksMap = null;
+  currentEffectQueue = null;
+  currentHookKey = null;
+  currentHookIndex = 0;
+}
+
 export function useState<S>(initial: S | (() => S)): [S, (v: S | ((prev: S) => S)) => void] {
   if (!currentContainer || !currentHooksMap || !oldHooksMap || !currentHookKey) {
     throw new Error('useState must be called inside a component render');
@@ -465,13 +565,16 @@ export function useState<S>(initial: S | (() => S)): [S, (v: S | ((prev: S) => S
   hooksArr[idx] = hook;
 
   const container = currentContainer;
+  const hookKeyLocal = currentHookKey; // capture owner key
   const setState = (v: any) => {
     const next = typeof v === 'function' ? (v as any)(hook!.state) : v;
     if (Object.is(next, hook!.state)) return;
     hook!.state = next;
-    const st = containerStates.get(container);
-    if (st && st.prevVNode) {
-      internalRender(st.prevVNode, container);
+    // Targeted re-render of the owning component only
+    if (hookKeyLocal) rerenderComponent(hookKeyLocal);
+    else {
+      const st = containerStates.get(container);
+      if (st && st.prevVNode) internalRender(st.prevVNode, container);
     }
   };
   return [hook.state, setState];
