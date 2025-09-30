@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import Fastify from 'fastify';
 import sqlitePlugin from './plugins/sqlite';
 import registerUserRoutes from "./users/user.controller";
@@ -21,4 +22,3 @@ export async function buildServer() {
 
     return app;
 }
-
