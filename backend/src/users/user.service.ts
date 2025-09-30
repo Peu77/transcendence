@@ -5,8 +5,8 @@ import {get, run} from "../db/helpers";
 import {v4 as uuid} from "uuid";
 
 
-export async function createUserToken(userId: string) {
-    return jwt.sign(userId, getEnv("JWT_SECRET"), {expiresIn: "10h"});
+export function createUserToken(userId: string) {
+    return jwt.sign({userId}, getEnv("JWT_SECRET"), {expiresIn: "10h"});
 }
 
 export function createUser(id: string, email: string, passwordHash: string) {
