@@ -1,5 +1,5 @@
 import { h, Link } from "refreshjs";
-import { useState, useEffect, navigate } from "refreshjs";
+import { useState, useEffect } from "refreshjs";
 import { buttonClasses } from "./components/Button";
 import toast from "./store/toast";
 

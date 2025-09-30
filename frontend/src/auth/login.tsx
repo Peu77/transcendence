@@ -42,7 +42,7 @@ export default function Login() {
       description: `Welcome back, ${values.email}.`,
       duration: 4000,
     });
-    navigate("/success");
+    navigate("/app");
   }
     else {
       toast.error("Login failed", {

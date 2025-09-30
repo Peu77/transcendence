@@ -8,7 +8,7 @@ import {
     Color3,
 } from '@babylonjs/core';
 
-export function create3DMesh(container) {
+export function create3DMesh(container: HTMLElement) {
     // Create canvas and append to container
     const canvas = document.createElement('canvas');
     canvas.style.width = '100%';
@@ -88,7 +88,7 @@ export function create3DMesh(container) {
         time += engine.getDeltaTime() * 0.002;
 
         // Update points
-        const updateWave = (lines) => {
+        const updateWave = (lines: Vector3[][]) => {
             for (let i = 0; i < lineCount; i++) {
                 for (let j = 0; j < pointsPerLine; j++) {
                     const point = lines[i][j];
