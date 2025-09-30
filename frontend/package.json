@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "refreshjs": "file:../refreshjs"
+    "refreshjs": "file:../refreshjs",
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
