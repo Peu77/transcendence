@@ -1,5 +1,5 @@
 import { h, useEffect, useRef } from "refreshjs";
-import { create3DMesh } from "../../3dMeshBabylon";
+import { create3DMesh } from "./3dMeshBabylon";
 export function ThreeDMesh() {
   const containerId = useRef(null);
 
@@ -7,11 +7,7 @@ export function ThreeDMesh() {
     if (containerId.current) {
       create3DMesh(containerId.current);
     }
-  }, [])
+  }, []);
 
-  return (
-    <div
-        ref={containerId}
-    />
-  );
+  return <div ref={containerId} />;
 }
