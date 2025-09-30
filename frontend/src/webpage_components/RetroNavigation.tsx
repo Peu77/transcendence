@@ -1,5 +1,5 @@
 import { useState, h } from 'refreshjs';
-import Button from './Button';
+import Button from '../components/Button';
 
 export const retroNavigationItems = [
   { id: 'home', label: 'HOME' },

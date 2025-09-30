@@ -1,5 +1,4 @@
 import { h, useEffect, useRef } from "refreshjs";
-import { cn } from "./utils";
 import { create3DMesh } from "../../3dMeshBabylon";
 export function ThreeDMesh() {
   const containerId = useRef(null);

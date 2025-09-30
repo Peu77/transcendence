@@ -1,9 +1,9 @@
 import { h, Fragment, useState, useRef, useEffect } from 'refreshjs';
-import { GameModeSelector } from './components/GameModeSelector';
-import { RetroGameHeader } from './components/RetroGameHeader';
-import { RetroNavigation } from './components/RetroNavigation';
-import { TableTennis3D } from './components/TableTennis3D';
-import { ThreeDMesh } from './components/3DMesh';
+import { GameModeSelector } from './webpage_components/GameModeSelector';
+import { RetroGameHeader } from './webpage_components/RetroGameHeader';
+import { RetroNavigation } from './webpage_components/RetroNavigation';
+import { TableTennis3D } from './webpage_components/TableTennis3D';
+import { ThreeDMesh } from './webpage_components/3DMesh';
 
 export default function App() {
 
