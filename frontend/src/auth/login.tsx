@@ -1,4 +1,4 @@
-import { h, Link } from "refreshjs";
+import { h, Link, navigate } from "refreshjs";
 import { z } from "zod";
 import Card, {
   CardContent,
@@ -29,9 +29,32 @@ export default function Login() {
   });
 
   async function handleSubmit(values: z.infer<typeof loginSchema>) {
-    toast.success("Logged in!", {
-      description: `Welcome back, ${values.email}.`,
-    });
+    try {
+      // Example API call
+      // const response = await handleLogin(values); // This should return { success: boolean, data: ..., error: ... }
+      const response = {
+        success: true,
+        data: { userId: 1, email: values.email },
+        error: null,
+      };
+      if (response.success) {
+        toast.success("Logged in!", {
+          description: `Welcome back, ${values.email}.`,
+          duration: 4000,
+        });
+        navigate("/app");
+      } else {
+        toast.error("Login failed", {
+          description: response.error || "Invalid email or password.",
+          duration: 4000,
+        });
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred", {
+        description: "Please try again later.",
+        duration: 4000,
+      });
+    }
   }
 
   return (
