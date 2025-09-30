@@ -4,6 +4,7 @@ import "./styles.css";
 import Login from "./auth/login";
 import Register from "./auth/register";
 import Toaster from "./components/Toaster";
+import App from "./App";
 
 function NotFound() {
   return <p class="text-red-600">404: Page not found</p>;
@@ -22,6 +23,10 @@ const routes = [
     path: "register",
     component: Register,
   },
+  {
+    path: "success",
+    component: App,
+  }
 ];
 
 const root = document.getElementById("root")!;

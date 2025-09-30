@@ -4,6 +4,7 @@ import { ImageWithFallback } from './components/ImageWithFallback';
 import { RetroGameHeader } from './components/RetroGameHeader';
 import { RetroNavigation } from './components/RetroNavigation';
 import { TableTennis3D } from './components/TableTennis3D';
+import { ThreeDMesh } from './components/3DMesh';
 import MigratedComponent from './components/MigratedComponent';
 
 export default function App() {
@@ -19,7 +20,8 @@ export default function App() {
       <RetroGameHeader />
       <RetroNavigation />
         <TableTennis3D onTableClick={() => {}} />
+     <ThreeDMesh />
     </Fragment>
   );
 }
-// {/* <GameModeSelector /> */}
+
