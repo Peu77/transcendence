@@ -24,7 +24,7 @@ const routes = [
     component: Register,
   },
   {
-    path: "success",
+    path: "app",
     component: App,
   }
 ];
