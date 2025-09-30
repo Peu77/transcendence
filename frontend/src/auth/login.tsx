@@ -16,6 +16,8 @@ import {
   FormLabel,
   FormMessage,
 } from "../components/Form";
+import { useMutation } from "../query/hooks";
+import { login as apiLogin } from "../api/auth";
 
 const loginSchema = z.object({
   email: z.email("Please enter a valid email"),
@@ -28,34 +30,38 @@ export default function Login() {
     defaultValues: { email: "", password: "" },
   });
 
-  async function handleSubmit(values: z.infer<typeof loginSchema>) {
-    try {
-      // Example API call
-      // const response = await handleLogin(values); // This should return { success: boolean, data: ..., error: ... }
-      const response = {
-        success: true,
-        data: { userId: 1, email: values.email },
-        error: null,
-      };
-      if (response.success) {
+  const loginMutation = useMutation({
+    mutationFn: apiLogin,
+    onSuccess: (data, vars) => {
+      if ((data as any)?.requires2FA) {
+        toast.info("Two-factor authentication required", {
+          description: "2FA flow not implemented yet.",
+        });
+        return;
+      }
+
+      if ((data as any)?.token) {
         toast.success("Logged in!", {
-          description: `Welcome back, ${values.email}.`,
-          duration: 4000,
+          description: `Welcome back, ${vars.email}.`,
+          duration: 3000,
         });
         navigate("/app");
-      } else {
-        toast.error("Login failed", {
-          description: response.error || "Invalid email or password.",
-          duration: 4000,
-        });
       }
-    } catch (error) {
-      toast.error("An unexpected error occurred", {
-        description: "Please try again later.",
-        duration: 4000,
-      });
-    }
+    },
+    onError: (err: any) => {
+      const description =
+        err?.response?.data?.error ||
+        err?.message ||
+        "Invalid email or password.";
+      toast.error("Login failed", { description, duration: 4000 });
+    },
+  });
+
+  async function handleSubmit(values: z.infer<typeof loginSchema>) {
+    await loginMutation.mutateAsync(values);
   }
+
+  const isBusy = loginMutation.isPending || form.formState.isSubmitting;
 
   return (
     <div class="flex min-h-screen flex-col items-center justify-center bg-background">
@@ -102,8 +108,8 @@ export default function Login() {
               )}
             />
 
-            <Button size={"sm"} disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "logging in…" : "login"}
+            <Button size={"sm"} disabled={isBusy}>
+              {isBusy ? "logging in…" : "login"}
             </Button>
 
             <p className="text-sm text-muted-foreground mt-2 text-center">
