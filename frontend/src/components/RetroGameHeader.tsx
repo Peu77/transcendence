@@ -1,7 +1,7 @@
 import { h } from 'refreshjs';
 
 export function RetroGameHeader() {
-  return h('header', { class: 'w-full bg-black border-b-2 border-cyan-400 px-6 py-4' },
+  return h('header', { class: 'w-full bg-background border-b-2 border-cyan-400 px-6 py-4' },
     h('div', { class: 'flex items-center justify-between max-w-6xl mx-auto' },
       h('div', { class: 'flex items-center space-x-4' },
         h('div', { class: 'w-8 h-8 bg-cyan-400 flex items-center justify-center' },
