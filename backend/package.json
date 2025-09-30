@@ -21,7 +21,8 @@
     "jsonwebtoken": "^9.0.2",
     "reflect-metadata": "^0.2.2",
     "speakeasy": "^2.0.0",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "@fastify/cors": "^9.0.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.11",
