@@ -1,6 +1,17 @@
 import { buildServer } from './app';
+import {config} from 'dotenv';
 
-const PORT = Number(process.env.PORT) || 3000;
+config();
+
+export function getEnv(key: string): string {
+    const value = process.env[key];
+    if (!value) {
+        throw new Error(`Missing env var ${key}`);
+    }
+    return value;
+}
+
+const PORT = Number(process.env.PORT) || 4000;
 const HOST = process.env.HOST || '0.0.0.0';
 
 async function start() {

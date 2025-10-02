@@ -11,9 +11,11 @@
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "types": ["node"],
-    "lib": ["ES2020"]
+    "lib": ["ES2020"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
-
