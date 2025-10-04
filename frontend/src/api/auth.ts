@@ -1,4 +1,4 @@
-import { axios } from "../query/client";
+import { axios } from "@/query/client";
 
 export type LoginRequest = { email: string; password: string };
 export type LoginResponse = { requires2FA?: true; twoFaSession?: string };
