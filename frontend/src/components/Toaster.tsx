@@ -1,6 +1,6 @@
 import { h } from "refreshjs";
 import { useStore } from "refreshjs";
-import { toastStore, dismiss } from "../store/toast";
+import { toastStore, dismiss } from "@/store/toast";
 import { cn } from "./utils";
 
 function variantClasses(variant: string): string {

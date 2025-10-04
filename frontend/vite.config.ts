@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import * as path from "path";
 
 export default defineConfig({
   esbuild: {
@@ -8,6 +9,11 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    open: true,
+    open: false,
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+    },
   },
 });
