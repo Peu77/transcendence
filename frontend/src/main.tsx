@@ -4,7 +4,7 @@ import "./styles.css";
 import Login from "./auth/login";
 import Register from "./auth/register";
 import Toaster from "./components/Toaster";
-import App from "./app/App";
+import Layout from "./app/layout/Layout";
 import { retroNavigationItems } from "./app/layout/RetroNavigation";
 import { id } from "zod/locales";
 function NotFound() {
@@ -25,11 +25,12 @@ const routes = [
     component: Register,
   },
   {
-    path: 'app/:id',
-    layout: App,
+    path: 'app/',
+    layout: Layout,
     children: retroNavigationItems.map((item) => ({
-      index: item.id === '' ? true : false,
-      path: item.id === '' ? 'default' : item.id,
+      index: item.id === 'default' ? true : false,
+      path: item.id === 'default' ? '' : item.id,
+      component: item.component,
     }))
   }
 ];

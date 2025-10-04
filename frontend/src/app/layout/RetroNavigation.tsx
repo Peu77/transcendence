@@ -1,14 +1,17 @@
-import { useState, h } from "refreshjs";
+import {  h } from "refreshjs";
 import Button from "../../components/Button";
+import App from "../App";
+import Game from "./Game";
+import Scores from "./Scores";
+import { navigate } from "refreshjs";
 
 export const retroNavigationItems = [
-  { id: "default", component: "App", label: "Home"},
-  { id: "game", component: "Game", label: "Game" },
-  { id: "scores", component: "Scores", label: "Scores" },
+  { id: "default", component: App, label: "Home" },
+  { id: "game", component: Game, label: "Game" },
+  { id: "scores", component: Scores, label: "Scores" },
 ];
 
-export function RetroNavigation() {
-  const [activeTab, setActiveTab] = useState("home");
+export function RetroNavigation({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (tab: string) => void }) {
 
   return (
     <nav className="w-full bg-card border-b border-gray-700 shadow-md">
@@ -19,7 +22,10 @@ export function RetroNavigation() {
               key={item.id}
               variant={activeTab === item.id ? "default" : "ghost"}
               size="sm"
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                setActiveTab(item.id);
+                navigate(item.id === 'default' ? '/app' : `/app/${item.id}`);
+              }}
             >
               {item.label}
             </Button>
