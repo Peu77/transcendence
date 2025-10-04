@@ -5,8 +5,15 @@ import {LoginDto, RegisterDto, TwoFAVerifyDto} from './user.dto';
 import bcrypt from 'bcryptjs';
 import {v4 as uuid} from 'uuid';
 import {HttpStatusCode} from "../utils/httpStatusCodes";
-import {create2FaSession, createUser, findUserByEmail, isValidTwoFaToken} from './user.service';
+import {create2FaSession, createUser, findUserByEmail, getUserById, isValidTwoFaToken} from './user.service';
 import {createUserToken} from "./user.service";
+
+async function getMeHandler(request: FastifyRequest, reply: FastifyReply) {
+    const user = getUserById(request.userId!!)
+    if (!user) return reply.code(HttpStatusCode.NOT_FOUND).send({error: 'User not found'});
+
+    return reply.send({id: user.id, email: user.email, twoFaEnabled: user.twoFaEnabled});
+}
 
 async function registerHandler(request: FastifyRequest, reply: FastifyReply) {
     const {data, errors} = await validateDto(RegisterDto, request.body);
@@ -23,7 +30,10 @@ async function registerHandler(request: FastifyRequest, reply: FastifyReply) {
     }
 
     const token = createUserToken(id);
-    reply.header("Set-Cookie", `token=${token}; HttpOnly; Path=/; Max-Age=86400`);
+    reply.cookie('token', token, {
+        httpOnly: true,
+        path: '/'
+    });
     return reply.code(HttpStatusCode.CREATED).send({});
 }
 
@@ -42,7 +52,10 @@ async function loginHandler(request: FastifyRequest, reply: FastifyReply) {
 
     if (!user.twoFaEnabled) {
         const token = createUserToken(user.id);
-        reply.header("Set-Cookie", `token=${token}; HttpOnly; Path=/; Max-Age=86400`);
+        reply.cookie('token', token, {
+            httpOnly: true,
+            path: '/'
+        });
         return reply.send({});
     }
 
@@ -65,4 +78,5 @@ export default function registerUserRoutes() {
     app.post('/auth/register', registerHandler);
     app.post('/auth/login', loginHandler);
     app.post('/auth/2fa/verify', twoFAVerifyHandler);
+    app.get('/users/me', getMeHandler);
 }

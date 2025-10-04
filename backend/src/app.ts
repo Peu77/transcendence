@@ -3,6 +3,8 @@ import Fastify from 'fastify';
 import sqlitePlugin from './plugins/sqlite';
 import registerUserRoutes from "./users/user.controller";
 import cors from '@fastify/cors';
+import fastifyCookie from "@fastify/cookie";
+import {registerAuthGuard} from "./users/auth.guard";
 
 export const app = Fastify({logger: true});
 
@@ -23,8 +25,10 @@ export async function buildServer() {
         allowedHeaders: ['Content-Type','Authorization']
     });
 
+    await app.register(fastifyCookie);
     await app.register(sqlitePlugin);
 
+    registerAuthGuard();
     registerUserRoutes();
 
     app.get('/hello', async () => ({message: 'Hello World'}));
