@@ -1,14 +1,14 @@
-import { h, Fragment } from "refreshjs";
-import { RetroNavigation } from "./layout/RetroNavigation";
+import { h } from "refreshjs";
 import { TableTennis3D } from "./layout/TableTennis3D";
-import { ThreeDMesh } from "./layout/3DMesh";
 
-export default function App() {
+export default function App({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (tab: string) => void }) {
   return (
-    <Fragment>
-      <RetroNavigation />
-      <TableTennis3D onTableClick={() => {}} />
-      <ThreeDMesh />
-    </Fragment>
+    <div>
+     <TableTennis3D onTableClick={() => 
+      {
+        setActiveTab("game");
+        window.history.pushState({}, "", "/app/game");
+      }} />
+    </div>
   );
 }
