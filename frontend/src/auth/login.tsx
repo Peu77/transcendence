@@ -5,18 +5,18 @@ import Card, {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/Card";
-import Input from "../components/Input";
-import Button from "../components/Button";
-import toast from "../store/toast";
+} from "@/components/Card";
+import Input from "@/components/Input";
+import Button from "@/components/Button";
+import toast from "@/store/toast";
 import {
   useForm,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "../components/Form";
-import { useMutation } from "../query/hooks";
+} from "@/components/Form";
+import { useMutation } from "@/query/hooks";
 import { login as apiLogin } from "../api/auth";
 
 const loginSchema = z.object({
