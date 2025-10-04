@@ -19,6 +19,7 @@
     "@babylonjs/core": "^6.29.0",
     "@babylonjs/gui": "^6.29.0",
     "@babylonjs/loaders": "^6.29.0",
+    "@types/node": "^24.6.2",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
     "prettier": "^3.6.2",
