@@ -1,15 +1,10 @@
-import type Database from "better-sqlite3";
+import type Database from 'better-sqlite3';
 
-declare module "fastify" {
+declare module 'fastify' {
   interface FastifyInstance {
     db: Database;
   }
 }
 
-declare module "fastify" {
-  interface FastifyRequest {
-    userId?: string;
-  }
-}
-
 export {};
+
