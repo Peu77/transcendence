@@ -14,4 +14,3 @@ export interface TwoFARow {
   createdAt: string;
   expiredAt: string;
 }
-
