@@ -26,6 +26,7 @@ const routes = [
   {
     path: "app",
     component: App,
+
   },
 ];
 
