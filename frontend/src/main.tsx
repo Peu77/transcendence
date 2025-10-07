@@ -6,7 +6,6 @@ import Register from "./auth/register";
 import Toaster from "./components/Toaster";
 import Layout from "./app/layout/Layout";
 import { retroNavigationItems } from "./app/layout/RetroNavigation";
-import { id } from "zod/locales";
 function NotFound() {
   return <p class="text-red-600">404: Page not found</p>;
 }
@@ -28,8 +27,8 @@ const routes = [
     path: "app/",
     layout: Layout,
     children: retroNavigationItems.map((item) => ({
-      index: item.id === "default" ? true : false,
-      path: item.id === "default" ? "" : item.id,
+      index: item.index,
+      path: item.id,
       component: item.component,
     })),
   },
