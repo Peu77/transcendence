@@ -3,15 +3,17 @@ import Button from "../../components/Button";
 import App from "../App";
 import Game from "./Game";
 import Scores from "./Scores";
-import { navigate } from "refreshjs";
+import { navigate, useCurrentRoute } from "refreshjs";
 
 export const retroNavigationItems = [
-  { id: "default", component: App, label: "Home" },
-  { id: "game", component: Game, label: "Game" },
-  { id: "scores", component: Scores, label: "Scores" },
+  { id: "", component: App, label: "Home", index: true },
+  { id: "game", component: Game, label: "Game", index: false },
+  { id: "scores", component: Scores, label: "Scores", index: false },
 ];
 
-export function RetroNavigation({ activeTab }: { activeTab: string }) {
+export function RetroNavigation() {
+  const { child } = useCurrentRoute();
+
   return (
     <nav className="w-full bg-card border-b border-gray-700 shadow-md">
       <div className="flex items-center justify-between max-w-6xl mx-auto px-6">
@@ -19,7 +21,7 @@ export function RetroNavigation({ activeTab }: { activeTab: string }) {
           {retroNavigationItems.map((item) => (
             <Button
               key={item.id}
-              variant={activeTab === item.id ? "default" : "ghost"}
+              variant={child?.path === item.id ? "default" : "ghost"}
               size="sm"
               onClick={() => {
                 navigate(item.id === "default" ? "/app" : `/app/${item.id}`);
