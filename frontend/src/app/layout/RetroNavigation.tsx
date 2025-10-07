@@ -11,7 +11,7 @@ export const retroNavigationItems = [
   { id: "scores", component: Scores, label: "Scores" },
 ];
 
-export function RetroNavigation({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (tab: string) => void }) {
+export function RetroNavigation({ activeTab }: { activeTab: string}) {
 
   return (
     <nav className="w-full bg-card border-b border-gray-700 shadow-md">
@@ -23,7 +23,6 @@ export function RetroNavigation({ activeTab, setActiveTab }: { activeTab: string
               variant={activeTab === item.id ? "default" : "ghost"}
               size="sm"
               onClick={() => {
-                setActiveTab(item.id);
                 navigate(item.id === 'default' ? '/app' : `/app/${item.id}`);
               }}
             >
