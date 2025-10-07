@@ -6,29 +6,18 @@ import Scores from "./Scores";
 import { ThreeDMesh } from "./3DMesh";
 
 export default function Layout(props: any) {
-  const [activeTab, setActiveTab] = useState("default");
+  let activeTab = ""
 
-  useEffect(() => {
     const path = window.location.pathname;
-    if (path === "/app") setActiveTab("default");
-    else if (path === "/app/game") setActiveTab("game");
-    else if (path === "/app/scores") setActiveTab("scores");
-    else setActiveTab("default");
-  }, []);
-
-  let content;
-  if (activeTab === "game") {
-    content = <Game />;
-  } else if (activeTab === "scores") {
-    content = <Scores />;
-  } else {
-    content = <App activeTab={activeTab} setActiveTab={setActiveTab} />;
-  }
+    if (path === "/app") activeTab = ("default");
+    else if (path === "/app/game") activeTab = ("game");
+    else if (path === "/app/scores") activeTab = ("scores");
+    else activeTab = ("default");
 
   return (
     <div>
-      <RetroNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
-      {content}
+      <RetroNavigation activeTab={activeTab} />
+      {props.children}
       <ThreeDMesh />
     </div>
   );

@@ -1,15 +1,10 @@
-import { useState, h } from "refreshjs";
+import { h } from "refreshjs";
 import Card, {
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  CardContent
 } from "../../components/Card";
-import Button from "@/components/Button";
-import { C } from "node_modules/@tanstack/query-core/build/modern/hydration-B0J2Tmyo";
+
 
 export function GameModeSelector() {
-  const [active, setActive] = useState<string | null>(null);
   interface GameMode {
     id: string;
     title: string;
@@ -66,11 +61,8 @@ export function GameModeSelector() {
       {gameModes.map((mode: GameMode) => (
         <Card
           key={mode.id}
-          className={`p-6 cursor-pointer border-2 ${
-            active === mode.id
-              ? "border-cyan-400 bg-cyan-900/10"
-              : "border-transparent hover:bg-secondary"
-          } transition-all group`}
+          className={`p-6 cursor-pointer border-2 border-transparent hover:bg-secondary
+           transition-all group`}
         >
           <CardContent className="p-0">
             <div className="flex items-center mb-4">
