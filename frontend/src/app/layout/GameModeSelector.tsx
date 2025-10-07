@@ -1,7 +1,14 @@
-import { useState, h } from "refreshjs";
+import { h } from "refreshjs";
+import Card, { CardContent } from "../../components/Card";
 
 export function GameModeSelector() {
-  const [active, setActive] = useState<string | null>(null);
+  interface GameMode {
+    id: string;
+    title: string;
+    description: string;
+    difficulty: string;
+    icon: string;
+  }
   const gameModes = [
     {
       id: "single",
@@ -47,21 +54,33 @@ export function GameModeSelector() {
     }
   };
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-      {gameModes.map((mode) => (
-        <button
+    <div className="flex flex-wrap items-center m-auto gap-6 justify-center">
+      {gameModes.map((mode: GameMode) => (
+        <Card
           key={mode.id}
-          className="bg-gray-900 border border-gray-700 hover:border-cyan-400 transition-all duration-300 p-6 text-left group hover:bg-gray-800"
-          onClick={() => setActive(mode.id)}
+          className={`p-6 cursor-pointer border-2 border-transparent hover:bg-secondary
+           transition-all group`}
         >
-          <div className="flex items-start justify-between mb-4">
-            <div className="text-2xl">{mode.icon}</div>
-            <div
-              className={`text-xs font-mono ${getDifficultyColor(mode.difficulty)} bg-gray-800 px-2 py-1`}
-            >
-              {mode.difficulty}
+          <CardContent className="p-0">
+            <div className="flex items-center mb-4">
+              <div
+                className={`text-3xl mr-4 ${getDifficultyColor(
+                  mode.difficulty,
+                )} group-hover:text-white transition-colors`}
+              >
+                {mode.icon}
+              </div>
+              <div className="flex flex-col">
+                <h4
+                  className={`text-sm font-mono tracking-wide ${getDifficultyColor(
+                    mode.difficulty,
+                  )} group-hover:text-white transition-colors`}
+                >
+                  {mode.difficulty}
+                </h4>
+              </div>
             </div>
-          </div>
+          </CardContent>
           <h3 className="text-cyan-400 font-mono tracking-wide mb-2 group-hover:text-white transition-colors">
             {mode.title}
           </h3>
@@ -71,7 +90,7 @@ export function GameModeSelector() {
           <div className="mt-4 text-xs text-gray-500 font-mono">
             › Click to select
           </div>
-        </button>
+        </Card>
       ))}
     </div>
   );
