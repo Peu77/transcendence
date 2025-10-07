@@ -25,14 +25,14 @@ const routes = [
     component: Register,
   },
   {
-    path: 'app/',
+    path: "app/",
     layout: Layout,
     children: retroNavigationItems.map((item) => ({
-      index: item.id === 'default' ? true : false,
-      path: item.id === 'default' ? '' : item.id,
+      index: item.id === "default" ? true : false,
+      path: item.id === "default" ? "" : item.id,
       component: item.component,
-    }))
-  }
+    })),
+  },
 ];
 
 const root = document.getElementById("root")!;

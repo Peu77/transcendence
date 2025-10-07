@@ -1,8 +1,5 @@
 import { h } from "refreshjs";
-import Card, {
-  CardContent
-} from "../../components/Card";
-
+import Card, { CardContent } from "../../components/Card";
 
 export function GameModeSelector() {
   interface GameMode {
@@ -68,16 +65,16 @@ export function GameModeSelector() {
             <div className="flex items-center mb-4">
               <div
                 className={`text-3xl mr-4 ${getDifficultyColor(
-                  mode.difficulty
+                  mode.difficulty,
                 )} group-hover:text-white transition-colors`}
               >
                 {mode.icon}
               </div>
               <div className="flex flex-col">
                 <h4
-                  className={`text-sm font-mono tracking-wide ${
-                    getDifficultyColor(mode.difficulty)
-                  } group-hover:text-white transition-colors`}
+                  className={`text-sm font-mono tracking-wide ${getDifficultyColor(
+                    mode.difficulty,
+                  )} group-hover:text-white transition-colors`}
                 >
                   {mode.difficulty}
                 </h4>
@@ -95,6 +92,6 @@ export function GameModeSelector() {
           </div>
         </Card>
       ))}
-      </div>
+    </div>
   );
 }
