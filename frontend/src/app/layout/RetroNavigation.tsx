@@ -15,7 +15,7 @@ export function RetroNavigation() {
   const { child } = useCurrentRoute();
 
   return (
-    <nav className="w-full bg-card border-b border-gray-700 shadow-md">
+    <nav className="w-full bg-card shadow-md">
       <div className="flex items-center justify-between max-w-6xl mx-auto px-6">
         <div className="flex flex-wrap items-center gap-2 py-3">
           {retroNavigationItems.map((item) => (
