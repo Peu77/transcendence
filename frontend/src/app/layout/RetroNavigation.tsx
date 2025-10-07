@@ -24,7 +24,7 @@ export function RetroNavigation() {
               variant={child?.path === item.id ? "default" : "ghost"}
               size="sm"
               onClick={() => {
-                navigate(item.id === "default" ? "/app" : `/app/${item.id}`);
+                navigate(`/app/${item.id}`);
               }}
             >
               {item.label}
