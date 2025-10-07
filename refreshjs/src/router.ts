@@ -31,6 +31,9 @@ export type RouterProps = {
 const listeners = new Set<(path: string) => void>();
 function notify(path: string) { for (const l of Array.from(listeners)) l(path); }
 
+// Store the current route chain for access by hooks
+let currentRouteChain: Match[] | null = null;
+
 function currentPath(): string {
   try { return window.location.pathname || '/'; } catch { return '/'; }
 }
@@ -74,6 +77,7 @@ export function Router({ routes, basename = '', notFound = null }: RouterProps):
     }, [basename]);
 
     const chain = matchRoutes(routes, path);
+    currentRouteChain = chain; // Store the current chain
     if (!chain) {
         if (!notFound) return null;
         if (typeof notFound === 'function') return h(notFound as any, {});
@@ -204,6 +208,42 @@ export function useLocation(): { pathname: string } {
         };
     }, []);
     return { pathname };
+}
+
+export function useCurrentRoute(): {
+    route: RouteObject | null;
+    params: Params;
+    child: RouteObject | null;
+    childParams: Params;
+    chain: Match[];
+} {
+    const [, forceUpdate] = useState({});
+
+    useEffect(() => {
+        const onPop = () => forceUpdate({});
+        const cb = () => forceUpdate({});
+        window.addEventListener('popstate', onPop);
+        listeners.add(cb);
+        return () => {
+            window.removeEventListener('popstate', onPop);
+            listeners.delete(cb);
+        };
+    }, []);
+
+    if (!currentRouteChain || currentRouteChain.length === 0) {
+        return { route: null, params: {}, child: null, childParams: {}, chain: [] };
+    }
+
+    const current = currentRouteChain[0];
+    const child = currentRouteChain.length > 1 ? currentRouteChain[1] : null;
+
+    return {
+        route: current.route,
+        params: current.params,
+        child: child?.route ?? null,
+        childParams: child?.params ?? {},
+        chain: currentRouteChain
+    };
 }
 
 export default { Router, Link, navigate };

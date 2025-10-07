@@ -4,8 +4,8 @@ import "./styles.css";
 import Login from "./auth/login";
 import Register from "./auth/register";
 import Toaster from "./components/Toaster";
-import App from "./app/App";
-
+import Layout from "./app/layout/Layout";
+import { retroNavigationItems } from "./app/layout/RetroNavigation";
 function NotFound() {
   return <p class="text-red-600">404: Page not found</p>;
 }
@@ -24,8 +24,13 @@ const routes = [
     component: Register,
   },
   {
-    path: "app",
-    component: App,
+    path: "app/",
+    layout: Layout,
+    children: retroNavigationItems.map((item) => ({
+      index: item.index,
+      path: item.id,
+      component: item.component,
+    })),
   },
 ];
 

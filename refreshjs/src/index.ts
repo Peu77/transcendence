@@ -627,7 +627,7 @@ function depsChanged(a: any[], b: any[]): boolean {
 }
 
 // Re-export router primitives so consumers can import from the package root
-export { Router, Link, navigate, useLocation } from './router';
+export { Router, Link, navigate, useLocation, useCurrentRoute } from './router';
 export type { RouteObject, Params } from './router';
 
 // Re-export store primitives
