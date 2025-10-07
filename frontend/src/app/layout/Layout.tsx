@@ -1,4 +1,4 @@
-import { h} from "refreshjs";
+import { h } from "refreshjs";
 import { RetroNavigation } from "./RetroNavigation";
 import { ThreeDMesh } from "./3DMesh";
 
