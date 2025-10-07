@@ -6,13 +6,13 @@ import Scores from "./Scores";
 import { ThreeDMesh } from "./3DMesh";
 
 export default function Layout(props: any) {
-  let activeTab = ""
+  let activeTab = "";
 
-    const path = window.location.pathname;
-    if (path === "/app") activeTab = ("default");
-    else if (path === "/app/game") activeTab = ("game");
-    else if (path === "/app/scores") activeTab = ("scores");
-    else activeTab = ("default");
+  const path = window.location.pathname;
+  if (path === "/app") activeTab = "default";
+  else if (path === "/app/game") activeTab = "game";
+  else if (path === "/app/scores") activeTab = "scores";
+  else activeTab = "default";
 
   return (
     <div>

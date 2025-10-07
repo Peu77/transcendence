@@ -1,4 +1,4 @@
-import {  h } from "refreshjs";
+import { h } from "refreshjs";
 import Button from "../../components/Button";
 import App from "../App";
 import Game from "./Game";
@@ -11,8 +11,7 @@ export const retroNavigationItems = [
   { id: "scores", component: Scores, label: "Scores" },
 ];
 
-export function RetroNavigation({ activeTab }: { activeTab: string}) {
-
+export function RetroNavigation({ activeTab }: { activeTab: string }) {
   return (
     <nav className="w-full bg-card border-b border-gray-700 shadow-md">
       <div className="flex items-center justify-between max-w-6xl mx-auto px-6">
@@ -23,7 +22,7 @@ export function RetroNavigation({ activeTab }: { activeTab: string}) {
               variant={activeTab === item.id ? "default" : "ghost"}
               size="sm"
               onClick={() => {
-                navigate(item.id === 'default' ? '/app' : `/app/${item.id}`);
+                navigate(item.id === "default" ? "/app" : `/app/${item.id}`);
               }}
             >
               {item.label}
