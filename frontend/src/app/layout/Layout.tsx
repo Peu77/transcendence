@@ -1,40 +1,29 @@
-import { h, navigate} from "refreshjs";
+import { createStore, h, navigate, useEffect } from "refreshjs";
 import { RetroNavigation } from "./RetroNavigation";
 import { ThreeDMesh } from "./3DMesh";
 import { getUser } from "@/api/user";
 import { User } from "@/api/user";
-
-
-let _currentUser: User | null | undefined = undefined;
-
-export let currentUser: User | null = null;
-
-export async function initAuth(): Promise<User | null> {
-  try {
-    const user = await getUser();
-    if (user) {
-      currentUser = user;
-      return user;
-    } else {
-      return null;
-    }
-  } catch {
-    return null;
-  }
-}
-
+import { useQuery } from "@/query/hooks";
+import { userStore } from "@/store/user";
 
 export default function Layout(props: any) {
-  if (typeof window !== "undefined" && _currentUser === undefined) {
-    _currentUser = null;
-    (async () => {
-      const user = await initAuth();
-      _currentUser = user;
-      if (!user) {
-        navigate("/login");
-      }
-    })();
-  }
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: async () => {
+      return await getUser();
+    },
+  });
+
+  useEffect(() => {
+    if (isError) {
+      navigate("/login");
+      return;
+    }
+
+    userStore.setState(data);
+  }, [data, isError]);
+
+  if (isLoading) return <div>Loading...</div>;
 
   return (
     <div>
