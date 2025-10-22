@@ -5,6 +5,7 @@ import registerUserRoutes from "./users/user.controller";
 import cors from "@fastify/cors";
 import fastifyCookie from "@fastify/cookie";
 import { registerAuthGuard } from "./users/auth.guard";
+import {fastifyMultipart} from "@fastify/multipart";
 
 export const app = Fastify({ logger: true });
 
@@ -23,11 +24,17 @@ export async function buildServer() {
     allowedHeaders: ["Content-Type", "Authorization"],
   });
 
+  await app.register(fastifyMultipart, {
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    }
+  })
+
   await app.register(fastifyCookie);
   await app.register(sqlitePlugin);
 
   registerAuthGuard();
-  registerUserRoutes();
+  await registerUserRoutes();
 
   app.get("/hello", async () => ({ message: "Hello World" }));
 

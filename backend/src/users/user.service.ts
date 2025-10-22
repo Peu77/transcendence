@@ -15,11 +15,20 @@ export async function ensureUploadDir() {
     return fs.mkdir(UPLOAD_DIR, {recursive: true});
 }
 
-export async function uploadProfilePicture(userId: string, file: MultipartFile) {
-    const filepath = path.join(UPLOAD_DIR, userId);
+export async function deleteProfilePicture(profilePictureId: string) {
+    try{
+        const filepath = path.join(UPLOAD_DIR, profilePictureId);
+        await fs.unlink(filepath);
+    }catch (error) {
+        console.error('Error deleting file:', error);
+    }
+}
+
+export async function uploadProfilePicture(profilePictureId: string, file: MultipartFile) {
+    const filepath = path.join(UPLOAD_DIR, profilePictureId);
     try {
         await pipeline(file.file, createWriteStream(filepath));
-        return false
+        return true
     } catch (err) {
         console.error('Error uploading file:', err);
         return false
@@ -78,5 +87,9 @@ export function isValidTwoFaToken(twoFaSecret: string, twoFaId: string, userId: 
         token: token,
         window: 1
     });
+}
+
+export function updateUserProfilePictureId(userId: string, profilePictureId: string) {
+    return run('UPDATE users SET profilePictureId = ? WHERE id = ?', profilePictureId, userId);
 }
 

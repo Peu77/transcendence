@@ -1,6 +1,7 @@
 export interface UserRow {
   id: string;
   email: string;
+  profilePictureId: string | null;
   password: string;
   twoFaEnabled: number;
   twoFaSecret: string | null;
