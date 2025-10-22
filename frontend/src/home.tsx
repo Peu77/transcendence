@@ -57,7 +57,7 @@ export default function Home() {
           GitHub
         </Link>
       </div>
-      <div class="mb-8">
+      <div class="mb-8 flex gap-2">
         <Button
           variant="secondary"
           size="sm"
@@ -70,8 +70,8 @@ export default function Home() {
           Show toast
         </Button>
         <Dialog>
-          <DialogTrigger>
-            <Button>trigger</Button>
+          <DialogTrigger size="sm" variant="secondary">
+            dialog
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
