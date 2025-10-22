@@ -1,18 +1,20 @@
-import { FastifyReply, FastifyRequest } from "fastify";
-import { app } from "../app";
-import { validateDto } from "../utils/validation";
-import { LoginDto, RegisterDto, TwoFAVerifyDto } from "./user.dto";
-import bcrypt from "bcryptjs";
-import { v4 as uuid } from "uuid";
-import { HttpStatusCode } from "../utils/httpStatusCodes";
+import {FastifyReply, FastifyRequest} from 'fastify';
+import {app} from '../app';
+import {validateDto} from '../utils/validation';
+import {LoginDto, RegisterDto, TwoFAVerifyDto} from './user.dto';
+import bcrypt from 'bcryptjs';
+import {v4 as uuid} from 'uuid';
+import {HttpStatusCode} from "../utils/httpStatusCodes";
 import {
-  create2FaSession,
-  createUser,
-  findUserByEmail,
-  getUserById,
-  isValidTwoFaToken,
-} from "./user.service";
-import { createUserToken } from "./user.service";
+    create2FaSession,
+    createUser,
+    ensureUploadDir,
+    findUserByEmail, getUserById,
+    isValidTwoFaToken,
+    uploadProfilePicture
+} from './user.service';
+import {createUserToken} from "./user.service";
+
 
 async function getMeHandler(request: FastifyRequest, reply: FastifyReply) {
   const user = getUserById(request.userId!!);
@@ -104,9 +106,24 @@ async function twoFAVerifyHandler(
   return reply.send({ token: createUserToken(data!.userId) });
 }
 
-export default function registerUserRoutes() {
-  app.post("/auth/register", registerHandler);
-  app.post("/auth/login", loginHandler);
-  app.post("/auth/2fa/verify", twoFAVerifyHandler);
-  app.get("/users/me", getMeHandler);
+async function uploadProfilePictureHandler(request: FastifyRequest, reply: FastifyReply) {
+    const file = await request.file();
+    if (!file) {
+        return reply.code(HttpStatusCode.BAD_REQUEST).send({error: 'No file uploaded'});
+    }
+
+    return await uploadProfilePicture(request.userId!!, file)
+}
+
+export default async function registerUserRoutes() {
+    try{
+        await ensureUploadDir()
+    } catch (err: any){
+        app.log.error("Failed to create upload directory", err);
+        process.exit(1);
+    }
+    app.post("/uploadProfilePicture", uploadProfilePictureHandler);
+    app.post('/auth/register', registerHandler);
+    app.post('/auth/login', loginHandler);
+    app.post('/auth/2fa/verify', twoFAVerifyHandler);
 }
