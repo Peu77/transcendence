@@ -6,6 +6,9 @@ const TEXT = Symbol('text');
 export const Fragment: any = Symbol('Fragment');
 const PORTAL = Symbol('portal');
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const XLINK_NS = 'http://www.w3.org/1999/xlink';
+
 export type Component<P = any> = (props: P & { children?: any }) => VNode | null;
 
 export type VNodeType = string | Component | typeof Fragment | typeof TEXT | typeof PORTAL;
@@ -107,7 +110,7 @@ function internalRender(vnode: VNode, container: Element) {
   currentHooksMap = new Map();
   currentEffectQueue = [];
 
-  const dom = diff(container, prevVNode, vnode, '0');
+  const dom = diff(container, prevVNode, vnode, '0', false);
   if (dom && dom !== container.firstChild && vnode) {
 
   }
@@ -138,7 +141,7 @@ function internalRender(vnode: VNode, container: Element) {
   currentHookIndex = 0;
 }
 
-function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null, path: string): Node | null {
+function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null, path: string, isSvg: boolean): Node | null {
   if (oldVNode == null && newVNode == null) return null;
 
   if (newVNode == null) {
@@ -147,13 +150,13 @@ function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null
   }
 
   if (oldVNode == null) {
-    const newDom = createDom(newVNode, parentDom, path);
+    const newDom = createDom(newVNode, parentDom, path, isSvg);
     if (newDom) parentDom.appendChild(newDom);
     return newDom;
   }
 
   if (!isSameType(oldVNode, newVNode)) {
-    const newDom = createDom(newVNode, parentDom, path);
+    const newDom = createDom(newVNode, parentDom, path, isSvg);
     if (newDom) {
       const oldDom = getDomNodeForVNode(oldVNode);
       if (oldDom && oldDom.parentNode === parentDom) {
@@ -176,14 +179,15 @@ function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null
   }
 
   if (newVNode.type === Fragment) {
-    patchChildren(parentDom, (oldVNode.props.children as any[]) || [], (newVNode.props.children as any[]) || [], path + '/F');
+    patchChildren(parentDom, (oldVNode.props.children as any[]) || [], (newVNode.props.children as any[]) || [], path + '/F', isSvg);
     setVNodeDomRef(newVNode, getDomNodeForChildren(newVNode, parentDom));
     return getDomNodeForVNode(newVNode);
   }
 
   if (newVNode.type === PORTAL) {
     const container = (newVNode.props.container as Element) || (typeof document !== 'undefined' ? document.body : parentDom);
-    patchChildren(container, (oldVNode.props.children as any[]) || [], (newVNode.props.children as any[]) || [], path + '/P');
+    const containerIsSvg = !!container && (container as any).namespaceURI === SVG_NS;
+    patchChildren(container, (oldVNode.props.children as any[]) || [], (newVNode.props.children as any[]) || [], path + '/P', containerIsSvg);
     // No DOM in parent for portal content
     setVNodeDomRef(newVNode, null);
     return null;
@@ -203,7 +207,7 @@ function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null
 
     const childPath = path + '/C:' + getComponentId(comp, newVNode.props?.key);
     const oldChildVNode = (oldVNode as any).__child as VNode | null;
-    const childDom = diff(parentDom, oldChildVNode, childVNode, childPath);
+    const childDom = diff(parentDom, oldChildVNode, childVNode, childPath, isSvg);
 
     // Record/update instance for targeted rerenders
     if (currentContainer) {
@@ -225,15 +229,17 @@ function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null
 
   const dom = getDomNodeForVNode(oldVNode)! as Element;
   setVNodeDomRef(newVNode, dom);
-  updateProps(dom, oldVNode.props || {}, newVNode.props || {});
+  const thisIsSvg = isSvg || (typeof newVNode.type === 'string' && newVNode.type === 'svg');
+  updateProps(dom, oldVNode.props || {}, newVNode.props || {}, thisIsSvg);
 
   const oldChildren = (oldVNode.props.children as any[]) || [];
   const newChildren = (newVNode.props.children as any[]) || [];
-  patchChildren(dom, oldChildren, newChildren, path + '/H:' + String(newVNode.type));
+  const childIsSvg = thisIsSvg && (newVNode.type !== 'foreignObject');
+  patchChildren(dom, oldChildren, newChildren, path + '/H:' + String(newVNode.type), childIsSvg);
   return dom;
 }
 
-function createDom(vnode: VNode | null, parentDom: Element, path: string): Node | null {
+function createDom(vnode: VNode | null, parentDom: Element, path: string, isSvg: boolean): Node | null {
   if (vnode == null) return null;
   if (vnode.type === TEXT) {
     const text = document.createTextNode(vnode.props.nodeValue ?? '');
@@ -246,7 +252,7 @@ function createDom(vnode: VNode | null, parentDom: Element, path: string): Node 
     const children = (vnode.props.children as any[]) || [];
     for (let i = 0; i < children.length; i++) {
       const childPath = path + '/F/' + makeChildKey(children[i], i);
-      const child = createDom(children[i], parentDom, childPath);
+      const child = createDom(children[i], parentDom, childPath, isSvg);
       if (child) parentDom.appendChild(child);
     }
     return fragMarker;
@@ -254,9 +260,10 @@ function createDom(vnode: VNode | null, parentDom: Element, path: string): Node 
   if (vnode.type === PORTAL) {
     const container = (vnode.props.container as Element) || document.body;
     const children = (vnode.props.children as any[]) || [];
+    const containerIsSvg = !!container && (container as any).namespaceURI === SVG_NS;
     for (let i = 0; i < children.length; i++) {
       const childPath = path + '/P/' + makeChildKey(children[i], i);
-      const child = createDom(children[i], container, childPath);
+      const child = createDom(children[i], container, childPath, containerIsSvg);
       if (child) container.appendChild(child);
     }
     // No marker in parent DOM for portals
@@ -273,7 +280,7 @@ function createDom(vnode: VNode | null, parentDom: Element, path: string): Node 
     const childVNode = withHookContext(hookKey, () => comp({ ...(vnode.props || {}), children: vnode.props?.children || [] }));
     (vnode as any).__child = childVNode;
     const childPath = path + '/C:' + getComponentId(comp, vnode.props?.key);
-    const childDom = createDom(childVNode, parentDom, childPath);
+    const childDom = createDom(childVNode, parentDom, childPath, isSvg);
     if (currentContainer) {
       instanceRegistry.set(hookKey, {
         container: currentContainer,
@@ -287,20 +294,24 @@ function createDom(vnode: VNode | null, parentDom: Element, path: string): Node 
     setVNodeDomRef(vnode, childDom);
     return childDom;
   }
-  const dom = document.createElement(vnode.type as string);
 
-  updateProps(dom, {}, vnode.props || {});
+  const thisIsSvg = isSvg || (typeof vnode.type === 'string' && vnode.type === 'svg');
+  const tag = vnode.type as string;
+  const dom = thisIsSvg ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
+
+  updateProps(dom as Element, {}, vnode.props || {}, thisIsSvg);
   const children = (vnode.props.children as any[]) || [];
+  const childIsSvg = thisIsSvg && (tag !== 'foreignObject');
   for (let i = 0; i < children.length; i++) {
     const childPath = path + '/H:' + String(vnode.type) + '/' + makeChildKey(children[i], i);
-    const child = createDom(children[i], dom, childPath);
-    if (child) dom.appendChild(child);
+    const child = createDom(children[i], dom as Element, childPath, childIsSvg);
+    if (child) (dom as Element).appendChild(child);
   }
-  setVNodeDomRef(vnode, dom);
-  return dom;
+  setVNodeDomRef(vnode, dom as unknown as Node);
+  return dom as unknown as Node;
 }
 
-function patchChildren(parentDom: Element, oldChildren: any[], newChildren: any[], path: string) {
+function patchChildren(parentDom: Element, oldChildren: any[], newChildren: any[], path: string, isSvg: boolean) {
   const oldKeyMap = new Map<any, { vnode: VNode; index: number }>();
   const oldUnkeyed: Array<{ vnode: VNode; index: number }> = [];
   for (let i = 0; i < oldChildren.length; i++) {
@@ -345,7 +356,7 @@ function patchChildren(parentDom: Element, oldChildren: any[], newChildren: any[
     const newV = newChildren[i] || null;
     const oldV = matchOld[i] || null;
     const childPath = path + '/' + makeChildKey(newV, i);
-    const dom = diff(parentDom, oldV, newV, childPath);
+    const dom = diff(parentDom, oldV, newV, childPath, isSvg);
     doms[i] = dom;
   }
 
@@ -437,24 +448,23 @@ function unmount(vnode: VNode, parentDom: Element, path: string) {
   if (dom && dom.parentNode === parentDom) parentDom.removeChild(dom);
 }
 
-function updateProps(dom: Element, prevProps: Record<string, any>, nextProps: Record<string, any>) {
+function updateProps(dom: Element, prevProps: Record<string, any>, nextProps: Record<string, any>, isSvg: boolean) {
   for (const name in prevProps) {
     if (name === 'children' || name === 'key') continue;
-    if (!(name in nextProps)) setProp(dom, name, undefined, prevProps[name]);
+    if (!(name in nextProps)) setProp(dom, name, undefined, prevProps[name], isSvg);
   }
   for (const name in nextProps) {
     if (name === 'children' || name === 'key') continue;
     const prev = prevProps[name];
     const next = nextProps[name];
-    if (prev !== next) setProp(dom, name, next, prev);
+    if (prev !== next) setProp(dom, name, next, prev, isSvg);
   }
 }
 
-function setProp(dom: Element, name: string, value: any, prev: any) {
+function setProp(dom: Element, name: string, value: any, prev: any, isSvg: boolean) {
   if (name === 'style' && value && typeof value === 'object') {
-    const style = (dom as HTMLElement).style;
+    const style = (dom as HTMLElement).style as any;
     const prevStyle = prev && typeof prev === 'object' ? prev : {};
-    // Remove old
     for (const k in prevStyle) if (!(k in value)) style[k as any] = '';
     for (const k in value) style[k as any] = value[k];
     return;
@@ -469,17 +479,42 @@ function setProp(dom: Element, name: string, value: any, prev: any) {
     if (value && typeof value === 'object') value.current = dom;
     return;
   }
-  if (value == null || value === false) {
-    dom.removeAttribute(name);
+
+  const isNil = value == null || value === false;
+  const isXlink = name === 'xlinkHref' || name === 'xlink:href';
+  const attrName = name === 'className' ? 'class' : name === 'htmlFor' ? 'for' : name;
+
+  if (isSvg) {
+    if (isNil) {
+      if (isXlink) (dom as any).removeAttributeNS?.(XLINK_NS, 'href');
+      else (dom as any).removeAttribute(attrName);
+      return;
+    }
+    if (isXlink) {
+      (dom as any).setAttributeNS?.(XLINK_NS, 'xlink:href', value);
+    } else {
+      (dom as any).setAttribute(attrName, String(value));
+    }
     return;
   }
-  if (name in (dom as any)) {
+
+  if (isNil) {
+    if (attrName in (dom as any)) {
+      try {
+        (dom as any)[attrName] = attrName === 'class' ? '' : '';
+      } catch {}
+    }
+    (dom as any).removeAttribute?.(attrName);
+    return;
+  }
+
+  if (attrName in (dom as any)) {
     try {
-      (dom as any)[name] = value;
+      (dom as any)[attrName] = value;
       return;
     } catch {}
   }
-  dom.setAttribute(name, String(value));
+  (dom as any).setAttribute(attrName, String(value));
 }
 
 function getDomNodeForVNode(vnode: VNode | null): Node | null {
@@ -554,7 +589,7 @@ function rerenderComponent(hookKey: string) {
   const props = inst.vnode.props || {};
   const childVNode = withHookContext(hookKey, () => inst.comp({ ...(props || {}), children: props?.children || [] }));
   const oldChildVNode = (inst.vnode as any).__child as VNode | null;
-  const childDom = diff(inst.parentDom, oldChildVNode, childVNode, inst.childPath);
+  const childDom = diff(inst.parentDom, oldChildVNode, childVNode, inst.childPath, /* isSvg */ (inst.parentDom as any).namespaceURI === SVG_NS);
   (inst.vnode as any).__child = childVNode;
   setVNodeDomRef(inst.vnode, childDom);
 
