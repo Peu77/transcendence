@@ -1,6 +1,8 @@
 import { h, Link, useState, useEffect } from "refreshjs";
-import { buttonClasses } from "./components/Button";
+import Button, { buttonClasses } from "./components/Button";
 import toast from "./store/toast";
+import Dialog, { DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/Dialog";
+import { Icon } from "@/components/Icon";
 
 const authors = ["Emil", "Kira", "Konrad", "Matthias"];
 const githubUrl = "https://github.com/peu77/transcendence";
@@ -9,9 +11,7 @@ export default function Home() {
   const fullText = "Transcendence";
   const [displayed, setDisplayed] = useState("");
   const [isDark, setIsDark] = useState(() =>
-    typeof window !== "undefined"
-      ? document.documentElement.classList.contains("dark")
-      : false,
+    document.documentElement.classList.contains("dark"),
   );
 
   useEffect(() => {
@@ -25,10 +25,8 @@ export default function Home() {
   }, []);
 
   const toggleDarkMode = () => {
-    if (typeof window !== "undefined") {
       document.documentElement.classList.toggle("dark");
       setIsDark(document.documentElement.classList.contains("dark"));
-    }
   };
 
   return (
@@ -55,8 +53,8 @@ export default function Home() {
         </Link>
       </div>
       <div class="mb-8">
-        <button
-          class={buttonClasses("secondary", "sm")}
+        <Button
+          variant="secondary" size="sm"
           onClick={() =>
             toast.success("Retro toast online!", {
               description: "This is a demo message.",
@@ -64,7 +62,17 @@ export default function Home() {
           }
         >
           Show toast
-        </button>
+        </Button>
+        <Dialog>
+          <DialogTrigger>
+            <Button>trigger</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>test dialog</DialogTitle>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
       </div>
       <button
         onClick={toggleDarkMode}
