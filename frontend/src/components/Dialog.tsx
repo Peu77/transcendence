@@ -1,7 +1,13 @@
-import { h, Fragment, useEffect, useRef, useState, createPortal } from "refreshjs";
+import {
+  h,
+  Fragment,
+  useEffect,
+  useRef,
+  useState,
+  createPortal,
+} from "refreshjs";
 import { cn } from "./utils";
-import {Icon} from "@/components/Icon";
-
+import { Icon } from "@/components/Icon";
 
 function injectDialogProps(child: any, extra: any) {
   if (!child || typeof child !== "object") return child;
@@ -21,7 +27,7 @@ export default function Dialog(props: { children: any }) {
   if (!idRef.current) idRef.current = ++dialogIdSeq;
 
   const enhanced = (props.children || []).map((c: any) =>
-    injectDialogProps(c, { open, setOpen, __dialogId: idRef.current })
+    injectDialogProps(c, { open, setOpen, __dialogId: idRef.current }),
   );
 
   return <span className="contents">{enhanced}</span>;
@@ -56,7 +62,7 @@ export function DialogTrigger(props: {
       className={cn(
         "inline-flex items-center justify-center rounded-md font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background",
         "bg-primary text-primary-foreground transition-transform duration-200 ease-in-out transform hover:scale-105 px-6 py-2",
-        className
+        className,
       )}
       disabled={disabled}
       aria-haspopup="dialog"
@@ -106,14 +112,17 @@ export function DialogContent(props: {
     <div
       className={cn(
         "fixed inset-0 z-50 bg-black/80 backdrop-blur-sm",
-        overlayClassName
+        overlayClassName,
       )}
       onClick={close}
     />
   );
 
   const panel = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={close}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={close}
+    >
       <div
         role="dialog"
         aria-modal="true"
@@ -121,7 +130,7 @@ export function DialogContent(props: {
         className={cn(
           "relative w-full max-w-lg clip-pixel-corners-btn bg-card text-card-foreground shadow-2xl",
           "border border-border",
-          className
+          className,
         )}
         onClick={(e: any) => e.stopPropagation()}
       >
@@ -143,25 +152,45 @@ export function DialogContent(props: {
     <Fragment>
       {overlay}
       {panel}
-    </Fragment>
+    </Fragment>,
   );
 }
 
 export function DialogHeader(props: { children: any; className?: string }) {
   const { children, className } = props;
-  return <div className={cn("flex flex-col gap-1.5 p-6", className)}>{children}</div>;
+  return (
+    <div className={cn("flex flex-col gap-1.5 p-6", className)}>{children}</div>
+  );
 }
 
-export function DialogTitle(props: { children: any; className?: string; id?: string }) {
+export function DialogTitle(props: {
+  children: any;
+  className?: string;
+  id?: string;
+}) {
   const { children, className, id } = props;
   return (
-    <h2 className={cn("text-xl font-semibold leading-none tracking-tight", className)} id={id}>
+    <h2
+      className={cn(
+        "text-xl font-semibold leading-none tracking-tight",
+        className,
+      )}
+      id={id}
+    >
       {children}
     </h2>
   );
 }
 
-export function DialogDescription(props: { children: any; className?: string; id?: string }) {
+export function DialogDescription(props: {
+  children: any;
+  className?: string;
+  id?: string;
+}) {
   const { children, className, id } = props;
-  return <p className={cn("text-sm text-muted-foreground", className)} id={id}>{children}</p>;
+  return (
+    <p className={cn("text-sm text-muted-foreground", className)} id={id}>
+      {children}
+    </p>
+  );
 }
