@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 create table if not exists users (
     id text primary key,
     email text unique not null,
-    profilePictureId text,
+    profilePictureId text unique,
     password text not null,
     twoFaEnabled integer default 0 not null,
     twoFaSecret text,
