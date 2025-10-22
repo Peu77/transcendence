@@ -34,6 +34,7 @@ async function getMeHandler(request: FastifyRequest, reply: FastifyReply) {
   return reply.send({
     id: user.id,
     email: user.email,
+    profilePictureId: user.profilePictureId,
     twoFaEnabled: user.twoFaEnabled,
   });
 }

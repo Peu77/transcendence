@@ -1,9 +1,11 @@
-import { h } from "refreshjs";
+import { h, useStore } from "refreshjs";
 import Button from "../../components/Button";
 import App from "../App";
 import Game from "./Game";
 import Scores from "./Scores";
 import { navigate, useCurrentRoute } from "refreshjs";
+import { ProfilePicture } from "@/components/ProfilePicture";
+import { userStore } from "@/store/user";
 
 export const retroNavigationItems = [
   { id: "", component: App, label: "Home", index: true },
@@ -13,6 +15,7 @@ export const retroNavigationItems = [
 
 export function RetroNavigation() {
   const { child } = useCurrentRoute();
+  const user = useStore(userStore)
 
   return (
     <nav className="w-full bg-card shadow-md">
@@ -31,6 +34,7 @@ export function RetroNavigation() {
             </Button>
           ))}
         </div>
+        <ProfilePicture profilePictureId={user?.profilePictureId} />
       </div>
     </nav>
   );
