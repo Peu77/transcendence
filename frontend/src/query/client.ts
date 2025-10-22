@@ -3,12 +3,12 @@ import axiosLib from "axios";
 
 export const queryClient: QueryClient = new QueryClient();
 
-const backendUrl: string =
+export const BACKEND_URL: string =
   // @ts-ignore
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
 export const axios = axiosLib.create({
-  baseURL: backendUrl,
+  baseURL: BACKEND_URL,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
