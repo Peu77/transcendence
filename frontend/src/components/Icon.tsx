@@ -1,6 +1,10 @@
 import { icons } from "lucide";
 
-export function Icon({ name, size = 24, color = "currentColor" }: {
+export function Icon({
+  name,
+  size = 24,
+  color = "currentColor",
+}: {
   name: keyof typeof icons;
   size?: number;
   color?: string;
@@ -18,7 +22,7 @@ export function Icon({ name, size = 24, color = "currentColor" }: {
       "stroke-width": "2",
       "stroke-linecap": "round",
       "stroke-linejoin": "round",
-      children: icon.map(([tag, attrs]) => ({ type: tag, props: attrs }))
-    }
+      children: icon.map(([tag, attrs]) => ({ type: tag, props: attrs })),
+    },
   };
 }

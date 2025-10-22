@@ -15,7 +15,7 @@ export const retroNavigationItems = [
 
 export function RetroNavigation() {
   const { child } = useCurrentRoute();
-  const user = useStore(userStore)
+  const user = useStore(userStore);
 
   return (
     <nav className="w-full bg-card shadow-md">

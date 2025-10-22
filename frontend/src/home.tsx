@@ -1,7 +1,12 @@
 import { h, Link, useState, useEffect } from "refreshjs";
 import Button, { buttonClasses } from "./components/Button";
 import toast from "./store/toast";
-import Dialog, { DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/Dialog";
+import Dialog, {
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/Dialog";
 import { Icon } from "@/components/Icon";
 
 const authors = ["Emil", "Kira", "Konrad", "Matthias"];
@@ -25,8 +30,8 @@ export default function Home() {
   }, []);
 
   const toggleDarkMode = () => {
-      document.documentElement.classList.toggle("dark");
-      setIsDark(document.documentElement.classList.contains("dark"));
+    document.documentElement.classList.toggle("dark");
+    setIsDark(document.documentElement.classList.contains("dark"));
   };
 
   return (
@@ -54,7 +59,8 @@ export default function Home() {
       </div>
       <div class="mb-8">
         <Button
-          variant="secondary" size="sm"
+          variant="secondary"
+          size="sm"
           onClick={() =>
             toast.success("Retro toast online!", {
               description: "This is a demo message.",
