@@ -8,11 +8,21 @@ import { HttpStatusCode } from "../utils/httpStatusCodes";
 import {
   create2FaSession,
   createUser,
+  deleteProfilePicture,
+  ensureUploadDir,
   findUserByEmail,
   getUserById,
   isValidTwoFaToken,
+  updateUserProfilePictureId,
+  UPLOAD_DIR,
+  uploadProfilePicture,
 } from "./user.service";
 import { createUserToken } from "./user.service";
+import { randomUUID } from "node:crypto";
+import path from "node:path";
+import fs from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { ProfilePictureDto } from "./dtos/getProfilePictureDto";
 
 async function getMeHandler(request: FastifyRequest, reply: FastifyReply) {
   const user = getUserById(request.userId!!);
@@ -104,9 +114,83 @@ async function twoFAVerifyHandler(
   return reply.send({ token: createUserToken(data!.userId) });
 }
 
-export default function registerUserRoutes() {
+async function uploadProfilePictureHandler(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const file = await request.file();
+  if (!file) {
+    return reply
+      .code(HttpStatusCode.BAD_REQUEST)
+      .send({ error: "No file uploaded" });
+  }
+
+  if (file.mimetype && !file.mimetype.startsWith("image/"))
+    return reply
+      .code(HttpStatusCode.BAD_REQUEST)
+      .send({ error: "Invalid file type. Only images are allowed" });
+
+  const user = getUserById(request.userId!!);
+  if (!user)
+    return reply
+      .code(HttpStatusCode.NOT_FOUND)
+      .send({ error: "User not found" });
+
+  if (user.profilePictureId) await deleteProfilePicture(user.profilePictureId);
+
+  const newProfilePictureId = randomUUID();
+  const uploadedPicture = await uploadProfilePicture(newProfilePictureId, file);
+  if (!uploadedPicture)
+    return reply
+      .code(HttpStatusCode.INTERNAL_SERVER_ERROR)
+      .send({ error: "Failed to upload profile picture" });
+
+  await updateUserProfilePictureId(user.id, newProfilePictureId);
+  return reply.send({
+    message: "Profile picture uploaded successfully",
+    profilePictureId: newProfilePictureId,
+  });
+}
+
+async function getProfilePictureHandler(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const { data, errors } = await validateDto(ProfilePictureDto, request.params);
+  if (errors || !data)
+    return reply.code(HttpStatusCode.BAD_REQUEST).send({ errors });
+  const filepath = path.join(UPLOAD_DIR, data.id);
+
+  try {
+    await fs.access(filepath);
+  } catch {
+    return reply
+      .code(HttpStatusCode.NOT_FOUND)
+      .send({ error: "Profile picture not found" });
+  }
+
+  try {
+    reply.header("Cache-Control", "public, max-age=600");
+    return reply.send(createReadStream(filepath));
+  } catch (err) {
+    request.log.error({ err }, "Failed to serve profile picture");
+    return reply
+      .code(HttpStatusCode.INTERNAL_SERVER_ERROR)
+      .send({ error: "Failed to serve profile picture" });
+  }
+}
+
+export default async function registerUserRoutes() {
+  try {
+    await ensureUploadDir();
+  } catch (err: any) {
+    app.log.error("Failed to create upload directory", err);
+    process.exit(1);
+  }
+  app.post("/users/uploadProfilePicture", uploadProfilePictureHandler);
+  app.get("/users/profilePicture/:id", getProfilePictureHandler);
+  app.get("/users/me", getMeHandler);
   app.post("/auth/register", registerHandler);
   app.post("/auth/login", loginHandler);
   app.post("/auth/2fa/verify", twoFAVerifyHandler);
-  app.get("/users/me", getMeHandler);
 }

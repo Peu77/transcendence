@@ -3,6 +3,40 @@ import jwt from "jsonwebtoken";
 import { getEnv } from "../server";
 import { get, run } from "../db/helpers";
 import { v4 as uuid } from "uuid";
+import fs from "fs/promises";
+import { MultipartFile } from "@fastify/multipart";
+import path from "node:path";
+import { pipeline } from "node:stream/promises";
+import { createWriteStream } from "node:fs";
+
+export const UPLOAD_DIR = "uploads/";
+
+export async function ensureUploadDir() {
+  return fs.mkdir(UPLOAD_DIR, { recursive: true });
+}
+
+export async function deleteProfilePicture(profilePictureId: string) {
+  try {
+    const filepath = path.join(UPLOAD_DIR, profilePictureId);
+    await fs.unlink(filepath);
+  } catch (error) {
+    console.error("Error deleting file:", error);
+  }
+}
+
+export async function uploadProfilePicture(
+  profilePictureId: string,
+  file: MultipartFile,
+) {
+  const filepath = path.join(UPLOAD_DIR, profilePictureId);
+  try {
+    await pipeline(file.file, createWriteStream(filepath));
+    return true;
+  } catch (err) {
+    console.error("Error uploading file:", err);
+    return false;
+  }
+}
 
 export function createUserToken(userId: string) {
   return jwt.sign({ userId }, getEnv("JWT_SECRET"), { expiresIn: "10h" });
@@ -82,4 +116,15 @@ export function isValidTwoFaToken(
     token: token,
     window: 1,
   });
+}
+
+export function updateUserProfilePictureId(
+  userId: string,
+  profilePictureId: string,
+) {
+  return run(
+    "UPDATE users SET profilePictureId = ? WHERE id = ?",
+    profilePictureId,
+    userId,
+  );
 }
