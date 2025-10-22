@@ -8,6 +8,7 @@ import {
 } from "refreshjs";
 import { cn } from "./utils";
 import { Icon } from "@/components/Icon";
+import Button, { ButtonSize, ButtonVariant } from "@/components/Button";
 
 function injectDialogProps(child: any, extra: any) {
   if (!child || typeof child !== "object") return child;
@@ -40,6 +41,8 @@ export function DialogTrigger(props: {
   open?: boolean;
   setOpen?: (v: boolean) => void;
   asChild?: boolean;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
 }) {
   const { className, children, disabled, setOpen, asChild } = props as any;
   const onClick = () => {
@@ -49,26 +52,23 @@ export function DialogTrigger(props: {
 
   if (asChild) {
     return (
-      <span onClick={onClick} className={className} aria-haspopup="dialog">
+      <span onClick={onClick} aria-haspopup="dialog">
         {children}
       </span>
     );
   }
 
   return (
-    <button
-      type="button"
+    <Button
+      variant={props.variant}
+      size={props.size}
       onClick={onClick}
-      className={cn(
-        "inline-flex items-center justify-center rounded-md font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background",
-        "bg-primary text-primary-foreground transition-transform duration-200 ease-in-out transform hover:scale-105 px-6 py-2",
-        className,
-      )}
+      className={className}
       disabled={disabled}
       aria-haspopup="dialog"
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
