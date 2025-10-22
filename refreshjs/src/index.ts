@@ -397,6 +397,11 @@ function makeChildKey(v: VNode | null, index: number): string {
 function isSameType(a: VNode, b: VNode): boolean {
   if (a.type === TEXT && b.type === TEXT) return true;
   if (a.type === Fragment && b.type === Fragment) return true;
+  if (a.type === PORTAL && b.type === PORTAL) {
+    const aContainer = a.props.container || (typeof document !== 'undefined' ? document.body : null);
+    const bContainer = b.props.container || (typeof document !== 'undefined' ? document.body : null);
+    return aContainer === bContainer;
+  }
   if (typeof a.type === 'string' && typeof b.type === 'string') return a.type === b.type;
   if (typeof a.type === 'function' && typeof b.type === 'function') return a.type === b.type;
   return false;
