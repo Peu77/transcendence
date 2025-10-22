@@ -16,7 +16,7 @@
     }
 */
 
-import { useEffect, useState } from './index';
+import { useEffect, useState } from "./index";
 
 export type Unsubscribe = () => void;
 
@@ -32,17 +32,22 @@ export function createStore<S>(initial: S): Store<S> {
 
   const getState = () => state;
 
-  const setState: Store<S>['setState'] = (update) => {
-    const next = typeof update === 'function' ? (update as (p: S) => S)(state) : update;
+  const setState: Store<S>["setState"] = (update) => {
+    const next =
+      typeof update === "function" ? (update as (p: S) => S)(state) : update;
     if (Object.is(next, state)) return;
     state = next;
     // Notify all listeners
     for (const l of Array.from(listeners)) {
-      try { l(); } catch (e) { console.error('[refreshjs][store] listener error:', e); }
+      try {
+        l();
+      } catch (e) {
+        console.error("[refreshjs][store] listener error:", e);
+      }
     }
   };
 
-  const subscribe: Store<S>['subscribe'] = (listener) => {
+  const subscribe: Store<S>["subscribe"] = (listener) => {
     listeners.add(listener);
     return () => {
       listeners.delete(listener);
@@ -52,7 +57,10 @@ export function createStore<S>(initial: S): Store<S> {
   return { getState, setState, subscribe };
 }
 
-export function shallowEqual<T extends Record<string, any>>(a: T, b: T): boolean {
+export function shallowEqual<T extends Record<string, any>>(
+  a: T,
+  b: T,
+): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
   const aKeys = Object.keys(a);
@@ -68,7 +76,7 @@ export function shallowEqual<T extends Record<string, any>>(a: T, b: T): boolean
 export function useStore<S, T = S>(
   store: Store<S>,
   selector?: (state: S) => T,
-  equals?: (a: T, b: T) => boolean
+  equals?: (a: T, b: T) => boolean,
 ): T {
   const sel = (selector || ((s: any) => s)) as (s: S) => T;
   const eq = (equals || Object.is) as (a: T, b: T) => boolean;
@@ -92,6 +100,6 @@ export function useStoreValue<S>(store: Store<S>): S {
   return useStore(store);
 }
 
-export function useStoreSetter<S>(store: Store<S>): Store<S>['setState'] {
+export function useStoreSetter<S>(store: Store<S>): Store<S>["setState"] {
   return (update) => store.setState(update);
 }
