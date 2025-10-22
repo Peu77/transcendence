@@ -4,10 +4,11 @@
 
 const TEXT = Symbol('text');
 export const Fragment: any = Symbol('Fragment');
+const PORTAL = Symbol('portal');
 
 export type Component<P = any> = (props: P & { children?: any }) => VNode | null;
 
-export type VNodeType = string | Component | typeof Fragment | typeof TEXT;
+export type VNodeType = string | Component | typeof Fragment | typeof TEXT | typeof PORTAL;
 
 export type VNode = {
   type: VNodeType;
@@ -22,6 +23,11 @@ export function h(type: VNodeType, props: any, ...children: any[]): VNode {
     type,
     props: { ...(props || {}), children: normalizedChildren },
   };
+}
+
+export function createPortal(children: any, container?: Element): VNode {
+  const kids = Array.isArray(children) ? children : [children];
+  return h(PORTAL as any, { container: container || (typeof document !== 'undefined' ? document.body : null) }, ...kids);
 }
 
 function createTextVNode(text: string): VNode {
@@ -175,6 +181,14 @@ function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null
     return getDomNodeForVNode(newVNode);
   }
 
+  if (newVNode.type === PORTAL) {
+    const container = (newVNode.props.container as Element) || (typeof document !== 'undefined' ? document.body : parentDom);
+    patchChildren(container, (oldVNode.props.children as any[]) || [], (newVNode.props.children as any[]) || [], path + '/P');
+    // No DOM in parent for portal content
+    setVNodeDomRef(newVNode, null);
+    return null;
+  }
+
   if (typeof newVNode.type === 'function') {
     const comp = newVNode.type as Component;
     const hookKey = makeHookKey(path, comp, newVNode.props?.key);
@@ -216,6 +230,73 @@ function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null
   const oldChildren = (oldVNode.props.children as any[]) || [];
   const newChildren = (newVNode.props.children as any[]) || [];
   patchChildren(dom, oldChildren, newChildren, path + '/H:' + String(newVNode.type));
+  return dom;
+}
+
+function createDom(vnode: VNode | null, parentDom: Element, path: string): Node | null {
+  if (vnode == null) return null;
+  if (vnode.type === TEXT) {
+    const text = document.createTextNode(vnode.props.nodeValue ?? '');
+    setVNodeDomRef(vnode, text);
+    return text;
+  }
+  if (vnode.type === Fragment) {
+    const fragMarker = document.createComment('fragment');
+    setVNodeDomRef(vnode, fragMarker);
+    const children = (vnode.props.children as any[]) || [];
+    for (let i = 0; i < children.length; i++) {
+      const childPath = path + '/F/' + makeChildKey(children[i], i);
+      const child = createDom(children[i], parentDom, childPath);
+      if (child) parentDom.appendChild(child);
+    }
+    return fragMarker;
+  }
+  if (vnode.type === PORTAL) {
+    const container = (vnode.props.container as Element) || document.body;
+    const children = (vnode.props.children as any[]) || [];
+    for (let i = 0; i < children.length; i++) {
+      const childPath = path + '/P/' + makeChildKey(children[i], i);
+      const child = createDom(children[i], container, childPath);
+      if (child) container.appendChild(child);
+    }
+    // No marker in parent DOM for portals
+    setVNodeDomRef(vnode, null);
+    return null;
+  }
+  if (typeof vnode.type === 'function') {
+    const comp = vnode.type as Component;
+    const hookKey = makeHookKey(path, comp, vnode.props?.key);
+    currentHookKey = hookKey;
+    currentHookIndex = 0;
+    const newHooks: HookState[] = [];
+    currentHooksMap!.set(hookKey, newHooks);
+    const childVNode = withHookContext(hookKey, () => comp({ ...(vnode.props || {}), children: vnode.props?.children || [] }));
+    (vnode as any).__child = childVNode;
+    const childPath = path + '/C:' + getComponentId(comp, vnode.props?.key);
+    const childDom = createDom(childVNode, parentDom, childPath);
+    if (currentContainer) {
+      instanceRegistry.set(hookKey, {
+        container: currentContainer,
+        parentDom,
+        comp,
+        vnode,
+        path,
+        childPath,
+      });
+    }
+    setVNodeDomRef(vnode, childDom);
+    return childDom;
+  }
+  const dom = document.createElement(vnode.type as string);
+
+  updateProps(dom, {}, vnode.props || {});
+  const children = (vnode.props.children as any[]) || [];
+  for (let i = 0; i < children.length; i++) {
+    const childPath = path + '/H:' + String(vnode.type) + '/' + makeChildKey(children[i], i);
+    const child = createDom(children[i], dom, childPath);
+    if (child) dom.appendChild(child);
+  }
+  setVNodeDomRef(vnode, dom);
   return dom;
 }
 
@@ -281,7 +362,7 @@ function patchChildren(parentDom: Element, oldChildren: any[], newChildren: any[
   for (let i = 0; i < newChildren.length; i++) {
     const v = newChildren[i];
     if (!v) continue;
-    if (v.type === Fragment) continue;
+    if (v.type === Fragment || v.type === PORTAL) continue; // portals do not occupy a node in parent
     const node = doms[i];
     if (node) desired.push(node);
   }
@@ -308,62 +389,6 @@ function isSameType(a: VNode, b: VNode): boolean {
   if (typeof a.type === 'string' && typeof b.type === 'string') return a.type === b.type;
   if (typeof a.type === 'function' && typeof b.type === 'function') return a.type === b.type;
   return false;
-}
-
-function createDom(vnode: VNode | null, parentDom: Element, path: string): Node | null {
-  if (vnode == null) return null;
-  if (vnode.type === TEXT) {
-    const text = document.createTextNode(vnode.props.nodeValue ?? '');
-    setVNodeDomRef(vnode, text);
-    return text;
-  }
-  if (vnode.type === Fragment) {
-    const fragMarker = document.createComment('fragment');
-    setVNodeDomRef(vnode, fragMarker);
-    const children = (vnode.props.children as any[]) || [];
-    for (let i = 0; i < children.length; i++) {
-      const childPath = path + '/F/' + makeChildKey(children[i], i);
-      const child = createDom(children[i], parentDom, childPath);
-      if (child) parentDom.appendChild(child);
-    }
-    return fragMarker;
-  }
-  if (typeof vnode.type === 'function') {
-    const comp = vnode.type as Component;
-    const hookKey = makeHookKey(path, comp, vnode.props?.key);
-    currentHookKey = hookKey;
-    currentHookIndex = 0;
-    const newHooks: HookState[] = [];
-    currentHooksMap!.set(hookKey, newHooks);
-    const childVNode = withHookContext(hookKey, () => comp({ ...(vnode.props || {}), children: vnode.props?.children || [] }));
-    (vnode as any).__child = childVNode;
-    const childPath = path + '/C:' + getComponentId(comp, vnode.props?.key);
-    const childDom = createDom(childVNode, parentDom, childPath);
-    // Record instance on mount
-    if (currentContainer) {
-      instanceRegistry.set(hookKey, {
-        container: currentContainer,
-        parentDom,
-        comp,
-        vnode,
-        path,
-        childPath,
-      });
-    }
-    setVNodeDomRef(vnode, childDom);
-    return childDom;
-  }
-  const dom = document.createElement(vnode.type as string);
-
-  updateProps(dom, {}, vnode.props || {});
-  const children = (vnode.props.children as any[]) || [];
-  for (let i = 0; i < children.length; i++) {
-    const childPath = path + '/H:' + String(vnode.type) + '/' + makeChildKey(children[i], i);
-    const child = createDom(children[i], dom, childPath);
-    if (child) dom.appendChild(child);
-  }
-  setVNodeDomRef(vnode, dom);
-  return dom;
 }
 
 function unmount(vnode: VNode, parentDom: Element, path: string) {
@@ -397,6 +422,15 @@ function unmount(vnode: VNode, parentDom: Element, path: string) {
     }
     const marker = getDomNodeForVNode(vnode);
     if (marker && marker.parentNode === parentDom) parentDom.removeChild(marker);
+    return;
+  }
+  if (vnode.type === PORTAL) {
+    const container = (vnode.props.container as Element) || document.body;
+    const children = (vnode.props.children as any[]) || [];
+    for (let i = 0; i < children.length; i++) {
+      unmount(children[i], container, path + '/P');
+    }
+    // No marker to remove in parent
     return;
   }
   const dom = getDomNodeForVNode(vnode);
@@ -646,4 +680,4 @@ declare global {
   }
 }
 
-export default { h, Fragment, render, useState, useRef, useEffect };
+export default { h, Fragment, render, useState, useRef, useEffect, createPortal };
