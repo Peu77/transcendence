@@ -3,6 +3,7 @@ import { axios } from "../query/client";
 export type User = {
   id: string;
   email: string;
+  profilePictureId: string | null;
   twoFaEnabled: boolean;
 };
 

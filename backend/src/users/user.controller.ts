@@ -34,6 +34,7 @@ async function getMeHandler(request: FastifyRequest, reply: FastifyReply) {
   return reply.send({
     id: user.id,
     email: user.email,
+    profilePictureId: user.profilePictureId,
     twoFaEnabled: user.twoFaEnabled,
   });
 }
@@ -187,7 +188,7 @@ export default async function registerUserRoutes() {
     app.log.error("Failed to create upload directory", err);
     process.exit(1);
   }
-  app.post("/users/uploadProfilePicture", uploadProfilePictureHandler);
+  app.post("/users/profilePicture", uploadProfilePictureHandler);
   app.get("/users/profilePicture/:id", getProfilePictureHandler);
   app.get("/users/me", getMeHandler);
   app.post("/auth/register", registerHandler);
