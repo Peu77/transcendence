@@ -6,6 +6,7 @@ import cors from "@fastify/cors";
 import fastifyCookie from "@fastify/cookie";
 import { registerAuthGuard } from "./users/auth.guard";
 import { fastifyMultipart } from "@fastify/multipart";
+import websocket from "@fastify/websocket";
 
 export const app = Fastify({ logger: true });
 
@@ -32,6 +33,7 @@ export async function buildServer() {
 
   await app.register(fastifyCookie);
   await app.register(sqlitePlugin);
+  await app.register(websocket);
 
   registerAuthGuard();
   await registerUserRoutes();
@@ -47,6 +49,39 @@ export async function buildServer() {
       .prepare("SELECT value FROM kv WHERE key = ?")
       .get("ping") as { value: string } | undefined;
     return { ok: true, value: row?.value ?? null };
+  });
+
+  /*
+  this is a simple websocket endpoint that echoes messages back to the client
+  this is only an example, this code should be moved to a separate module
+   */
+  app.get("/ws", { websocket: true }, (connection, req) => {
+    const userId = (req as any).userId as string | undefined;
+    if (!userId) {
+      console.log("Unauthorized WS connection attempt");
+      connection.close();
+      return;
+    }
+
+    connection.on("message", (buffer: Buffer) => {
+      console.log("WS message received:", buffer.toString());
+      try {
+        const text = buffer.toString();
+        if (text === "ping") {
+          connection.send("pong");
+          return;
+        }
+        connection.send(
+          JSON.stringify({ type: "echo", data: text, t: Date.now() }),
+        );
+      } catch (err) {
+        req.log.error({ err }, "WS message handling error");
+      }
+    });
+
+    connection.on("close", () => {
+      req.log.info({ userId }, "WS connection closed");
+    });
   });
 
   return app;
