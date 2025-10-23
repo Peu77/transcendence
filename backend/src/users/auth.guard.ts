@@ -8,8 +8,9 @@ export function registerAuthGuard() {
     const token = request.cookies.token;
     try {
       const decoded = jwt.verify(token || "", process.env.JWT_SECRET || "");
-      if (!decoded || typeof decoded === "string" || !decoded.userId)
+      if (!decoded || typeof decoded === "string" || !decoded.userId) {
         return reply.code(401).send({ error: "Unauthorized" });
+      }
       request.userId = decoded.userId;
     } catch (err) {
       return reply.code(401).send({ error: "Unauthorized" });
