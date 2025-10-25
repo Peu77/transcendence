@@ -8,6 +8,13 @@ import Dialog, {
   DialogTrigger,
 } from "@/components/Dialog";
 import { Icon } from "@/components/Icon";
+import Dropdown, {
+  DropdownContent,
+  DropdownItem,
+  DropdownTrigger,
+  DropdownLabel,
+  DropdownSeparator,
+} from "@/components/Dropdown";
 
 const authors = ["Emil", "Kira", "Konrad", "Matthias"];
 const githubUrl = "https://github.com/peu77/transcendence";
@@ -79,6 +86,25 @@ export default function Home() {
             </DialogHeader>
           </DialogContent>
         </Dialog>
+
+        <Dropdown>
+          <DropdownTrigger variant="secondary" size="sm">
+            Open menu
+          </DropdownTrigger>
+          <DropdownContent align="start" sideOffset={8}>
+            <DropdownLabel>Quick actions</DropdownLabel>
+            <DropdownItem onSelect={() => console.log("Profile")}>
+              Profile
+            </DropdownItem>
+            <DropdownItem onSelect={() => console.log("Settings")}>
+              Settings
+            </DropdownItem>
+            <DropdownSeparator />
+            <DropdownItem onSelect={() => console.log("Logout")}>
+              Logout
+            </DropdownItem>
+          </DropdownContent>
+        </Dropdown>
       </div>
       <button
         onClick={toggleDarkMode}
