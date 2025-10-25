@@ -10,7 +10,9 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "test:verbose": "vitest --reporter=verbose",
+    "test:verbose:run": "vitest run --reporter=verbose"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

@@ -9,7 +9,9 @@ describe('User Controller - Registration', () => {
 
   beforeAll(async () => {
     app = await buildServer();
-    await app.ready();
+	  await app.ready();
+	  // List routes for debugging
+	  console.log("All routes:\n", app.printRoutes());
   });
 
   afterAll(async () => {
