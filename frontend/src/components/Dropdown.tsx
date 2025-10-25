@@ -252,8 +252,18 @@ function MenuKeyboardScope(props: { children: any; onClose: () => void }) {
     }
   };
 
+  const onClick = (e: MouseEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    const item = target.closest('[role="menuitem"]') as HTMLElement | null;
+    const disabled = item?.getAttribute("aria-disabled") === "true";
+    if (item && !disabled) {
+      queueMicrotask(() => props.onClose());
+    }
+  };
+
   return (
-    <div ref={containerRef as any} onKeyDown={onKeyDown as any}>
+    <div ref={containerRef as any} onKeyDown={onKeyDown as any} onClick={onClick as any}>
       {props.children}
     </div>
   );
