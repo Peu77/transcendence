@@ -2,12 +2,23 @@
   refreshjs - a tiny React-like library with vDOM and hooks
 */
 
-const TEXT = Symbol('text');
-export const Fragment: any = Symbol('Fragment');
+const TEXT = Symbol("text");
+export const Fragment: any = Symbol("Fragment");
+const PORTAL = Symbol("portal");
 
-export type Component<P = any> = (props: P & { children?: any }) => VNode | null;
+const SVG_NS = "http://www.w3.org/2000/svg";
+const XLINK_NS = "http://www.w3.org/1999/xlink";
 
-export type VNodeType = string | Component | typeof Fragment | typeof TEXT;
+export type Component<P = any> = (
+  props: P & { children?: any },
+) => VNode | null;
+
+export type VNodeType =
+  | string
+  | Component
+  | typeof Fragment
+  | typeof TEXT
+  | typeof PORTAL;
 
 export type VNode = {
   type: VNodeType;
@@ -17,11 +28,27 @@ export type VNode = {
 export function h(type: VNodeType, props: any, ...children: any[]): VNode {
   const normalizedChildren = flatten(children)
     .filter((c) => c !== null && c !== undefined && c !== false)
-    .map((c) => (typeof c === 'string' || typeof c === 'number' ? createTextVNode(String(c)) : c));
+    .map((c) =>
+      typeof c === "string" || typeof c === "number"
+        ? createTextVNode(String(c))
+        : c,
+    );
   return {
     type,
     props: { ...(props || {}), children: normalizedChildren },
   };
+}
+
+export function createPortal(children: any, container?: Element): VNode {
+  const kids = Array.isArray(children) ? children : [children];
+  return h(
+    PORTAL as any,
+    {
+      container:
+        container || (typeof document !== "undefined" ? document.body : null),
+    },
+    ...kids,
+  );
 }
 
 function createTextVNode(text: string): VNode {
@@ -87,7 +114,7 @@ export function render(vnode: VNode, container: Element) {
 let currentContainer: Element | null = null;
 let currentHooksMap: Map<string, HookState[]> | null = null;
 let oldHooksMap: Map<string, HookState[]> | null = null;
-let currentEffectQueue: ContainerState['effectQueue'] | null = null;
+let currentEffectQueue: ContainerState["effectQueue"] | null = null;
 let currentHookKey: string | null = null;
 let currentHookIndex = 0;
 let lastRenderedContainer: Element | null = null;
@@ -101,9 +128,8 @@ function internalRender(vnode: VNode, container: Element) {
   currentHooksMap = new Map();
   currentEffectQueue = [];
 
-  const dom = diff(container, prevVNode, vnode, '0');
+  const dom = diff(container, prevVNode, vnode, "0", false);
   if (dom && dom !== container.firstChild && vnode) {
-
   }
 
   for (const { hook } of currentEffectQueue!) {
@@ -112,7 +138,7 @@ function internalRender(vnode: VNode, container: Element) {
         const cleanup = hook.effect ? hook.effect() : undefined;
         hook.cleanup = cleanup;
       } catch (e) {
-        console.error('[refreshjs] useEffect error:', e);
+        console.error("[refreshjs] useEffect error:", e);
       }
     });
   }
@@ -132,7 +158,13 @@ function internalRender(vnode: VNode, container: Element) {
   currentHookIndex = 0;
 }
 
-function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null, path: string): Node | null {
+function diff(
+  parentDom: Element,
+  oldVNode: VNode | null,
+  newVNode: VNode | null,
+  path: string,
+  isSvg: boolean,
+): Node | null {
   if (oldVNode == null && newVNode == null) return null;
 
   if (newVNode == null) {
@@ -141,13 +173,13 @@ function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null
   }
 
   if (oldVNode == null) {
-    const newDom = createDom(newVNode, parentDom, path);
+    const newDom = createDom(newVNode, parentDom, path, isSvg);
     if (newDom) parentDom.appendChild(newDom);
     return newDom;
   }
 
   if (!isSameType(oldVNode, newVNode)) {
-    const newDom = createDom(newVNode, parentDom, path);
+    const newDom = createDom(newVNode, parentDom, path, isSvg);
     if (newDom) {
       const oldDom = getDomNodeForVNode(oldVNode);
       if (oldDom && oldDom.parentNode === parentDom) {
@@ -170,12 +202,36 @@ function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null
   }
 
   if (newVNode.type === Fragment) {
-    patchChildren(parentDom, (oldVNode.props.children as any[]) || [], (newVNode.props.children as any[]) || [], path + '/F');
+    patchChildren(
+      parentDom,
+      (oldVNode.props.children as any[]) || [],
+      (newVNode.props.children as any[]) || [],
+      path + "/F",
+      isSvg,
+    );
     setVNodeDomRef(newVNode, getDomNodeForChildren(newVNode, parentDom));
     return getDomNodeForVNode(newVNode);
   }
 
-  if (typeof newVNode.type === 'function') {
+  if (newVNode.type === PORTAL) {
+    const container =
+      (newVNode.props.container as Element) ||
+      (typeof document !== "undefined" ? document.body : parentDom);
+    const containerIsSvg =
+      !!container && (container as any).namespaceURI === SVG_NS;
+    patchChildren(
+      container,
+      (oldVNode.props.children as any[]) || [],
+      (newVNode.props.children as any[]) || [],
+      path + "/P",
+      containerIsSvg,
+    );
+    // No DOM in parent for portal content
+    setVNodeDomRef(newVNode, null);
+    return null;
+  }
+
+  if (typeof newVNode.type === "function") {
     const comp = newVNode.type as Component;
     const hookKey = makeHookKey(path, comp, newVNode.props?.key);
 
@@ -185,11 +241,22 @@ function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null
     const newHooks: HookState[] = [];
     currentHooksMap!.set(hookKey, newHooks);
 
-    const childVNode = withHookContext(hookKey, () => comp({ ...(newVNode.props || {}), children: newVNode.props?.children || [] }));
+    const childVNode = withHookContext(hookKey, () =>
+      comp({
+        ...(newVNode.props || {}),
+        children: newVNode.props?.children || [],
+      }),
+    );
 
-    const childPath = path + '/C:' + getComponentId(comp, newVNode.props?.key);
+    const childPath = path + "/C:" + getComponentId(comp, newVNode.props?.key);
     const oldChildVNode = (oldVNode as any).__child as VNode | null;
-    const childDom = diff(parentDom, oldChildVNode, childVNode, childPath);
+    const childDom = diff(
+      parentDom,
+      oldChildVNode,
+      childVNode,
+      childPath,
+      isSvg,
+    );
 
     // Record/update instance for targeted rerenders
     if (currentContainer) {
@@ -211,15 +278,119 @@ function diff(parentDom: Element, oldVNode: VNode | null, newVNode: VNode | null
 
   const dom = getDomNodeForVNode(oldVNode)! as Element;
   setVNodeDomRef(newVNode, dom);
-  updateProps(dom, oldVNode.props || {}, newVNode.props || {});
+  const thisIsSvg =
+    isSvg || (typeof newVNode.type === "string" && newVNode.type === "svg");
+  updateProps(dom, oldVNode.props || {}, newVNode.props || {}, thisIsSvg);
 
   const oldChildren = (oldVNode.props.children as any[]) || [];
   const newChildren = (newVNode.props.children as any[]) || [];
-  patchChildren(dom, oldChildren, newChildren, path + '/H:' + String(newVNode.type));
+  const childIsSvg = thisIsSvg && newVNode.type !== "foreignObject";
+  patchChildren(
+    dom,
+    oldChildren,
+    newChildren,
+    path + "/H:" + String(newVNode.type),
+    childIsSvg,
+  );
   return dom;
 }
 
-function patchChildren(parentDom: Element, oldChildren: any[], newChildren: any[], path: string) {
+function createDom(
+  vnode: VNode | null,
+  parentDom: Element,
+  path: string,
+  isSvg: boolean,
+): Node | null {
+  if (vnode == null) return null;
+  if (vnode.type === TEXT) {
+    const text = document.createTextNode(vnode.props.nodeValue ?? "");
+    setVNodeDomRef(vnode, text);
+    return text;
+  }
+  if (vnode.type === Fragment) {
+    const fragMarker = document.createComment("fragment");
+    setVNodeDomRef(vnode, fragMarker);
+    const children = (vnode.props.children as any[]) || [];
+    for (let i = 0; i < children.length; i++) {
+      const childPath = path + "/F/" + makeChildKey(children[i], i);
+      const child = createDom(children[i], parentDom, childPath, isSvg);
+      if (child) parentDom.appendChild(child);
+    }
+    return fragMarker;
+  }
+  if (vnode.type === PORTAL) {
+    const container = (vnode.props.container as Element) || document.body;
+    const children = (vnode.props.children as any[]) || [];
+    const containerIsSvg =
+      !!container && (container as any).namespaceURI === SVG_NS;
+    for (let i = 0; i < children.length; i++) {
+      const childPath = path + "/P/" + makeChildKey(children[i], i);
+      const child = createDom(
+        children[i],
+        container,
+        childPath,
+        containerIsSvg,
+      );
+      if (child) container.appendChild(child);
+    }
+    // No marker in parent DOM for portals
+    setVNodeDomRef(vnode, null);
+    return null;
+  }
+  if (typeof vnode.type === "function") {
+    const comp = vnode.type as Component;
+    const hookKey = makeHookKey(path, comp, vnode.props?.key);
+    currentHookKey = hookKey;
+    currentHookIndex = 0;
+    const newHooks: HookState[] = [];
+    currentHooksMap!.set(hookKey, newHooks);
+    const childVNode = withHookContext(hookKey, () =>
+      comp({ ...(vnode.props || {}), children: vnode.props?.children || [] }),
+    );
+    (vnode as any).__child = childVNode;
+    const childPath = path + "/C:" + getComponentId(comp, vnode.props?.key);
+    const childDom = createDom(childVNode, parentDom, childPath, isSvg);
+    if (currentContainer) {
+      instanceRegistry.set(hookKey, {
+        container: currentContainer,
+        parentDom,
+        comp,
+        vnode,
+        path,
+        childPath,
+      });
+    }
+    setVNodeDomRef(vnode, childDom);
+    return childDom;
+  }
+
+  const thisIsSvg =
+    isSvg || (typeof vnode.type === "string" && vnode.type === "svg");
+  const tag = vnode.type as string;
+  const dom = thisIsSvg
+    ? document.createElementNS(SVG_NS, tag)
+    : document.createElement(tag);
+
+  updateProps(dom as Element, {}, vnode.props || {}, thisIsSvg);
+  const children = (vnode.props.children as any[]) || [];
+  const childIsSvg = thisIsSvg && tag !== "foreignObject";
+  for (let i = 0; i < children.length; i++) {
+    const childPath =
+      path + "/H:" + String(vnode.type) + "/" + makeChildKey(children[i], i);
+    const child = createDom(children[i], dom as Element, childPath, childIsSvg);
+    if (child) (dom as Element).appendChild(child);
+  }
+  setVNodeDomRef(vnode, dom as unknown as Node);
+  return dom as unknown as Node;
+}
+
+function patchChildren(
+  parentDom: Element,
+  oldChildren: any[],
+  newChildren: any[],
+  path: string,
+  isSvg: boolean,
+) {
   const oldKeyMap = new Map<any, { vnode: VNode; index: number }>();
   const oldUnkeyed: Array<{ vnode: VNode; index: number }> = [];
   for (let i = 0; i < oldChildren.length; i++) {
@@ -231,7 +402,9 @@ function patchChildren(parentDom: Element, oldChildren: any[], newChildren: any[
   }
 
   const usedOld = new Set<number>();
-  const matchOld: Array<VNode | null> = new Array(newChildren.length).fill(null);
+  const matchOld: Array<VNode | null> = new Array(newChildren.length).fill(
+    null,
+  );
 
   function takeNextUnkeyedMatch(newV: VNode | null): VNode | null {
     if (!newV) return null;
@@ -263,8 +436,8 @@ function patchChildren(parentDom: Element, oldChildren: any[], newChildren: any[
   for (let i = 0; i < newChildren.length; i++) {
     const newV = newChildren[i] || null;
     const oldV = matchOld[i] || null;
-    const childPath = path + '/' + makeChildKey(newV, i);
-    const dom = diff(parentDom, oldV, newV, childPath);
+    const childPath = path + "/" + makeChildKey(newV, i);
+    const dom = diff(parentDom, oldV, newV, childPath, isSvg);
     doms[i] = dom;
   }
 
@@ -272,7 +445,7 @@ function patchChildren(parentDom: Element, oldChildren: any[], newChildren: any[
     const oldV = oldChildren[i];
     if (!oldV) continue;
     if (!usedOld.has(i)) {
-      const oldPath = path + '/' + makeChildKey(oldV, i);
+      const oldPath = path + "/" + makeChildKey(oldV, i);
       unmount(oldV, parentDom, oldPath);
     }
   }
@@ -281,7 +454,7 @@ function patchChildren(parentDom: Element, oldChildren: any[], newChildren: any[
   for (let i = 0; i < newChildren.length; i++) {
     const v = newChildren[i];
     if (!v) continue;
-    if (v.type === Fragment) continue;
+    if (v.type === Fragment || v.type === PORTAL) continue; // portals do not occupy a node in parent
     const node = doms[i];
     if (node) desired.push(node);
   }
@@ -298,94 +471,62 @@ function patchChildren(parentDom: Element, oldChildren: any[], newChildren: any[
 
 function makeChildKey(v: VNode | null, index: number): string {
   const k = v && v.props ? v.props.key : null;
-  const t = v ? (typeof v.type === 'function' ? 'C' : v.type === Fragment ? 'F' : v.type === TEXT ? 'T' : String(v.type)) : 'N';
+  const t = v
+    ? typeof v.type === "function"
+      ? "C"
+      : v.type === Fragment
+        ? "F"
+        : v.type === TEXT
+          ? "T"
+          : String(v.type)
+    : "N";
   return `${t}:${k ?? index}`;
 }
 
 function isSameType(a: VNode, b: VNode): boolean {
   if (a.type === TEXT && b.type === TEXT) return true;
   if (a.type === Fragment && b.type === Fragment) return true;
-  if (typeof a.type === 'string' && typeof b.type === 'string') return a.type === b.type;
-  if (typeof a.type === 'function' && typeof b.type === 'function') return a.type === b.type;
+  if (a.type === PORTAL && b.type === PORTAL) {
+    const aContainer =
+      a.props.container ||
+      (typeof document !== "undefined" ? document.body : null);
+    const bContainer =
+      b.props.container ||
+      (typeof document !== "undefined" ? document.body : null);
+    return aContainer === bContainer;
+  }
+  if (typeof a.type === "string" && typeof b.type === "string")
+    return a.type === b.type;
+  if (typeof a.type === "function" && typeof b.type === "function")
+    return a.type === b.type;
   return false;
-}
-
-function createDom(vnode: VNode | null, parentDom: Element, path: string): Node | null {
-  if (vnode == null) return null;
-  if (vnode.type === TEXT) {
-    const text = document.createTextNode(vnode.props.nodeValue ?? '');
-    setVNodeDomRef(vnode, text);
-    return text;
-  }
-  if (vnode.type === Fragment) {
-    const fragMarker = document.createComment('fragment');
-    setVNodeDomRef(vnode, fragMarker);
-    const children = (vnode.props.children as any[]) || [];
-    for (let i = 0; i < children.length; i++) {
-      const childPath = path + '/F/' + makeChildKey(children[i], i);
-      const child = createDom(children[i], parentDom, childPath);
-      if (child) parentDom.appendChild(child);
-    }
-    return fragMarker;
-  }
-  if (typeof vnode.type === 'function') {
-    const comp = vnode.type as Component;
-    const hookKey = makeHookKey(path, comp, vnode.props?.key);
-    currentHookKey = hookKey;
-    currentHookIndex = 0;
-    const newHooks: HookState[] = [];
-    currentHooksMap!.set(hookKey, newHooks);
-    const childVNode = withHookContext(hookKey, () => comp({ ...(vnode.props || {}), children: vnode.props?.children || [] }));
-    (vnode as any).__child = childVNode;
-    const childPath = path + '/C:' + getComponentId(comp, vnode.props?.key);
-    const childDom = createDom(childVNode, parentDom, childPath);
-    // Record instance on mount
-    if (currentContainer) {
-      instanceRegistry.set(hookKey, {
-        container: currentContainer,
-        parentDom,
-        comp,
-        vnode,
-        path,
-        childPath,
-      });
-    }
-    setVNodeDomRef(vnode, childDom);
-    return childDom;
-  }
-  const dom = document.createElement(vnode.type as string);
-
-  updateProps(dom, {}, vnode.props || {});
-  const children = (vnode.props.children as any[]) || [];
-  for (let i = 0; i < children.length; i++) {
-    const childPath = path + '/H:' + String(vnode.type) + '/' + makeChildKey(children[i], i);
-    const child = createDom(children[i], dom, childPath);
-    if (child) dom.appendChild(child);
-  }
-  setVNodeDomRef(vnode, dom);
-  return dom;
 }
 
 function unmount(vnode: VNode, parentDom: Element, path: string) {
   if (!vnode) return;
-  if (typeof vnode.type === 'function') {
+  if (typeof vnode.type === "function") {
     const comp = vnode.type as Component;
     const hookKey = makeHookKey(path, comp, vnode.props?.key);
     // cleanup effects
     const oldArr = oldHooksMap?.get(hookKey) || [];
     for (const h of oldArr) {
-      if (h && typeof h.cleanup === 'function') {
+      if (h && typeof h.cleanup === "function") {
         try {
           h.cleanup();
         } catch (e) {
-          console.error('[refreshjs] useEffect cleanup error:', e);
+          console.error("[refreshjs] useEffect cleanup error:", e);
         }
       }
     }
     // remove instance record
     instanceRegistry.delete(hookKey);
     const child = (vnode as any).__child as VNode | null;
-    if (child) unmount(child, parentDom, path + '/C:' + getComponentId(comp, vnode.props?.key));
+    if (child)
+      unmount(
+        child,
+        parentDom,
+        path + "/C:" + getComponentId(comp, vnode.props?.key),
+      );
     const dom = getDomNodeForVNode(vnode);
     if (dom && dom.parentNode === parentDom) parentDom.removeChild(dom);
     return;
@@ -393,59 +534,109 @@ function unmount(vnode: VNode, parentDom: Element, path: string) {
   if (vnode.type === Fragment) {
     const children = (vnode.props.children as any[]) || [];
     for (let i = 0; i < children.length; i++) {
-      unmount(children[i], parentDom, path + '/F');
+      unmount(children[i], parentDom, path + "/F");
     }
     const marker = getDomNodeForVNode(vnode);
-    if (marker && marker.parentNode === parentDom) parentDom.removeChild(marker);
+    if (marker && marker.parentNode === parentDom)
+      parentDom.removeChild(marker);
+    return;
+  }
+  if (vnode.type === PORTAL) {
+    const container = (vnode.props.container as Element) || document.body;
+    const children = (vnode.props.children as any[]) || [];
+    for (let i = 0; i < children.length; i++) {
+      unmount(children[i], container, path + "/P");
+    }
+    // No marker to remove in parent
     return;
   }
   const dom = getDomNodeForVNode(vnode);
   if (dom && dom.parentNode === parentDom) parentDom.removeChild(dom);
 }
 
-function updateProps(dom: Element, prevProps: Record<string, any>, nextProps: Record<string, any>) {
+function updateProps(
+  dom: Element,
+  prevProps: Record<string, any>,
+  nextProps: Record<string, any>,
+  isSvg: boolean,
+) {
   for (const name in prevProps) {
-    if (name === 'children' || name === 'key') continue;
-    if (!(name in nextProps)) setProp(dom, name, undefined, prevProps[name]);
+    if (name === "children" || name === "key") continue;
+    if (!(name in nextProps))
+      setProp(dom, name, undefined, prevProps[name], isSvg);
   }
   for (const name in nextProps) {
-    if (name === 'children' || name === 'key') continue;
+    if (name === "children" || name === "key") continue;
     const prev = prevProps[name];
     const next = nextProps[name];
-    if (prev !== next) setProp(dom, name, next, prev);
+    if (prev !== next) setProp(dom, name, next, prev, isSvg);
   }
 }
 
-function setProp(dom: Element, name: string, value: any, prev: any) {
-  if (name === 'style' && value && typeof value === 'object') {
-    const style = (dom as HTMLElement).style;
-    const prevStyle = prev && typeof prev === 'object' ? prev : {};
-    // Remove old
-    for (const k in prevStyle) if (!(k in value)) style[k as any] = '';
+function setProp(
+  dom: Element,
+  name: string,
+  value: any,
+  prev: any,
+  isSvg: boolean,
+) {
+  if (name === "style" && value && typeof value === "object") {
+    const style = (dom as HTMLElement).style as any;
+    const prevStyle = prev && typeof prev === "object" ? prev : {};
+    for (const k in prevStyle) if (!(k in value)) style[k as any] = "";
     for (const k in value) style[k as any] = value[k];
     return;
   }
-  if (name.startsWith('on') && (typeof value === 'function' || typeof prev === 'function')) {
+  if (
+    name.startsWith("on") &&
+    (typeof value === "function" || typeof prev === "function")
+  ) {
     const event = name.slice(2).toLowerCase();
     if (prev) dom.removeEventListener(event, prev);
     if (value) dom.addEventListener(event, value);
     return;
   }
-  if (name === 'ref') {
-    if (value && typeof value === 'object') value.current = dom;
+  if (name === "ref") {
+    if (value && typeof value === "object") value.current = dom;
     return;
   }
-  if (value == null || value === false) {
-    dom.removeAttribute(name);
+
+  const isNil = value == null || value === false;
+  const isXlink = name === "xlinkHref" || name === "xlink:href";
+  const attrName =
+    name === "className" ? "class" : name === "htmlFor" ? "for" : name;
+
+  if (isSvg) {
+    if (isNil) {
+      if (isXlink) (dom as any).removeAttributeNS?.(XLINK_NS, "href");
+      else (dom as any).removeAttribute(attrName);
+      return;
+    }
+    if (isXlink) {
+      (dom as any).setAttributeNS?.(XLINK_NS, "xlink:href", value);
+    } else {
+      (dom as any).setAttribute(attrName, String(value));
+    }
     return;
   }
-  if (name in (dom as any)) {
+
+  if (isNil) {
+    if (attrName in (dom as any)) {
+      try {
+        (dom as any)[attrName] = attrName === "class" ? "" : "";
+      } catch {}
+    }
+    (dom as any).removeAttribute?.(attrName);
+    return;
+  }
+
+  if (attrName in (dom as any)) {
     try {
-      (dom as any)[name] = value;
+      (dom as any)[attrName] = value;
       return;
     } catch {}
   }
-  dom.setAttribute(name, String(value));
+  (dom as any).setAttribute(attrName, String(value));
 }
 
 function getDomNodeForVNode(vnode: VNode | null): Node | null {
@@ -480,12 +671,12 @@ function withHookContext<T>(key: string, fn: () => T): T {
 }
 
 function getComponentId(comp: Function, key?: any): string {
-  const n = (comp as any).displayName || comp.name || 'Anon';
-  return n + (key != null ? `[${key}]` : '');
+  const n = (comp as any).displayName || comp.name || "Anon";
+  return n + (key != null ? `[${key}]` : "");
 }
 
 function makeHookKey(path: string, comp: Function, key?: any): string {
-  return path + '/HOOKS:' + getComponentId(comp, key);
+  return path + "/HOOKS:" + getComponentId(comp, key);
 }
 
 // Targeted re-render of a single function component instance by hook key
@@ -518,9 +709,17 @@ function rerenderComponent(hookKey: string) {
 
   // Render child vnode with this hook context
   const props = inst.vnode.props || {};
-  const childVNode = withHookContext(hookKey, () => inst.comp({ ...(props || {}), children: props?.children || [] }));
+  const childVNode = withHookContext(hookKey, () =>
+    inst.comp({ ...(props || {}), children: props?.children || [] }),
+  );
   const oldChildVNode = (inst.vnode as any).__child as VNode | null;
-  const childDom = diff(inst.parentDom, oldChildVNode, childVNode, inst.childPath);
+  const childDom = diff(
+    inst.parentDom,
+    oldChildVNode,
+    childVNode,
+    inst.childPath,
+    /* isSvg */ (inst.parentDom as any).namespaceURI === SVG_NS,
+  );
   (inst.vnode as any).__child = childVNode;
   setVNodeDomRef(inst.vnode, childDom);
 
@@ -531,7 +730,7 @@ function rerenderComponent(hookKey: string) {
         const cleanup = hook.effect ? hook.effect() : undefined;
         hook.cleanup = cleanup;
       } catch (e) {
-        console.error('[refreshjs] useEffect error:', e);
+        console.error("[refreshjs] useEffect error:", e);
       }
     });
   }
@@ -548,26 +747,33 @@ function rerenderComponent(hookKey: string) {
   currentHookIndex = 0;
 }
 
-export function useState<S>(initial: S | (() => S)): [S, (v: S | ((prev: S) => S)) => void] {
-  if (!currentContainer || !currentHooksMap || !oldHooksMap || !currentHookKey) {
-    throw new Error('useState must be called inside a component render');
+export function useState<S>(
+  initial: S | (() => S),
+): [S, (v: S | ((prev: S) => S)) => void] {
+  if (
+    !currentContainer ||
+    !currentHooksMap ||
+    !oldHooksMap ||
+    !currentHookKey
+  ) {
+    throw new Error("useState must be called inside a component render");
   }
   const hooksArr = currentHooksMap.get(currentHookKey)!;
   const oldArr = oldHooksMap.get(currentHookKey) || [];
   const idx = currentHookIndex++;
-  let hook = (oldArr[idx] as HookState | undefined);
+  let hook = oldArr[idx] as HookState | undefined;
   if (!hook) {
-    const init = (typeof initial === 'function' ? (initial as any)() : initial);
+    const init = typeof initial === "function" ? (initial as any)() : initial;
     hook = { state: init };
   } else if (hook.state === undefined) {
-    hook.state = (typeof initial === 'function' ? (initial as any)() : initial);
+    hook.state = typeof initial === "function" ? (initial as any)() : initial;
   }
   hooksArr[idx] = hook;
 
   const container = currentContainer;
   const hookKeyLocal = currentHookKey; // capture owner key
   const setState = (v: any) => {
-    const next = typeof v === 'function' ? (v as any)(hook!.state) : v;
+    const next = typeof v === "function" ? (v as any)(hook!.state) : v;
     if (Object.is(next, hook!.state)) return;
     hook!.state = next;
     // Targeted re-render of the owning component only
@@ -581,13 +787,18 @@ export function useState<S>(initial: S | (() => S)): [S, (v: S | ((prev: S) => S
 }
 
 export function useRef<T>(initial: T): { current: T } {
-  if (!currentContainer || !currentHooksMap || !oldHooksMap || !currentHookKey) {
-    throw new Error('useRef must be called inside a component render');
+  if (
+    !currentContainer ||
+    !currentHooksMap ||
+    !oldHooksMap ||
+    !currentHookKey
+  ) {
+    throw new Error("useRef must be called inside a component render");
   }
   const hooksArr = currentHooksMap.get(currentHookKey)!;
   const oldArr = oldHooksMap.get(currentHookKey) || [];
   const idx = currentHookIndex++;
-  let hook = (oldArr[idx] as HookState | undefined);
+  let hook = oldArr[idx] as HookState | undefined;
   if (!hook) {
     hook = { ref: { current: initial } } as HookState;
   }
@@ -596,13 +807,19 @@ export function useRef<T>(initial: T): { current: T } {
 }
 
 export function useEffect(effect: () => void | (() => void), deps?: any[]) {
-  if (!currentContainer || !currentHooksMap || !oldHooksMap || !currentHookKey || !currentEffectQueue) {
-    throw new Error('useEffect must be called inside a component render');
+  if (
+    !currentContainer ||
+    !currentHooksMap ||
+    !oldHooksMap ||
+    !currentHookKey ||
+    !currentEffectQueue
+  ) {
+    throw new Error("useEffect must be called inside a component render");
   }
   const hooksArr = currentHooksMap.get(currentHookKey)!;
   const oldArr = oldHooksMap.get(currentHookKey) || [];
   const idx = currentHookIndex++;
-  let hook = (oldArr[idx] as HookState | undefined);
+  let hook = oldArr[idx] as HookState | undefined;
   const prevDeps = hook?.deps;
   if (!hook) hook = {} as HookState;
   hook.effect = effect;
@@ -611,8 +828,12 @@ export function useEffect(effect: () => void | (() => void), deps?: any[]) {
 
   const shouldRun = !prevDeps || !deps || depsChanged(prevDeps, deps);
   if (shouldRun) {
-    if (hook.cleanup && typeof hook.cleanup === 'function') {
-      try { hook.cleanup(); } catch (e) { console.error('[refreshjs] useEffect cleanup error:', e); }
+    if (hook.cleanup && typeof hook.cleanup === "function") {
+      try {
+        hook.cleanup();
+      } catch (e) {
+        console.error("[refreshjs] useEffect cleanup error:", e);
+      }
     }
     currentEffectQueue.push({ key: currentHookKey, index: idx, hook });
   }
@@ -627,11 +848,17 @@ function depsChanged(a: any[], b: any[]): boolean {
 }
 
 // Re-export router primitives so consumers can import from the package root
-export { Router, Link, navigate, useLocation, useCurrentRoute } from './router';
-export type { RouteObject, Params } from './router';
+export { Router, Link, navigate, useLocation, useCurrentRoute } from "./router";
+export type { RouteObject, Params } from "./router";
 
 // Re-export store primitives
-export { createStore, useStore, shallowEqual, useStoreValue, useStoreSetter } from './store';
+export {
+  createStore,
+  useStore,
+  shallowEqual,
+  useStoreValue,
+  useStoreSetter,
+} from "./store";
 
 // JSX typings
 declare global {
@@ -640,10 +867,22 @@ declare global {
       [elemName: string]: any;
     }
     interface Element extends VNode {}
-    interface ElementChildrenAttribute { children: {}; }
-    interface IntrinsicAttributes { key?: any }
+    interface ElementChildrenAttribute {
+      children: {};
+    }
+    interface IntrinsicAttributes {
+      key?: any;
+    }
     interface Fragment {}
   }
 }
 
-export default { h, Fragment, render, useState, useRef, useEffect };
+export default {
+  h,
+  Fragment,
+  render,
+  useState,
+  useRef,
+  useEffect,
+  createPortal,
+};
