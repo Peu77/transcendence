@@ -7,7 +7,6 @@ import Dialog, {
   DialogTitle,
   DialogTrigger,
 } from "@/components/Dialog";
-import { Icon } from "@/components/Icon";
 import Dropdown, {
   DropdownContent,
   DropdownItem,

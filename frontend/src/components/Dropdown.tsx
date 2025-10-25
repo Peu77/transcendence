@@ -263,7 +263,11 @@ function MenuKeyboardScope(props: { children: any; onClose: () => void }) {
   };
 
   return (
-    <div ref={containerRef as any} onKeyDown={onKeyDown as any} onClick={onClick as any}>
+    <div
+      ref={containerRef as any}
+      onKeyDown={onKeyDown as any}
+      onClick={onClick as any}
+    >
       {props.children}
     </div>
   );
