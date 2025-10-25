@@ -44,17 +44,20 @@ export default function Button(props: {
   variant?: ButtonVariant;
   children: any;
   size?: ButtonSize;
+  [key: string]: any;
 }) {
+  const { onClick, className, disabled, variant, children, size, ...rest } =
+    props as any;
   return (
     <button
-      onClick={props.onClick}
+      {...rest}
+      onClick={onClick}
       className={
-        buttonClasses(props.variant, props.size) +
-        (props.className ? ` ${props.className}` : "")
+        buttonClasses(variant, size) + (className ? ` ${className}` : "")
       }
-      disabled={props.disabled}
+      disabled={disabled}
     >
-      {props.children}
+      {children}
     </button>
   );
 }
