@@ -6,6 +6,14 @@ import Scores from "./Scores";
 import { navigate, useCurrentRoute } from "refreshjs";
 import { ProfilePicture } from "@/components/ProfilePicture";
 import { userStore } from "@/store/user";
+import Dropdown, {
+  DropdownContent,
+  DropdownItem,
+  DropdownTrigger,
+} from "@/components/Dropdown";
+import { useMutation } from "@/query/hooks";
+import { logout } from "@/api/user";
+import { queryClient } from "@/query/client";
 
 export const retroNavigationItems = [
   { id: "", component: App, label: "Home", index: true },
@@ -16,6 +24,17 @@ export const retroNavigationItems = [
 export function RetroNavigation() {
   const { child } = useCurrentRoute();
   const user = useStore(userStore);
+  const logoutMutation = useMutation({
+    mutationKey: ["logout"],
+    mutationFn: async () => {
+      return await logout();
+    },
+    onSuccess: async () => {
+      userStore.setState(undefined);
+      navigate("/login");
+      await queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    },
+  });
 
   return (
     <nav className="w-full bg-card shadow-md">
@@ -34,7 +53,23 @@ export function RetroNavigation() {
             </Button>
           ))}
         </div>
-        <ProfilePicture profilePictureId={user?.profilePictureId} />
+        <Dropdown>
+          <DropdownTrigger asChild={true}>
+            <ProfilePicture
+              className="cursor-pointer"
+              profilePictureId={user?.profilePictureId}
+            />
+          </DropdownTrigger>
+          <DropdownContent>
+            <DropdownItem onSelect={() => console.log("Profile")}>
+              Profile
+            </DropdownItem>
+            <DropdownItem onSelect={() => console.log("Settings")}>
+              Settings
+            </DropdownItem>
+            <DropdownItem onSelect={logoutMutation.mutate}>Logout</DropdownItem>
+          </DropdownContent>
+        </Dropdown>
       </div>
     </nav>
   );
