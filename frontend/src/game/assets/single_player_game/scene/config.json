@@ -1,0 +1,27 @@
+{
+    "config": {
+        "version": "5.0.0",
+        "name": "Single Player Game",
+        "description": "Single player table tennis game scene"
+    },
+    "scene": {
+        "metadata": {
+            "scripts": [
+                {
+                    "id": "scripts/single_player.ts",
+                    "name": "SinglePlayerScript"
+                }
+            ]
+        }
+    },
+    "nodes": [
+        {
+            "id": "root",
+            "name": "Root",
+            "type": "TransformNode",
+            "scripts": [
+                "scripts/single_player.ts"
+            ]
+        }
+    ]
+}

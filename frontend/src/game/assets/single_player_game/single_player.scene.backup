@@ -1,0 +1,49 @@
+{
+  "version": "5.0.0",
+  "scene": {
+    "autoClear": true,
+    "clearColor": [0.2, 0.2, 0.3, 1.0],
+    "ambientColor": [0, 0, 0],
+    "gravity": [0, -9.81, 0],
+    "collisionsEnabled": false,
+    "physicsEnabled": false,
+    "meshes": [],
+    "lights": [],
+    "cameras": [],
+    "materials": [],
+    "textures": [],
+    "sounds": [],
+    "animations": [],
+    "animationGroups": [],
+    "skeletons": [],
+    "morphTargetManagers": [],
+    "transformNodes": [],
+    "geometries": {
+      "boxes": [],
+      "spheres": [],
+      "cylinders": [],
+      "grounds": [],
+      "planes": []
+    },
+    "particleSystems": [],
+    "postProcesses": [],
+    "lensFlareSystems": [],
+    "shadowGenerators": [],
+    "activeCameraID": null
+  },
+  "metadata": {
+    "editor": {
+      "version": "5.0.0",
+      "exportedFrom": "Babylon.js Editor"
+    },
+    "scripts": [
+      {
+        "id": "single_player_script",
+        "name": "SinglePlayerScript", 
+        "class": "SinglePlayerScript",
+        "script": "scripts/single_player.ts",
+        "attachTo": "scene"
+      }
+    ]
+  }
+}
