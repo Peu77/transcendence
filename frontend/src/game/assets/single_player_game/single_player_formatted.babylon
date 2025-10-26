@@ -1,0 +1,52 @@
+{
+  "autoClear": true,
+  "clearColor": [0.2, 0.2, 0.3, 1],
+  "ambientColor": [0, 0, 0],
+  "gravity": [0, -9.807, 0],
+  "collisionsEnabled": false,
+  "useRightHandedSystem": false,
+  "fogMode": 0,
+  "fogColor": [0.2, 0.2, 0.3],
+  "fogStart": 0,
+  "fogEnd": 1000,
+  "fogDensity": 0.1,
+  "physicsEnabled": false,
+  "physicsGravity": [0, -981, 0],
+  "physicsEngine": "HavokPlugin",
+  "metadata": {
+    "rendering": [],
+    "physicsGravity": [0, -981, 0],
+    "scripts": {
+      "scene": [
+        {
+          "script": "scripts/single_player.ts",
+          "class": "SinglePlayerScript"
+        }
+      ]
+    }
+  },
+  "morphTargetManagers": [],
+  "lights": [],
+  "cameras": [],
+  "activeCameraID": null,
+  "animations": [],
+  "materials": [],
+  "multiMaterials": [],
+  "environmentIntensity": 1,
+  "iblIntensity": 1,
+  "skeletons": [],
+  "transformNodes": [],
+  "geometries": {
+    "boxes": [],
+    "spheres": [],
+    "cylinders": [],
+    "toruses": [],
+    "grounds": [],
+    "planes": [],
+    "torusKnots": [],
+    "vertexData": []
+  },
+  "meshes": [],
+  "particleSystems": [],
+  "sounds": []
+}
