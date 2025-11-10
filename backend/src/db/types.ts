@@ -15,3 +15,39 @@ export interface TwoFARow {
   createdAt: string;
   expiredAt: string;
 }
+
+export interface FriendRequestRow {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+}
+
+export interface FriendRow {
+  id: string;
+  userId1: string;
+  userId2: string;
+  createdAt: string;
+}
+
+export interface ConversationRow {
+  id: string;
+  type: 'direct' | 'group';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConversationParticipantRow {
+  conversationId: string;
+  userId: string;
+  joinedAt: string;
+}
+
+export interface MessageRow {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+}
