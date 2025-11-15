@@ -20,11 +20,10 @@ export interface FriendRequestRow {
   id: string;
   senderId: string;
   receiverId: string;
-  status: 'pending' | 'accepted' | 'rejected';
   createdAt: string;
 }
 
-export interface FriendRow {
+export interface FriendshipRow {
   id: string;
   userId1: string;
   userId2: string;
@@ -33,9 +32,8 @@ export interface FriendRow {
 
 export interface ConversationRow {
   id: string;
-  type: 'direct' | 'group';
+  type: 'direct' | 'group' | 'game_room';
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface ConversationParticipantRow {

@@ -23,25 +23,22 @@ create table if not exists friend_requests (
     id text primary key,
     senderId text not null references users(id) on delete cascade,
     receiverId text not null references users(id) on delete cascade,
-    status text not null check(status in ('pending', 'accepted', 'rejected')) default 'pending',
     createdAt timestamp default current_timestamp not null,
     unique(senderId, receiverId)
 );
 
-create table if not exists friends (
+create table if not exists friendships (
     id text primary key,
     userId1 text not null references users(id) on delete cascade,
     userId2 text not null references users(id) on delete cascade,
     createdAt timestamp default current_timestamp not null,
-    check(userId1 < userId2),
-    unique(userId1, userId2)
+    check(userId1 < userId2)
 );
 
 create table if not exists conversations (
     id text primary key,
-    type text not null check(type in ('direct', 'group')) default 'direct',
-    createdAt timestamp default current_timestamp not null,
-    updatedAt timestamp default current_timestamp not null
+    type text not null check(type in ('direct', 'group', 'game_room')),
+    createdAt timestamp default current_timestamp not null
 );
 
 create table if not exists conversation_participants (
