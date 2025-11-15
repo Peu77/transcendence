@@ -2,6 +2,8 @@ import "reflect-metadata";
 import Fastify from "fastify";
 import sqlitePlugin from "./plugins/sqlite";
 import registerUserRoutes from "./users/user.controller";
+import registerFriendRoutes from "./friends/friend.controller";
+import registerMessageRoutes from "./messages/message.controller";
 import cors from "@fastify/cors";
 import fastifyCookie from "@fastify/cookie";
 import { registerAuthGuard } from "./users/auth.guard";
@@ -37,6 +39,8 @@ export async function buildServer() {
 
   registerAuthGuard();
   await registerUserRoutes();
+  await registerFriendRoutes();
+  await registerMessageRoutes();
 
   app.get("/hello", async () => ({ message: "Hello World" }));
 
