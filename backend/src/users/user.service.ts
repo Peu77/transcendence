@@ -1,6 +1,6 @@
 import { TwoFARow, UserRow } from "../db/types";
 import jwt from "jsonwebtoken";
-import { getEnv } from "../server";
+import { getEnv } from "../utils/env";
 import { get, run } from "../db/helpers";
 import { v4 as uuid } from "uuid";
 import fs from "fs/promises";
