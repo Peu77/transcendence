@@ -11,7 +11,7 @@ import {
   Color4,
 } from "@babylonjs/core";
 
-import {BACKND_URL} from "@query/client";
+import { BACKEND_URL } from "@/query/client";
 
 export function singlePlayerGame(container: HTMLElement) {
   const canvas = document.createElement("canvas");
@@ -132,61 +132,130 @@ export function singlePlayerGame(container: HTMLElement) {
   ball.material = ballTexture;
   // const ballVelocity = new Vector3(0.15, 0, 0.03);
 
-  const wsUrl = BACKND_URL.replace("http", "ws") + "/ws/game/1v1";
+  const wsUrl = BACKEND_URL.replace("http", "ws") + "/game/ws";
   let ws: WebSocket | null = null;
+  let currentRoomId: string | null = null;
 
+
+  async function createGameRoom() {
     try {
-    ws = new WebSocket(wsUrl);
-  } catch (err) {
-    console.error("Failed to create WebSocket:", err);
-  }
+      const response = await fetch(BACKEND_URL + "/game/rooms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ type: "single" })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        currentRoomId = data.roomId;
+        console.log("Created room:", currentRoomId);
 
-    function applyState(state: any) {
-    if (!state) return;
-    if (state.ball) {
-      ball.position.copyFromFloats(ball.position.x, ball.position.y);
-    }
-    if (state.paddles && Array.isArray(state.paddles)) {
-      const p0 = state.paddles[0];
-      const p1 = state.paddles[1];
-      if (p0) paddle1.position.copyFromFloats(paddle1.position.x, paddle1.position.y);
-      if (p1) paddle2.position.copyFromFloats(paddle2.position.x, paddle2.position.y);
-    }
-  }
-
-  if (ws) {
-    // ws.onopen = () => {
-    //   console.info("Game WS connected:", wsUrl);
-    //   ws!.send(JSON.stringify({ type: "join", role: "viewer" }));
-    // };
-
-    ws.onmessage = (ev) => {
-      try {
-        const msg = JSON.parse(ev.data);
-        if (msg.type === "game_state" && msg.state) {
-          applyState(msg.state);
-        }
-      } catch (e) {
-        console.error("Invalid WS message:", e);
+        connectWebSocket();
+      } else {
+        console.error("Failed to create room:", response.status);
       }
-    };
-
-    ws.onerror = (ev) => {
-      console.error("Game WS error:", ev);
-    };
-
-    ws.onclose = () => {
-      console.info("Game WS closed");
-    };
+    } catch (err) {
+      console.error("Failed to create room:", err);
+    }
   }
+
+  function connectWebSocket() {
+    try {
+      ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        console.info("Game WS connected:", wsUrl);
+        if (currentRoomId) {
+          ws!.send(JSON.stringify({ 
+            type: "join_room", 
+            roomId: currentRoomId 
+          }));
+        }
+      };
+
+      ws.onmessage = (ev: MessageEvent) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          console.log("Received message:", msg);
+          
+          if (msg.type === "game_state" && msg.data) {
+            applyState(msg.data);
+          } else if (msg.type === "joined_room") {
+            console.log("Successfully joined room:", msg.roomId);
+          } else if (msg.type === "error") {
+            console.error("Game error:", msg.data.message);
+          }
+        } catch (e) {
+          console.error("Invalid WS message:", e);
+        }
+      };
+
+      ws.onerror = (ev: Event) => {
+        console.error("Game WS error:", ev);
+      };
+
+      ws.onclose = () => {
+        console.info("Game WS closed");
+      };
+    } catch (err) {
+      console.error("Failed to create WebSocket:", err);
+    }
+  }
+
+  function applyState(state: any) {
+    if (!state) return;
+    
+    if (state.ball && state.ball.position) {
+      ball.position.copyFromFloats(
+        (state.ball.position.x - 400) / 20,
+        ball.position.y,
+        (state.ball.position.y - 300) / 15
+      );
+    }
+    
+
+    if (state.paddles) {
+      const paddleIds = Object.keys(state.paddles);
+      
+      if (paddleIds.length > 0) {
+        const paddle1Data = state.paddles[paddleIds[0]];
+        if (paddle1Data && paddle1Data.position) {
+          paddle1.position.copyFromFloats(
+            (paddle1Data.position.x - 400) / 20,
+            paddle1.position.y,
+            (paddle1Data.position.y - 300) / 15 
+          );
+        }
+      }
+      
+      if (paddleIds.length > 1) {
+        const paddle2Data = state.paddles[paddleIds[1]];
+        if (paddle2Data && paddle2Data.position) {
+          paddle2.position.copyFromFloats(
+            (paddle2Data.position.x - 400) / 20,
+            paddle2.position.y,
+            (paddle2Data.position.y - 300) / 15
+          );
+        }
+      }
+    }
+  }
+
+  createGameRoom();
 
 
   container.addEventListener("pointermove", (e) => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
     const rect = (canvas as HTMLCanvasElement).getBoundingClientRect();
-    const relX = (e.clientX - rect.left) / rect.width;
-    const x = relX * 20 - 10;
-    ws.send(JSON.stringify({ type: "input", action: "pointer", x }));
+    const relY = (e.clientY - rect.top) / rect.height;
+    const paddleY = relY * 600;
+    ws.send(JSON.stringify({ 
+      type: "paddle_move", 
+      data: { paddleY } 
+    }));
   });
 
 
