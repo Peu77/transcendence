@@ -14,7 +14,6 @@ import { GameRoomManager, registerGameRoutes, registerGameWebSocket } from "./ga
 
 export const app = Fastify({ logger: true });
 
-// Global game room manager instance
 export const gameRoomManager = new GameRoomManager();
 
 export async function buildServer() {
@@ -50,8 +49,7 @@ export async function buildServer() {
 
   registerAuthGuard();
   await registerUserRoutes();
-
-  // Register game routes and WebSocket handlers
+  
   registerGameRoutes(app, gameRoomManager);
   registerGameWebSocket(app, gameRoomManager);
 

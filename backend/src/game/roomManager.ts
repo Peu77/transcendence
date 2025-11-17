@@ -3,7 +3,7 @@ import { GameEngine } from './engine';
 
 export class GameRoomManager {
   private rooms: Map<string, GameRoom> = new Map();
-  private playerToRoom: Map<string, Player> = new Map();
+  private playerToRoom: Map<string, string> = new Map();
 
   createRoom(request: CreateRoomRequest, creatorId?: string): GameRoom {
     const roomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -45,7 +45,7 @@ export class GameRoomManager {
     this.leaveRoom(player.id);
 
     room.players.set(player.id, player);
-    this.playerToRoom.set(player.id, player);
+    this.playerToRoom.set(player.id, roomId);
     
     GameEngine.createPaddle(player.id, room);
 
@@ -65,7 +65,7 @@ export class GameRoomManager {
   }
 
   leaveRoom(playerId: string): boolean {
-    const roomId = this.playerToRoom.get(playerId)?.id;
+    const roomId = this.playerToRoom.get(playerId);
     if (!roomId) return false;
 
     const room = this.rooms.get(roomId);
@@ -163,7 +163,6 @@ export class GameRoomManager {
       room.gameLoop = undefined;
     }
 
-    // Reset player ready states
     room.players.forEach(player => {
       player.ready = false;
     });
@@ -180,7 +179,7 @@ export class GameRoomManager {
   }
 
   handlePlayerMessage(playerId: string, message: GameMessage): void {
-    const roomId = this.playerToRoom.get(playerId)?.id;
+    const roomId = this.playerToRoom.get(playerId);
     if (!roomId) return;
 
     const room = this.rooms.get(roomId);
@@ -248,7 +247,7 @@ export class GameRoomManager {
   }
 
   getRoomByPlayerId(playerId: string): GameRoom | undefined {
-    const roomId = this.playerToRoom.get(playerId)?.id;
+    const roomId = this.playerToRoom.get(playerId);
     return roomId ? this.rooms.get(roomId) : undefined;
   }
 
