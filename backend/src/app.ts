@@ -5,6 +5,8 @@ import registerUserRoutes from "./users/user.controller";
 import cors from "@fastify/cors";
 import fastifyCookie from "@fastify/cookie";
 import { registerAuthGuard } from "./users/auth.guard";
+import fastifyStatic from "@fastify/static";
+import path from "node:path";
 import { fastifyMultipart } from "@fastify/multipart";
 // import multipart from "@fastify/multipart";
 import websocket from "@fastify/websocket";
@@ -19,8 +21,8 @@ export async function buildServer() {
   const defaultOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
   const envOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(",")
-        .map((s) => s.trim())
-        .filter(Boolean)
+      .map((s) => s.trim())
+      .filter(Boolean)
     : undefined;
 
   await app.register(cors, {
@@ -39,6 +41,12 @@ export async function buildServer() {
   await app.register(fastifyCookie);
   await app.register(sqlitePlugin);
   await app.register(websocket);
+
+  await app.register(fastifyStatic, {
+    root: path.join(process.cwd(), "frontend", "public"),
+    prefix: "/public/",
+    wildcard: true,
+  });
 
   registerAuthGuard();
   await registerUserRoutes();

@@ -11,6 +11,8 @@ import {
   Color4,
 } from "@babylonjs/core";
 
+import {BACKND_URL} from "@query/client";
+
 export function singlePlayerGame(container: HTMLElement) {
   const canvas = document.createElement("canvas");
   canvas.style.width = "100%";
@@ -50,7 +52,6 @@ export function singlePlayerGame(container: HTMLElement) {
 
   floor.material = floorMat;
 
-  // 2. Left Wall
   const leftWall = MeshBuilder.CreateBox(
     "leftWall",
     {
@@ -71,11 +72,11 @@ export function singlePlayerGame(container: HTMLElement) {
   leftWall.position.x = -10;
   leftWall.position.y = 0.5;
 
-  // 3. Right Wall
+
   const rightWall = leftWall.clone("rightWall");
   rightWall.position.x = 10;
 
-  // 4. Center Line (Visual Net)
+
   const line = MeshBuilder.CreateBox(
     "centerLine",
     {
@@ -96,7 +97,7 @@ export function singlePlayerGame(container: HTMLElement) {
   line.position.y = 0.1;
   line.material = new StandardMaterial("lineMat", scene);
 
-  // 5. Paddles
+
   const paddle1 = MeshBuilder.CreateBox(
     "paddle1",
     {
@@ -120,53 +121,90 @@ export function singlePlayerGame(container: HTMLElement) {
   const paddle2 = paddle1.clone("paddle2");
   paddle2.position.z = -18;
 
-  // 6. Ball
+
   const ball = MeshBuilder.CreateSphere("ball", { diameter: 1 }, scene);
   ball.position.y = 0.5;
   ball.position.z = -3;
 
-  // sphere texture
 
   const ballTexture = new StandardMaterial("sphereMirror", scene);
   ballTexture.diffuseTexture = new Texture("textures/sphereMap.png", scene);
-
   ball.material = ballTexture;
+  // const ballVelocity = new Vector3(0.15, 0, 0.03);
 
-  const ballVelocity = new Vector3(0.15, 0, 0.03);
+  const wsUrl = BACKND_URL.replace("http", "ws") + "/ws/game/1v1";
+  let ws: WebSocket | null = null;
 
-  scene.registerBeforeRender(() => {
-    ball.position.addInPlace(ballVelocity);
+    try {
+    ws = new WebSocket(wsUrl);
+  } catch (err) {
+    console.error("Failed to create WebSocket:", err);
+  }
 
-    // Bounce on walls
-    if (ball.position.x <= -9.75 || ball.position.x >= 9.75) {
-      ballVelocity.x *= -1;
+    function applyState(state: any) {
+    if (!state) return;
+    if (state.ball) {
+      ball.position.copyFromFloats(ball.position.x, ball.position.y);
     }
-
-    // Bounce on paddle1 (front)
-    if (ball.intersectsMesh(paddle1, false) && ballVelocity.z > 0) {
-      ballVelocity.z *= -1;
+    if (state.paddles && Array.isArray(state.paddles)) {
+      const p0 = state.paddles[0];
+      const p1 = state.paddles[1];
+      if (p0) paddle1.position.copyFromFloats(paddle1.position.x, paddle1.position.y);
+      if (p1) paddle2.position.copyFromFloats(paddle2.position.x, paddle2.position.y);
     }
+  }
 
-    // Bounce on paddle2 (back)
-    if (ball.intersectsMesh(paddle2, false) && ballVelocity.z < 0) {
-      ballVelocity.z *= -1;
-    }
+  if (ws) {
+    // ws.onopen = () => {
+    //   console.info("Game WS connected:", wsUrl);
+    //   ws!.send(JSON.stringify({ type: "join", role: "viewer" }));
+    // };
 
-    // Reset if out of bounds
-    if (ball.position.z > 20 || ball.position.z < -20) {
-      ball.position = new Vector3(0, 0.5, 0);
-      ballVelocity.x = 0.1 * (Math.random() > 0.5 ? 1 : -1);
-      ballVelocity.z = 0.2 * (Math.random() > 0.5 ? 1 : -1);
-    }
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === "game_state" && msg.state) {
+          applyState(msg.state);
+        }
+      } catch (e) {
+        console.error("Invalid WS message:", e);
+      }
+    };
+
+    ws.onerror = (ev) => {
+      console.error("Game WS error:", ev);
+    };
+
+    ws.onclose = () => {
+      console.info("Game WS closed");
+    };
+  }
+
+
+  container.addEventListener("pointermove", (e) => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const rect = (canvas as HTMLCanvasElement).getBoundingClientRect();
+    const relX = (e.clientX - rect.left) / rect.width;
+    const x = relX * 20 - 10;
+    ws.send(JSON.stringify({ type: "input", action: "pointer", x }));
   });
+
 
   engine.runRenderLoop(() => {
     scene.render();
   });
 
-  // Resize
+
   window.addEventListener("resize", () => {
     engine.resize();
   });
+
+
+  window.addEventListener("beforeunload", () => {
+    try {
+      ws?.close();
+    } catch {}
+  });
+
   return scene;
 }
