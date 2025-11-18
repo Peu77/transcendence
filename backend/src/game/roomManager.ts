@@ -4,6 +4,7 @@ import { GameEngine } from './engine';
 export class GameRoomManager {
   private rooms: Map<string, GameRoom> = new Map();
   private playerToRoom: Map<string, string> = new Map();
+  private roomEmptyAt: Map<string, number> = new Map();
 
   createRoom(request: CreateRoomRequest, creatorId?: string): GameRoom {
     const roomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -24,45 +25,47 @@ export class GameRoomManager {
     };
 
     this.rooms.set(roomId, room);
+    console.log('GameRoomManager.createRoom -> created', room.id);
+    console.log('rooms after create:', Array.from(this.rooms.keys()));
     return room;
   }
 
-  joinRoom(roomId: string, player: Player): { success: boolean; error?: string } {
+  joinRoom(roomId: string, player: Player) {
+    console.log(`joinRoom: player ${player.id} joining room ${roomId}`);
+
+
+
     const room = this.rooms.get(roomId);
-    if (!room) {
+   if (!room) {
+      console.log(`joinRoom: room ${roomId} not found`);
       return { success: false, error: 'Room not found' };
     }
 
+    if (room.players.has(player.id)) {
+      console.log(`joinRoom: player ${player.id} already in room ${roomId}`);
+      return { success: true }; // already joined
+    }
+
     if (room.players.size >= room.maxPlayers) {
+      console.log(`joinRoom: room ${roomId} is full`);
       return { success: false, error: 'Room is full' };
     }
 
-    if (room.gameState.isPlaying) {
-      return { success: false, error: 'Game already in progress' };
-    }
-
-   
-    this.leaveRoom(player.id);
-
     room.players.set(player.id, player);
     this.playerToRoom.set(player.id, roomId);
-    
-    GameEngine.createPaddle(player.id, room);
+   this.roomEmptyAt.delete(roomId);
 
-    
     this.broadcastToRoom(roomId, {
       type: 'player_joined',
       roomId,
       playerId: player.id,
-      data: {
-        playerId: player.id,
-        username: player.username,
-        playerCount: room.players.size
-      }
+      data: { username: player.username }
     });
 
+    console.log('joinRoom result: success, rooms:', Array.from(this.rooms.keys()));
     return { success: true };
-  }
+   }
+  
 
   leaveRoom(playerId: string): boolean {
     const roomId = this.playerToRoom.get(playerId);
@@ -82,31 +85,13 @@ export class GameRoomManager {
     room.players.delete(playerId);
     this.playerToRoom.delete(playerId);
     
-  
-    delete room.gameState.paddles[playerId];
-    delete room.gameState.scores[playerId];
-
-    if (room.gameState.isPlaying && room.players.size < 2) {
-      this.stopGame(roomId);
-    }
-
-    this.broadcastToRoom(roomId, {
-      type: 'player_left',
-      roomId,
-      playerId,
-      data: {
-        playerId,
-        playerCount: room.players.size
-      }
-    });
-
     if (room.players.size === 0) {
-      if (room.gameLoop) {
-        clearInterval(room.gameLoop);
-      }
-      this.rooms.delete(roomId);
+      this.roomEmptyAt.set(roomId, Date.now());
+    } else {
+      this.roomEmptyAt.delete(roomId);
     }
 
+    console.log(`leaveRoom: player ${playerId} left ${roomId}, players=${room.players.size}`);
     return true;
   }
 

@@ -48,7 +48,7 @@ export function singlePlayerGame(container: HTMLElement) {
   );
 
   const floorMat = new StandardMaterial("wood", scene);
-  floorMat.diffuseTexture = new Texture("textures/albedo.png", scene);
+  floorMat.diffuseTexture = new Texture("/albedo.png", scene);
 
   floor.material = floorMat;
 
