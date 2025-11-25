@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { GameRoomManager } from './roomManager';
 import { GameMessage, Player, CreateRoomRequest, CreateRoomResponse } from './types';
+import {WebSocket} from "@fastify/websocket";
 
 export class GameWebSocketHandler {
   private roomManager: GameRoomManager;
@@ -9,14 +10,17 @@ export class GameWebSocketHandler {
     this.roomManager = roomManager;
   }
 
-  handleConnection(connection: any, request: FastifyRequest): void {
+  handleConnection(connection: WebSocket, request: FastifyRequest): void {
 
     const userId = (request as any).userId as string | undefined;
-    const username = (request as any).username as string | undefined;
+    let username = (request as any).username as string | undefined;
+
+    //TODO add username to database and fetch it here
+    username = "test1234"
 
     if (!userId || !username) {
       console.log('Unauthorized WebSocket connection attempt');
-      connection.socket.close(1008, 'Unauthorized');
+      connection.close(1008, 'Unauthorized');
       return;
     }
 
@@ -25,7 +29,7 @@ export class GameWebSocketHandler {
 
     console.log(`WebSocket connected: ${username} (${playerId})`);
 
-    connection.socket.on('message', (buffer: Buffer) => {
+    connection.on('message', (buffer: Buffer) => {
       try {
         const message: GameMessage = JSON.parse(buffer.toString());
         
@@ -40,7 +44,7 @@ export class GameWebSocketHandler {
               id: playerId,
               userId,
               username,
-              ws: connection.socket,
+              ws: connection,
               paddle: 
               {
                 position: { x: 0, y: 0 },
@@ -53,7 +57,7 @@ export class GameWebSocketHandler {
 
             const joinResult = this.roomManager.joinRoom(message.roomId, currentPlayer);
             if (joinResult.success) {
-              connection.socket.send(JSON.stringify({
+              connection.send(JSON.stringify({
                 type: 'joined_room',
                 roomId: message.roomId,
                 playerId,
@@ -84,18 +88,18 @@ export class GameWebSocketHandler {
       }
     });
 
-    connection.socket.on('close', () => {
+    connection.on('close', () => {
       console.log(`WebSocket disconnected: ${username} (${playerId})`);
       if (currentPlayer) {
         this.roomManager.leaveRoom(currentPlayer.id);
       }
     });
 
-    connection.socket.on('error', (error: Error) => {
+    connection.on('error', (error: Error) => {
       console.error(`WebSocket error for ${username}:`, error);
     });
 
-    connection.socket.send(JSON.stringify({
+    connection.send(JSON.stringify({
       type: 'connected',
       playerId,
       data: { message: 'Connected to game server' }
