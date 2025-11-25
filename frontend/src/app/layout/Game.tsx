@@ -1,6 +1,5 @@
 import { h, useEffect, useRef } from "refreshjs";
-import { GameModeSelector } from "./GameModeSelector";
-import { singlePlayerGame } from "../../game/single_player";
+import { singlePlayerGame } from "@/game/single_player";
 
 export default function Game() {
   const containerId = useRef<HTMLElement | null>(null);
