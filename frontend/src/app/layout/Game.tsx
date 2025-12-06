@@ -8,7 +8,7 @@ export default function Game() {
     if (containerId.current) {
       singlePlayerGame(containerId.current);
     }
-  }, []);
+  }, [containerId.current]);
 
   return <div ref={containerId} style={{ width: "100%", height: "100vh" }} />;
 }
