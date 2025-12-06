@@ -8,3 +8,10 @@ backend/.env
 frontend/node_modules
 frontend/.env
 .DS_Store
+
+
+frontend/src/game/.next/
+frontend/src/game/.bjseditor/
+frontend/src/game/.vscode/
+frontend/src/game/public/
+frontend/src/game/node_modules/

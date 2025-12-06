@@ -2,6 +2,7 @@ import { h, useStore } from "refreshjs";
 import Button from "../../components/Button";
 import App from "../App";
 import Game from "./Game";
+import JoinRoomById from "./JoinRoomById";
 import Scores from "./Scores";
 import { navigate, useCurrentRoute } from "refreshjs";
 import { ProfilePicture } from "@/components/ProfilePicture";
@@ -19,6 +20,7 @@ export const retroNavigationItems = [
   { id: "", component: App, label: "Home", index: true },
   { id: "game", component: Game, label: "Game", index: false },
   { id: "scores", component: Scores, label: "Scores", index: false },
+  { id: "join-room", component: JoinRoomById, label: "Join Room", index: false },
 ];
 
 export function RetroNavigation() {

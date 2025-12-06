@@ -1,7 +1,7 @@
 import {FastifyReply, FastifyRequest} from "fastify";
 import {app} from "../app";
 import {validateDto} from "../utils/validation";
-import {LoginDto, RegisterDto, TwoFAVerifyDto} from "./user.dto";
+import {LoginDto, RegisterDto, TwoFAVerifyDto} from "./dtos/user.dto";
 import bcrypt from "bcryptjs";
 import {v4 as uuid} from "uuid";
 import {HttpStatusCode} from "../utils/httpStatusCodes";
