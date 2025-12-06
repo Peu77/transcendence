@@ -7,7 +7,7 @@ export function ThreeDMesh() {
     if (containerId.current) {
       create3DMesh(containerId.current);
     }
-  }, []);
+  }, [containerId.current]);
 
   return <div ref={containerId} />;
 }

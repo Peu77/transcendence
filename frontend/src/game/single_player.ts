@@ -11,6 +11,8 @@ import {
   Color4,
 } from "@babylonjs/core";
 
+import { BACKEND_URL } from "@/query/client";
+
 export function singlePlayerGame(container: HTMLElement) {
   const canvas = document.createElement("canvas");
   canvas.style.width = "100%";
@@ -46,11 +48,10 @@ export function singlePlayerGame(container: HTMLElement) {
   );
 
   const floorMat = new StandardMaterial("wood", scene);
-  floorMat.diffuseTexture = new Texture("textures/albedo.png", scene);
+  floorMat.diffuseTexture = new Texture("/albedo.png", scene);
 
   floor.material = floorMat;
 
-  // 2. Left Wall
   const leftWall = MeshBuilder.CreateBox(
     "leftWall",
     {
@@ -71,11 +72,11 @@ export function singlePlayerGame(container: HTMLElement) {
   leftWall.position.x = -10;
   leftWall.position.y = 0.5;
 
-  // 3. Right Wall
+
   const rightWall = leftWall.clone("rightWall");
   rightWall.position.x = 10;
 
-  // 4. Center Line (Visual Net)
+
   const line = MeshBuilder.CreateBox(
     "centerLine",
     {
@@ -96,7 +97,7 @@ export function singlePlayerGame(container: HTMLElement) {
   line.position.y = 0.1;
   line.material = new StandardMaterial("lineMat", scene);
 
-  // 5. Paddles
+
   const paddle1 = MeshBuilder.CreateBox(
     "paddle1",
     {
@@ -120,53 +121,159 @@ export function singlePlayerGame(container: HTMLElement) {
   const paddle2 = paddle1.clone("paddle2");
   paddle2.position.z = -18;
 
-  // 6. Ball
+
   const ball = MeshBuilder.CreateSphere("ball", { diameter: 1 }, scene);
   ball.position.y = 0.5;
   ball.position.z = -3;
 
-  // sphere texture
 
   const ballTexture = new StandardMaterial("sphereMirror", scene);
   ballTexture.diffuseTexture = new Texture("textures/sphereMap.png", scene);
-
   ball.material = ballTexture;
+  // const ballVelocity = new Vector3(0.15, 0, 0.03);
 
-  const ballVelocity = new Vector3(0.15, 0, 0.03);
+  const wsUrl = BACKEND_URL.replace("http", "ws") + "/game/ws";
+  let ws: WebSocket | null = null;
+  let currentRoomId: string | null = null;
 
-  scene.registerBeforeRender(() => {
-    ball.position.addInPlace(ballVelocity);
 
-    // Bounce on walls
-    if (ball.position.x <= -9.75 || ball.position.x >= 9.75) {
-      ballVelocity.x *= -1;
+  async function createGameRoom() {
+    try {
+      const response = await fetch(BACKEND_URL + "/game/rooms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ type: "single" })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        currentRoomId = data.roomId;
+        console.log("Created room:", currentRoomId);
+
+        connectWebSocket();
+      } else {
+        console.error("Failed to create room:", response.status);
+      }
+    } catch (err) {
+      console.error("Failed to create room:", err);
     }
+  }
 
-    // Bounce on paddle1 (front)
-    if (ball.intersectsMesh(paddle1, false) && ballVelocity.z > 0) {
-      ballVelocity.z *= -1;
-    }
+  function connectWebSocket() {
+    try {
+      ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        console.info("Game WS connected:", wsUrl);
+        if (currentRoomId) {
+          ws!.send(JSON.stringify({ 
+            type: "join_room", 
+            roomId: currentRoomId 
+          }));
+        }
+      };
 
-    // Bounce on paddle2 (back)
-    if (ball.intersectsMesh(paddle2, false) && ballVelocity.z < 0) {
-      ballVelocity.z *= -1;
-    }
+      ws.onmessage = (ev: MessageEvent) => {
+        try {
+          const msg = JSON.parse(ev.data);
+          console.log("Received message:", msg);
+          
+          if (msg.type === "game_state" && msg.data) {
+            applyState(msg.data);
+          } else if (msg.type === "joined_room") {
+            console.log("Successfully joined room:", msg.roomId);
+          } else if (msg.type === "error") {
+            console.error("Game error:", msg.data.message);
+          }
+        } catch (e) {
+          console.error("Invalid WS message:", e);
+        }
+      };
 
-    // Reset if out of bounds
-    if (ball.position.z > 20 || ball.position.z < -20) {
-      ball.position = new Vector3(0, 0.5, 0);
-      ballVelocity.x = 0.1 * (Math.random() > 0.5 ? 1 : -1);
-      ballVelocity.z = 0.2 * (Math.random() > 0.5 ? 1 : -1);
+      ws.onerror = (ev: Event) => {
+        console.error("Game WS error:", ev);
+      };
+
+      ws.onclose = () => {
+        console.info("Game WS closed");
+      };
+    } catch (err) {
+      console.error("Failed to create WebSocket:", err);
     }
+  }
+
+  function applyState(state: any) {
+    if (!state) return;
+    
+    if (state.ball && state.ball.position) {
+      ball.position.copyFromFloats(
+        (state.ball.position.x - 400) / 20,
+        ball.position.y,
+        (state.ball.position.y - 300) / 15
+      );
+    }
+    
+
+    if (state.paddles) {
+      const paddleIds = Object.keys(state.paddles);
+      
+      if (paddleIds.length > 0) {
+        const paddle1Data = state.paddles[paddleIds[0]];
+        if (paddle1Data && paddle1Data.position) {
+          paddle1.position.copyFromFloats(
+            (paddle1Data.position.x - 400) / 20,
+            paddle1.position.y,
+            (paddle1Data.position.y - 300) / 15 
+          );
+        }
+      }
+      
+      if (paddleIds.length > 1) {
+        const paddle2Data = state.paddles[paddleIds[1]];
+        if (paddle2Data && paddle2Data.position) {
+          paddle2.position.copyFromFloats(
+            (paddle2Data.position.x - 400) / 20,
+            paddle2.position.y,
+            (paddle2Data.position.y - 300) / 15
+          );
+        }
+      }
+    }
+  }
+
+  createGameRoom();
+
+
+  container.addEventListener("pointermove", (e) => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const rect = (canvas as HTMLCanvasElement).getBoundingClientRect();
+    const relY = (e.clientY - rect.top) / rect.height;
+    const paddleY = relY * 600;
+    ws.send(JSON.stringify({ 
+      type: "paddle_move", 
+      data: { paddleY } 
+    }));
   });
+
 
   engine.runRenderLoop(() => {
     scene.render();
   });
 
-  // Resize
+
   window.addEventListener("resize", () => {
     engine.resize();
   });
+
+
+  window.addEventListener("beforeunload", () => {
+    try {
+      ws?.close();
+    } catch {}
+  });
+
   return scene;
 }
