@@ -41,11 +41,6 @@ export async function buildServer() {
   await app.register(sqlitePlugin);
   await app.register(websocket);
 
-  await app.register(fastifyStatic, {
-    root: path.join(process.cwd(), "frontend", "public"),
-    prefix: "/public/",
-    wildcard: true,
-  });
 
   registerAuthGuard();
   await registerUserRoutes();
