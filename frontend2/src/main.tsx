@@ -1,13 +1,13 @@
-import { StrictMode } from 'react'
+import {StrictMode} from 'react'
 import ReactDOM from 'react-dom/client'
 import {
-  Outlet,
-  RouterProvider,
-  createRootRoute,
-  createRoute,
-  createRouter,
+    Outlet,
+    RouterProvider,
+    createRootRoute,
+    createRoute,
+    createRouter,
 } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
+import {TanStackRouterDevtools} from '@tanstack/react-router-devtools'
 
 import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider.tsx'
 
@@ -15,54 +15,62 @@ import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
 
 import App from './App.tsx'
+import {Toaster} from "@/components/ui/sonner.tsx";
+import Login from "@/routes/auth/login.tsx";
 
 const rootRoute = createRootRoute<unknown>({
-  component: () => (
-    <>
-      <Outlet />
-      <TanStackRouterDevtools />
-    </>
-  ),
+    component: () => (
+        <>
+            <Toaster/>
+            <Outlet/>
+            <TanStackRouterDevtools/>
+        </>
+    ),
 })
 
 const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/',
-  component: App,
+    getParentRoute: () => rootRoute,
+    path: '/',
+    component: App,
 })
 
 const routeTree = rootRoute.addChildren([
-  indexRoute
+    indexRoute,
+    createRoute({
+        getParentRoute: () => rootRoute,
+        component: Login,
+        path: "login"
+    }),
 ])
 
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
 const router = createRouter({
-  routeTree,
-  context: {
-    ...TanStackQueryProviderContext,
-  },
-  defaultPreload: 'intent',
-  scrollRestoration: true,
-  defaultStructuralSharing: true,
-  defaultPreloadStaleTime: 0,
+    routeTree,
+    context: {
+        ...TanStackQueryProviderContext,
+    },
+    defaultPreload: 'intent',
+    scrollRestoration: true,
+    defaultStructuralSharing: true,
+    defaultPreloadStaleTime: 0,
 })
 
 declare module '@tanstack/react-router' {
-  interface Register {
-    router: typeof router
-  }
+    interface Register {
+        router: typeof router
+    }
 }
 
 const rootElement = document.getElementById('app')
 if (rootElement && !rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement)
-  root.render(
-    <StrictMode>
-      <TanStackQueryProvider.Provider {...TanStackQueryProviderContext}>
-        <RouterProvider router={router} />
-      </TanStackQueryProvider.Provider>
-    </StrictMode>,
-  )
+    const root = ReactDOM.createRoot(rootElement)
+    root.render(
+        <StrictMode>
+            <TanStackQueryProvider.Provider {...TanStackQueryProviderContext}>
+                <RouterProvider router={router}/>
+            </TanStackQueryProvider.Provider>
+        </StrictMode>,
+    )
 }
 
 reportWebVitals()
