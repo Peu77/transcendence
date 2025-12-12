@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import {Link} from "@tanstack/react-router";
-import {buttonVariants} from "@/components/ui/button.tsx";
+import {Button, buttonVariants} from "@/components/ui/button.tsx";
+import {toast} from "sonner";
 
 const authors = ["Emil", "Kira", "Konrad", "Matthias"];
 const githubUrl = "https://github.com/peu77/transcendence";
@@ -52,6 +53,10 @@ export default function Home() {
           >
             GitHub
           </Link>
+
+            <Button onClick={() => toast.error("This is a success toast!")}>
+                test
+            </Button>
         </div>
 
         <button

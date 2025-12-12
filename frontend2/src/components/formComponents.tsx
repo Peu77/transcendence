@@ -33,7 +33,7 @@ function ErrorMessages({
       {errors.map((error) => (
         <div
           key={typeof error === 'string' ? error : error.message}
-          className="text-red-500 mt-1 font-bold"
+          className="text-red-500 text-sm mt-1 font-bold"
         >
           {typeof error === 'string' ? error : error.message}
         </div>
@@ -44,9 +44,11 @@ function ErrorMessages({
 
 export function TextField({
   label,
+  type = "text",
   placeholder,
 }: {
-  label: string
+  label: string,
+  type?: string,
   placeholder?: string
 }) {
   const field = useFieldContext<string>()
@@ -54,10 +56,11 @@ export function TextField({
 
   return (
     <div>
-      <Label htmlFor={label} className="mb-2 text-xl font-bold">
+      <Label htmlFor={label} className="mb-2 font-bold">
         {label}
       </Label>
       <Input
+        type={type}
         value={field.state.value}
         placeholder={placeholder}
         onBlur={field.handleBlur}
@@ -80,7 +83,7 @@ export function TextArea({
 
   return (
     <div>
-      <Label htmlFor={label} className="mb-2 text-xl font-bold">
+      <Label htmlFor={label} className="mb-2 font-bold">
         {label}
       </Label>
       <ShadcnTextarea
@@ -139,7 +142,7 @@ export function Slider({ label }: { label: string }) {
 
   return (
     <div>
-      <Label htmlFor={label} className="mb-2 text-xl font-bold">
+      <Label htmlFor={label} className="mb-2 font-bold">
         {label}
       </Label>
       <ShadcnSlider
