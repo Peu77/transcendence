@@ -4,7 +4,7 @@ import App from "../App";
 import Game from "./Game";
 import JoinRoomById from "./JoinRoomById";
 import Scores from "./Scores";
-import { navigate, useCurrentRoute } from "refreshjs";
+import { navigate } from "refreshjs";
 import { ProfilePicture } from "@/components/ProfilePicture";
 import { userStore } from "@/store/user";
 import Dropdown, {
@@ -24,7 +24,6 @@ export const retroNavigationItems = [
 ];
 
 export function RetroNavigation() {
-  const { child } = useCurrentRoute();
   const user = useStore(userStore);
   const logoutMutation = useMutation({
     mutationKey: ["logout"],
@@ -39,22 +38,8 @@ export function RetroNavigation() {
   });
 
   return (
-    <nav className="w-full bg-card shadow-md">
-      <div className="flex items-center justify-between max-w-6xl mx-auto px-6">
-        <div className="flex flex-wrap items-center gap-2 py-3">
-          {retroNavigationItems.map((item) => (
-            <Button
-              key={item.id}
-              variant={child?.path === item.id ? "default" : "ghost"}
-              size="sm"
-              onClick={() => {
-                navigate(`/app/${item.id}`);
-              }}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </div>
+    <nav className="w-full bg-card shadow-md px-32">
+      <div className="flex items-center justify-end max-w-6xl mx-auto">
         <Dropdown>
           <DropdownTrigger asChild={true}>
             <ProfilePicture
