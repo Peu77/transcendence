@@ -1,8 +1,7 @@
-import { createStore, h, navigate, useEffect } from "refreshjs";
+import { h, navigate, useEffect } from "refreshjs";
 import { RetroNavigation } from "./RetroNavigation";
 import { ThreeDMesh } from "./3DMesh";
 import { getUser } from "@/api/user";
-import { User } from "@/api/user";
 import { useQuery } from "@/query/hooks";
 import { userStore } from "@/store/user";
 
