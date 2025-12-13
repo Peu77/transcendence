@@ -41,7 +41,7 @@ export default function Register() {
 
     const registerMutation = useMutation({
         mutationFn: register,
-        onSuccess: async (data, vars) => {
+        onSuccess: async (_data, vars) => {
             toast.success("Account created!", {
                 description: `Welcome, ${vars.email}.`,
                 duration: 3000,

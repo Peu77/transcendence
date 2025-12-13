@@ -211,7 +211,7 @@ export const Route = createRootRoute({
 });
 ```
 
-Next up you'll need to move your home route code into `src/routes/index.tsx`
+Next up you'll need to move your home route code into `src/routes/home.tsx`
 
 ```tsx
 import { createFileRoute } from "@tanstack/react-router";
@@ -233,7 +233,7 @@ function App() {
           alt="logo"
         />
         <p>
-          Edit <code>src/App.tsx</code> and save to reload.
+          Edit <code>src/home.tsx</code> and save to reload.
         </p>
         <a
           className="text-[#61dafb] hover:underline"
@@ -257,7 +257,7 @@ function App() {
 }
 ```
 
-At this point you can delete `src/App.tsx`, you will no longer need it as the contents have moved into `src/routes/index.tsx`.
+At this point you can delete `src/home.tsx`, you will no longer need it as the contents have moved into `src/routes/home.tsx`.
 
 The only additional code is the `createFileRoute` function that tells TanStack Router where to render the route. Helpfully the Vite plugin will keep the path argument that goes to `createFileRoute` automatically in sync with the file system.
 
@@ -435,7 +435,7 @@ First you need to add TanStack Store as a dependency:
 pnpm add @tanstack/store
 ```
 
-Now let's create a simple counter in the `src/App.tsx` file as a demonstration.
+Now let's create a simple counter in the `src/home.tsx` file as a demonstration.
 
 ```tsx
 import { useStore } from "@tanstack/react-store";

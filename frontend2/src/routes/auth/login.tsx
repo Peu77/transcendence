@@ -40,7 +40,7 @@ export default function Login() {
                 description: `Welcome back, ${vars.email}.`,
                 duration: 3000,
             });
-            await navigate("/app");
+            await navigate({to: "/app"});
         },
         onError: (err: any) => {
             const description =

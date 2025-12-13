@@ -14,10 +14,11 @@ import * as TanStackQueryProvider from './integrations/tanstack-query/root-provi
 import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
 
-import App from './App.tsx'
 import {Toaster} from "@/components/ui/sonner.tsx";
 import Login from "@/routes/auth/login.tsx";
 import Register from "@/routes/auth/register.tsx";
+import Home from "@/routes/home.tsx";
+import {App} from "@/routes/app/app.tsx";
 
 const rootRoute = createRootRoute<unknown>({
     component: () => (
@@ -32,7 +33,7 @@ const rootRoute = createRootRoute<unknown>({
 const indexRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/',
-    component: App,
+    component: Home,
 })
 
 const routeTree = rootRoute.addChildren([
@@ -46,6 +47,11 @@ const routeTree = rootRoute.addChildren([
         getParentRoute: () => rootRoute,
         component: Register,
         path: "register"
+    }),
+    createRoute({
+        getParentRoute: () => rootRoute,
+        component: App,
+        path: "app"
     })
 ])
 
