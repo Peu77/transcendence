@@ -1,19 +1,24 @@
-import { defineConfig } from "vite";
-import * as path from "path";
+import { defineConfig } from 'vite'
+import { devtools } from '@tanstack/devtools-vite'
+import viteReact from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
+import { fileURLToPath, URL } from 'node:url'
+
+// https://vitejs.dev/config/
 export default defineConfig({
-  esbuild: {
-    jsx: "transform",
-    jsxFactory: "h",
-    jsxFragment: "Fragment",
-  },
-  server: {
-    port: 5173,
-    open: false,
-  },
+  plugins: [
+    devtools(),
+    viteReact({
+      babel: {
+        plugins: ['babel-plugin-react-compiler'],
+      },
+    }),
+    tailwindcss(),
+  ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-});
+})
