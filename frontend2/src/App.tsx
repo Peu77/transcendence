@@ -34,7 +34,7 @@ export default function Home() {
         <span className="border-b-2 border-blue-400 pb-1 animate-pulse">
           {displayed}
         </span>
-          <span class="animate-blink">
+          <span className="animate-blink">
           {displayed.length < fullText.length ? "|" : ""}
         </span>
         </h1>
@@ -43,8 +43,7 @@ export default function Home() {
             Login
           </Link>
           <Link
-              to={"/"}
-              href={githubUrl}
+              to={githubUrl}
               target="_blank"
               rel="noopener"
               className={buttonVariants({
@@ -66,7 +65,7 @@ export default function Home() {
         >
           {isDark ? "White" : "Dark"}
         </button>
-        <footer class="absolute bottom-6 text-gray-400 text-sm">
+        <footer className="absolute bottom-6 text-gray-400 text-sm">
           Project by {authors.join(", ")}
         </footer>
         <style>{`

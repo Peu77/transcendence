@@ -17,6 +17,10 @@ export default function Login() {
 
     const form = useAppForm({
         validators: {onChange: loginSchema},
+        defaultValues: {
+            email: "",
+            password: "",
+        },
         onSubmit: async (data) => {
             await handleSubmit(data.value);
         }
@@ -24,7 +28,7 @@ export default function Login() {
 
     const loginMutation = useMutation({
         mutationFn: login,
-        onSuccess: (data, vars) => {
+        onSuccess: async (data, vars) => {
             if ((data as any)?.requires2FA) {
                 toast.info("Two-factor authentication required", {
                     description: "2FA flow not implemented yet.",
@@ -36,7 +40,7 @@ export default function Login() {
                 description: `Welcome back, ${vars.email}.`,
                 duration: 3000,
             });
-            navigate("/app");
+            await navigate("/app");
         },
         onError: (err: any) => {
             const description =
@@ -62,9 +66,9 @@ export default function Login() {
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
                     <form
-                        onSubmit={e => {
+                        onSubmit={async e => {
                             e.preventDefault();
-                            form.handleSubmit();
+                            await form.handleSubmit();
                         }}
                         noValidate
                         className="flex flex-col gap-3 w-72"
