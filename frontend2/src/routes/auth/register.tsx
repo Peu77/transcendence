@@ -1,141 +1,133 @@
-import { h, Link, navigate } from "refreshjs";
-import { z } from "zod";
-import Card, {
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/Card";
-import Input from "@/components/Input";
-import Button from "@/components/Button";
-import toast from "@/store/toast";
+import {z} from "zod";
+import {useAppForm} from "@/hooks/form.ts";
+import {useMutation} from "@tanstack/react-query";
+import {register} from "@/api/auth.ts";
 import {
-  useForm,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/Form";
-import { useMutation } from "@/query/hooks";
-import { register as apiRegister } from "../api/auth";
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card.tsx";
+import {toast} from "sonner";
+import {Link, useNavigate} from "@tanstack/react-router";
+import {Button} from "@/components/ui/button.tsx";
 
 const registerSchema = z
-  .object({
-    email: z.email("Please enter a valid email"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(6, "Confirm your password"),
-  })
-  .refine((v) => v.password === v.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "Passwords do not match",
-  });
+    .object({
+        email: z.email("Please enter a valid email"),
+        password: z.string().min(6, "Password must be at least 6 characters"),
+        confirmPassword: z.string().min(6, "Confirm your password"),
+    })
+    .refine((v) => v.password === v.confirmPassword, {
+        path: ["confirmPassword"],
+        message: "Passwords do not match",
+    });
 
 export default function Register() {
-  const form = useForm({
-    schema: registerSchema,
-    defaultValues: { email: "", password: "", confirmPassword: "" },
-  });
+    const navigate = useNavigate();
 
-  const registerMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof registerSchema>) =>
-      apiRegister({ email: values.email, password: values.password }),
-    onSuccess: (data, vars) => {
-      toast.success("Account created!", {
-        description: `Welcome, ${vars.email}.`,
-        duration: 3000,
-      });
-      navigate("/app");
-    },
-    onError: (err: any) => {
-      const description =
-        err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        err?.message ||
-        "Could not create account.";
-      toast.error("Registration failed", { description, duration: 4000 });
-    },
-  });
+    const form = useAppForm({
+        validators: {onChange: registerSchema},
+        defaultValues: {
+            email: "",
+            password: "",
+            confirmPassword: "",
+        },
+        onSubmit: async (data) => {
+            await handleSubmit(data.value);
+        },
+    });
 
-  async function handleSubmit(values: z.infer<typeof registerSchema>) {
-    await registerMutation.mutateAsync(values);
-  }
+    const registerMutation = useMutation({
+        mutationFn: register,
+        onSuccess: async (data, vars) => {
+            toast.success("Account created!", {
+                description: `Welcome, ${vars.email}.`,
+                duration: 3000,
+            });
+            await navigate({to: "/app"});
+        },
+        onError: (err: any) => {
+            const description =
+                err?.response?.data?.error ||
+                err?.message ||
+                "Could not create account.";
+            toast.error("Registration failed", {description, duration: 4000});
+        },
+    });
 
-  const isBusy = registerMutation.isPending || form.formState.isSubmitting;
+    async function handleSubmit(values: z.infer<typeof registerSchema>) {
+        await registerMutation.mutateAsync({
+            email: values.email,
+            password: values.password,
+        });
+    }
 
-  return (
-    <div class="flex min-h-screen flex-col items-center justify-center bg-background">
-      <Card className="animate-scale-in">
-        <CardHeader>
-          <CardTitle>Create account</CardTitle>
-          <CardDescription>sign up to get started</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            noValidate
-            className="flex flex-col gap-3 w-72"
-          >
-            <FormField
-              form={form}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor={field.id}>Email</FormLabel>
-                  <Input
-                    {...field}
-                    autoFocus={true}
-                    placeholder="enter email"
-                  />
-                  <FormMessage form={form} name="email" />
-                </FormItem>
-              )}
-            />
+    const isBusy = registerMutation.isPending || form.state.isSubmitting;
 
-            <FormField
-              form={form}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor={field.id}>Password</FormLabel>
-                  <Input
-                    {...field}
-                    type="password"
-                    placeholder="enter password"
-                  />
-                  <FormMessage form={form} name="password" />
-                </FormItem>
-              )}
-            />
+    return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+            <Card className="animate-scale-in">
+                <CardHeader>
+                    <CardTitle>Create account</CardTitle>
+                    <CardDescription>sign up to get started</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3">
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            await form.handleSubmit();
+                        }}
+                        noValidate
+                        className="flex flex-col gap-3 w-72"
+                    >
+                        <form.AppField
+                            name="email"
+                            children={(field) => (
+                                <field.TextField
+                                    label="Email"
+                                    placeholder="enter email"
+                                    type="email"
+                                />
+                            )}
+                        />
 
-            <FormField
-              form={form}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor={field.id}>Confirm password</FormLabel>
-                  <Input
-                    {...field}
-                    type="password"
-                    placeholder="confirm password"
-                  />
-                  <FormMessage form={form} name="confirmPassword" />
-                </FormItem>
-              )}
-            />
+                        <form.AppField
+                            name="password"
+                            children={(field) => (
+                                <field.TextField
+                                    label="Password"
+                                    placeholder="enter password"
+                                    type="password"
+                                />
+                            )}
+                        />
 
-            <Button size={"sm"} disabled={isBusy}>
-              {isBusy ? "creating…" : "create account"}
-            </Button>
+                        <form.AppField
+                            name="confirmPassword"
+                            children={(field) => (
+                                <field.TextField
+                                    label="Confirm password"
+                                    placeholder="confirm password"
+                                    type="password"
+                                />
+                            )}
+                        />
 
-            <p className="text-sm text-muted-foreground mt-2 text-center">
-              Already have an account?{" "}
-              <Link to="/login" className="text-primary hover:underline">
-                Log in
-              </Link>
-            </p>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  );
+                        <Button size={"sm"} disabled={isBusy}>
+                            {isBusy ? "creating.." : "create account"}
+                        </Button>
+
+                        <p className="text-sm text-muted-foreground mt-2 text-center">
+                            Already have an account?{" "}
+                            <Link to="/login" className="text-primary hover:underline">
+                                Log in
+                            </Link>
+                        </p>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
+    );
 }

@@ -17,6 +17,7 @@ import reportWebVitals from './reportWebVitals.ts'
 import App from './App.tsx'
 import {Toaster} from "@/components/ui/sonner.tsx";
 import Login from "@/routes/auth/login.tsx";
+import Register from "@/routes/auth/register.tsx";
 
 const rootRoute = createRootRoute<unknown>({
     component: () => (
@@ -41,6 +42,11 @@ const routeTree = rootRoute.addChildren([
         component: Login,
         path: "login"
     }),
+    createRoute({
+        getParentRoute: () => rootRoute,
+        component: Register,
+        path: "register"
+    })
 ])
 
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
