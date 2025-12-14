@@ -44,7 +44,7 @@ export class UsersController {
         destination: async (_req, _file, cb) => {
           await fs.mkdir(UPLOAD_DIR, { recursive: true });
           cb(null, UPLOAD_DIR);
-        }
+        },
       }),
       fileFilter: (_req, file, cb) => {
         if (file.mimetype && !file.mimetype.startsWith("image/")) {
@@ -76,7 +76,7 @@ export class UsersController {
     return {
       message: "Profile picture uploaded successfully",
       profilePictureId: file.filename,
-    }
+    };
   }
 
   @Get("users/profilePicture/:id")
