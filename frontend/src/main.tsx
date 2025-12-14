@@ -18,9 +18,10 @@ import {Toaster} from "@/components/ui/sonner.tsx";
 import Login from "@/routes/auth/login.tsx";
 import Register from "@/routes/auth/register.tsx";
 import Home from "@/routes/home.tsx";
-import {App} from "@/routes/app/app.tsx";
+import {AppRoute} from "@/routes/app/layout.tsx";
+import {AppIndexRoute} from "@/routes/app/app.tsx";
 
-const rootRoute = createRootRoute<unknown>({
+export const rootRoute = createRootRoute<unknown>({
     component: () => (
         <>
             <Toaster/>
@@ -48,11 +49,8 @@ const routeTree = rootRoute.addChildren([
         component: Register,
         path: "register"
     }),
-    createRoute({
-        getParentRoute: () => rootRoute,
-        component: App,
-        path: "app"
-    })
+    AppRoute,
+    AppIndexRoute
 ])
 
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
