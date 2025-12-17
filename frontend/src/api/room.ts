@@ -1,6 +1,4 @@
-import { axios } from "@/query/client";
-import { BACKEND_URL } from "@/query/client";
-
+import {axios} from "@/lib/client.ts";
 
 export interface RoomInfo {
   id: string;
