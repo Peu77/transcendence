@@ -1,44 +1,86 @@
-import { h, render, Router, Fragment } from "refreshjs";
-import Home from "./home";
-import "./styles.css";
-import Login from "./auth/login";
-import Register from "./auth/register";
-import Toaster from "./components/Toaster";
-import Layout from "./app/layout/Layout";
-import { retroNavigationItems } from "./app/layout/RetroNavigation";
-function NotFound() {
-  return <p class="text-red-600">404: Page not found</p>;
+import {StrictMode} from 'react'
+import ReactDOM from 'react-dom/client'
+import {
+    Outlet,
+    RouterProvider,
+    createRootRoute,
+    createRoute,
+    createRouter,
+} from '@tanstack/react-router'
+import {TanStackRouterDevtools} from '@tanstack/react-router-devtools'
+
+import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider.tsx'
+
+import './styles.css'
+import reportWebVitals from './reportWebVitals.ts'
+
+import {Toaster} from "@/components/ui/sonner.tsx";
+import Login from "@/routes/auth/login.tsx";
+import Register from "@/routes/auth/register.tsx";
+import Home from "@/routes/home.tsx";
+import {AppRoute} from "@/routes/app/layout.tsx";
+import {AppIndexRoute} from "@/routes/app/app.tsx";
+
+export const rootRoute = createRootRoute<unknown>({
+    component: () => (
+        <>
+            <Toaster/>
+            <Outlet/>
+            <TanStackRouterDevtools/>
+        </>
+    ),
+})
+
+const indexRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/',
+    component: Home,
+})
+
+const routeTree = rootRoute.addChildren([
+    indexRoute,
+    createRoute({
+        getParentRoute: () => rootRoute,
+        component: Login,
+        path: "login"
+    }),
+    createRoute({
+        getParentRoute: () => rootRoute,
+        component: Register,
+        path: "register"
+    }),
+    AppRoute,
+    AppIndexRoute
+])
+
+const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
+const router = createRouter({
+    routeTree,
+    context: {
+        ...TanStackQueryProviderContext,
+    },
+    defaultPreload: 'intent',
+    scrollRestoration: true,
+    defaultStructuralSharing: true,
+    defaultPreloadStaleTime: 0,
+})
+
+declare module '@tanstack/react-router' {
+    interface Register {
+        router: typeof router
+    }
 }
 
-const routes = [
-  {
-    path: "",
-    component: Home,
-  },
-  {
-    path: "login",
-    component: Login,
-  },
-  {
-    path: "register",
-    component: Register,
-  },
-  {
-    path: "app/",
-    layout: Layout,
-    children: retroNavigationItems.map((item) => ({
-      index: item.index,
-      path: item.id,
-      component: item.component,
-    })),
-  },
-];
+const rootElement = document.getElementById('app')
+if (rootElement && !rootElement.innerHTML) {
+    const root = ReactDOM.createRoot(rootElement)
+    root.render(
+        <StrictMode>
+            <TanStackQueryProvider.Provider {...TanStackQueryProviderContext}>
+                <RouterProvider router={router}/>
+            </TanStackQueryProvider.Provider>
+        </StrictMode>,
+    )
+}
 
-const root = document.getElementById("root")!;
-render(
-  <Fragment>
-    <Router routes={routes} notFound={NotFound} />
-    <Toaster />
-  </Fragment>,
-  root,
-);
+reportWebVitals()
