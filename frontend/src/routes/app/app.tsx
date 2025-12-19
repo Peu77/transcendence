@@ -47,7 +47,7 @@ const Index = () => {
     ]
 
     return (
-            <div className="w-full min-h-screen flex flex-col items-end pt-10 bg-accent-foreground">
+            <div className="w-full min-h-screen flex flex-col items-end pt-10">
                 <div className="max-w-[90%] flex flex-col w-full gap-4">
                 {items.map((item) => (
                     <div key={item.label}
