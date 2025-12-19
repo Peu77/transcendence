@@ -5,6 +5,7 @@ import {createRoute, Outlet, useNavigate} from "@tanstack/react-router";
 import {rootRoute} from "@/main.tsx";
 import {useEffect} from "react";
 import {toast} from "sonner";
+import {Navbar} from "@/components/app/navbar.tsx";
 
 const AppLayout = () => {
     const userQuery = useQuery({
@@ -29,7 +30,8 @@ const AppLayout = () => {
     }
 
     return (
-        <div className="min-h-screen overflow-hidden">
+        <div className="min-h-screen overflow-hidden bg-background">
+            <Navbar/>
             <Outlet/>
         </div>
     )
