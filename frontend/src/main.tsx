@@ -20,6 +20,7 @@ import Register from "@/routes/auth/register.tsx";
 import Home from "@/routes/home.tsx";
 import {AppRoute} from "@/routes/app/layout.tsx";
 import {AppIndexRoute} from "@/routes/app/app.tsx";
+import {NotFound} from "@/components/notFound.tsx";
 
 export const rootRoute = createRootRoute<unknown>({
     component: () => (
@@ -35,6 +36,7 @@ const indexRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/',
     component: Home,
+    notFoundComponent: () => <div>404 - Not Found</div>,
 })
 
 const routeTree = rootRoute.addChildren([
@@ -55,6 +57,7 @@ const routeTree = rootRoute.addChildren([
 
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
 const router = createRouter({
+    defaultNotFoundComponent: NotFound,
     routeTree,
     context: {
         ...TanStackQueryProviderContext,
