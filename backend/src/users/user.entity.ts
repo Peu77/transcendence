@@ -1,27 +1,30 @@
-import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
-import { TwoFa } from '../auth/twofa.entity';
+import { Column, Entity, OneToMany, PrimaryColumn } from "typeorm";
+import { TwoFa } from "../auth/twofa.entity";
 
-@Entity({ name: 'users' })
+@Entity({ name: "users" })
 export class User {
-  @PrimaryColumn('uuid')
+  @PrimaryColumn("uuid")
   id: string;
 
-  @Column({ type: 'varchar', unique: true })
+  @Column({ unique: true })
   email: string;
 
-  @Column({ type: 'varchar', nullable: true, unique: true })
+  @Column({ unique: true, default: "" })
+  username: string;
+
+  @Column({ type: "text", nullable: true, unique: true })
   profilePictureId: string | null;
 
-  @Column({ type: 'varchar' })
+  @Column()
   password: string;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ default: false })
   twoFaEnabled: boolean;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: "text", nullable: true })
   twoFaSecret: string | null;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   createdAt: Date;
 
   @OneToMany(() => TwoFa, (twofa) => twofa.user)
