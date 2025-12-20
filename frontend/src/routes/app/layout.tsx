@@ -6,12 +6,18 @@ import {rootRoute} from "@/main.tsx";
 import {useEffect} from "react";
 import {toast} from "sonner";
 import {Navbar} from "@/components/app/navbar.tsx";
+import {userStore} from "@/store/userStore.ts";
 
 const AppLayout = () => {
     const userQuery = useQuery({
         queryKey: ['user'],
         queryFn: getUser,
     })
+    useEffect(() => {
+        if (userQuery.data)
+            userStore.setState(userQuery.data)
+    }, [userQuery.data]);
+
     const navigate = useNavigate()
 
     useEffect(() => {

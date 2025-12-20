@@ -4,6 +4,7 @@ export type User = {
     id: string;
     email: string;
     profilePictureId: string | null;
+    username: string;
     twoFaEnabled: boolean;
 };
 
