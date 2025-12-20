@@ -4,6 +4,7 @@ import {MoonIcon, SunIcon, UsersIcon} from "lucide-react";
 import {ProfileImage} from "@/components/app/profileImage.tsx";
 import {userStore} from "@/store/userStore.ts";
 import {useStore} from "@tanstack/react-form";
+import {setFriendsOverlayIsOpen} from "@/store/friendsOverlayStore.tsx";
 
 export const Navbar = () => {
     const [isDark, setIsDark] = useState(() =>
@@ -29,7 +30,7 @@ export const Navbar = () => {
                         <Button variant="ghost" onClick={toggleDarkMode}>
                             {isDark ? <MoonIcon/> : <SunIcon/>}
                         </Button>
-                        <Button variant="ghost">
+                        <Button variant="ghost" onClick={() => setFriendsOverlayIsOpen(true)}>
                             <UsersIcon/>
                         </Button>
                     </div>
