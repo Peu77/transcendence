@@ -20,7 +20,7 @@ import Register from "@/routes/auth/register.tsx";
 import Home from "@/routes/home.tsx";
 import {AppRoute} from "@/routes/app/layout.tsx";
 import {AppIndexRoute} from "@/routes/app/app.tsx";
-import {NotFound} from "@/components/notFound.tsx";
+import {NotFound} from "@/routes/notFound.tsx";
 
 export const rootRoute = createRootRoute<unknown>({
     component: () => (
