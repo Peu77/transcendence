@@ -7,6 +7,7 @@ import {useEffect} from "react";
 import {toast} from "sonner";
 import {Navbar} from "@/components/app/navbar.tsx";
 import {userStore} from "@/store/userStore.ts";
+import {FriendsOverlay} from "@/components/app/friends/friendsOverlay.tsx";
 
 const AppLayout = () => {
     const userQuery = useQuery({
@@ -37,6 +38,7 @@ const AppLayout = () => {
 
     return (
         <div className="min-h-screen overflow-hidden bg-background">
+            <FriendsOverlay/>
             <Navbar/>
             <Outlet/>
         </div>
