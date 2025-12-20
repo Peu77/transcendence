@@ -35,14 +35,13 @@ export const FriendsOverlay = () => {
                 onClick={() => setFriendsOverlayIsOpen(false)}
             />
             <div
-                className={`fixed top-4 z-50 h-[calc(100dvh-2rem)] bg-sidebar border-r border-sidebar-border shadow-2xl transition-all duration-300 ease-in-out clip-pixel-corners-btn ${
-                    isOpen ? "translate-x-0 left-5" : "-translate-x-full left-0"
-                } w-[380px]`}
+                className={`fixed z-50 top-1/2 -translate-y-1/2 max-w-[380px] w-full bg-sidebar border-r border-sidebar-border shadow-2xl transition-all duration-300 ease-in-out clip-pixel-corners-btn ${
+                    isOpen ? "translate-x-0 left-5 h-[calc(100dvh-2rem)] " : " left-0 h-[calc(100dvh/2)] -translate-x-full"
+                }`}
             >
                 <h2 className="p-4 font-bold text-lg border-b border-sidebar-border">
                     Friends
                 </h2>
-                {/* Friends list content goes here */}
             </div>
         </>
     )
