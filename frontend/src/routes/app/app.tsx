@@ -53,7 +53,7 @@ const Index = () => {
                     <div key={item.label}
                          className={`pb-1 pr-1 ${item.borderColor} clip-pixel-corners-btn translate-x-48 hover:translate-x-40 transition-transform w-[calc(100%+12rem)] overflow-hidden`}
                     >
-                        <Button asChild={true} className={` justify-start ${item.color} saturate-50 hover:scale-100 py-10 w-full`} key={item.label}>
+                        <Button asChild={true} className={` justify-start ${item.color} saturate-50 hover:scale-100 py-10 w-full select-none`} key={item.label}>
                             <Link to={item.path}>
                                 <div className={`flex flex-col items-start justify-center ${item.textColor}`}>
                                     <span className="font-bold text-4xl">{item.label}</span>
