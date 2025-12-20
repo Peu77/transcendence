@@ -1,12 +1,14 @@
 import {
   IsEnum,
   IsInt,
+  IsNotEmpty,
   IsNumber,
   IsNumberString,
   IsOptional,
   IsString,
   IsUUID,
   Max,
+  MaxLength,
   Min,
   MinLength,
 } from "class-validator";
@@ -14,8 +16,11 @@ import { PresenceStatus } from "./entities/user-presence.entity";
 import { Type } from "class-transformer";
 
 export class SendFriendRequestDto {
-  @IsUUID()
-  toUserId: string;
+  // Identifier can be a username or user ID
+  @IsNotEmpty()
+  @IsString()
+  @MaxLength(50)
+  userIdentifier: string;
 }
 
 export class SendDirectMessageDto {

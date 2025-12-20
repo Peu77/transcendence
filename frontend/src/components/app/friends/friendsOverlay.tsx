@@ -76,7 +76,7 @@ export const FriendsOverlay = () => {
         mutationFn: async () => {
             const trimmed = toUserId.trim();
             if (!trimmed) throw new Error("Missing user id");
-            return sendFriendRequest({toUserId: trimmed});
+            return sendFriendRequest({userIdentifier: trimmed});
         },
         onSuccess: async () => {
             setToUserId("");
@@ -242,7 +242,7 @@ export const FriendsOverlay = () => {
                                 <Input
                                     value={toUserId}
                                     onChange={(e) => setToUserId(e.target.value)}
-                                    placeholder="Add friend by user id"
+                                    placeholder="Add friend by user id or username"
                                 />
                                 <Button type="submit" disabled={sendRequestMutation.isPending}>Add</Button>
                             </form>
