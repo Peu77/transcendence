@@ -1,6 +1,7 @@
 import {useStore} from "@tanstack/react-form";
 import {friendsOverlayStore, setFriendsOverlayIsOpen} from "@/store/friendsOverlayStore.tsx";
 import {useEffect} from "react";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs.tsx";
 
 export const FriendsOverlay = () => {
     const isOpen = useStore(friendsOverlayStore, s => s.isOpen);
@@ -42,6 +43,22 @@ export const FriendsOverlay = () => {
                 <h2 className="p-4 font-bold text-lg border-b border-sidebar-border">
                     Friends
                 </h2>
+
+              <Tabs className="w-full mt-2" defaultValue={"friends"}>
+                  <TabsList className="flex w-full">
+                      <TabsTrigger className="w-full" value={"friends"}>Friends</TabsTrigger>
+                        <TabsTrigger className="w-full" value={"requests"}>Requests</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value={"friends"}>
+                      <div className="p-4">
+                      </div>
+                  </TabsContent>
+                  <TabsContent value={"requests"}>
+                      <div className="p-4">
+
+                      </div>
+                  </TabsContent>
+              </Tabs>
             </div>
         </>
     )
