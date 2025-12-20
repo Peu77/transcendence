@@ -33,7 +33,7 @@ export type Friend = {
   presence?: FriendPresence;
 };
 
-export type SendFriendRequestRequest = { toUserId: string };
+export type SendFriendRequestRequest = { userIdentifier: string };
 export type SendFriendRequestResponse = {
   id: string;
   status: string;

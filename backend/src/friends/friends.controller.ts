@@ -28,7 +28,7 @@ export class FriendsController {
     @UserId() userId: string,
     @Body() body: SendFriendRequestDto,
   ) {
-    const req = await this.friendsService.sendFriendRequest(userId, body.toUserId);
+    const req = await this.friendsService.sendFriendRequest(userId, body.userIdentifier);
     return { id: req.id, status: req.status, createdAt: req.createdAt };
   }
 

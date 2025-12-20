@@ -15,6 +15,7 @@ import {
 import { Friendship } from "./entities/friendship.entity";
 import { DirectMessage } from "./entities/direct-message.entity";
 import { PresenceStatus, UserPresence } from "./entities/user-presence.entity";
+import { isUUID } from "class-validator";
 
 @Injectable()
 export class FriendsService {
@@ -41,13 +42,20 @@ export class FriendsService {
 
   async sendFriendRequest(
     fromUserId: string,
-    toUserId: string,
+    toUserIdentifier: string,
   ): Promise<FriendRequest> {
-    if (fromUserId === toUserId)
-      throw new BadRequestException("Cannot friend yourself");
-    await this.assertUserExists(toUserId);
+    const toUser = await this.usersRepo.findOneOrFail({
+      where: [
+        isUUID(toUserIdentifier) ? { id: toUserIdentifier } : {},
+        { username: toUserIdentifier }
+      ]
+    })
 
-    const { low, high } = this.canonicalPair(fromUserId, toUserId);
+    if (fromUserId === toUser.id)
+      throw new BadRequestException("Cannot friend yourself");
+    await this.assertUserExists(toUser.id);
+
+    const { low, high } = this.canonicalPair(fromUserId, toUser.id);
     const alreadyFriends = await this.friendshipsRepo.exists({
       where: { userLowId: low, userHighId: high },
     });
@@ -55,9 +63,9 @@ export class FriendsService {
 
     const existing = await this.friendRequestsRepo.findOne({
       where: [
-        { fromUserId, toUserId, status: FriendRequestStatus.PENDING },
+        { fromUserId, toUserId: toUser.id, status: FriendRequestStatus.PENDING },
         {
-          fromUserId: toUserId,
+          fromUserId: toUser.id,
           toUserId: fromUserId,
           status: FriendRequestStatus.PENDING,
         },
@@ -67,7 +75,7 @@ export class FriendsService {
 
     const request = this.friendRequestsRepo.create({
       fromUserId,
-      toUserId,
+      toUserId: toUser.id,
       status: FriendRequestStatus.PENDING,
     });
     return await this.friendRequestsRepo.save(request);
