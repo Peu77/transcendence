@@ -11,9 +11,32 @@ import {
 } from "@/api/friends.ts";
 import {RequestRow} from "@/components/app/friends/requestRow.tsx";
 import {Button} from "@/components/ui/button.tsx";
+import {useLiveEvent} from "@/realtime/hooks.ts";
 
 export const RequestsTab = (props: { isOpen: boolean }) => {
     const qc = useQueryClient();
+
+    useLiveEvent("friend_request.created", async () => {
+        await qc.invalidateQueries({queryKey: ["friends", "requests", "incoming"]});
+    }, [props.isOpen]);
+
+    useLiveEvent("friend_request.canceled", async () => {
+        await qc.invalidateQueries({queryKey: ["friends", "requests", "incoming"]});
+        await qc.invalidateQueries({queryKey: ["friends", "requests", "outgoing"]});
+    }, [props.isOpen]);
+
+    useLiveEvent("friend_request.denied", async () => {
+        await qc.invalidateQueries({queryKey: ["friends", "requests", "incoming"]});
+        await qc.invalidateQueries({queryKey: ["friends", "requests", "outgoing"]});
+    }, [props.isOpen]);
+
+    useLiveEvent("friend_request.accepted", async () => {
+        await Promise.all([
+            qc.invalidateQueries({queryKey: ["friends"]}),
+            qc.invalidateQueries({queryKey: ["friends", "requests", "incoming"]}),
+            qc.invalidateQueries({queryKey: ["friends", "requests", "outgoing"]}),
+        ]);
+    }, [props.isOpen]);
 
     const incomingQuery = useQuery({
         queryKey: ["friends", "requests", "incoming"],
@@ -119,4 +142,3 @@ export const RequestsTab = (props: { isOpen: boolean }) => {
         </div>
     )
 }
-
