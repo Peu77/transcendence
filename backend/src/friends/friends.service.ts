@@ -47,9 +47,9 @@ export class FriendsService {
     const toUser = await this.usersRepo.findOneOrFail({
       where: [
         isUUID(toUserIdentifier) ? { id: toUserIdentifier } : {},
-        { username: toUserIdentifier }
-      ]
-    })
+        { username: toUserIdentifier },
+      ],
+    });
 
     if (fromUserId === toUser.id)
       throw new BadRequestException("Cannot friend yourself");
@@ -61,9 +61,18 @@ export class FriendsService {
     });
     if (alreadyFriends) throw new ConflictException("Already friends");
 
+    const alreadySendtRequest = await this.friendRequestsRepo.exists({
+      where: { fromUserId, toUserId: toUser.id },
+    });
+    if (alreadySendtRequest) throw new ConflictException("Friend request already sent");
+
     const existing = await this.friendRequestsRepo.findOne({
       where: [
-        { fromUserId, toUserId: toUser.id, status: FriendRequestStatus.PENDING },
+        {
+          fromUserId,
+          toUserId: toUser.id,
+          status: FriendRequestStatus.PENDING,
+        },
         {
           fromUserId: toUser.id,
           toUserId: fromUserId,
@@ -208,6 +217,12 @@ export class FriendsService {
     if (userId === friendUserId)
       throw new BadRequestException("Invalid friend");
     const { low, high } = this.canonicalPair(userId, friendUserId);
+
+    await this.assertFriends(userId, friendUserId);
+    await this.friendRequestsRepo.delete({
+      fromUserId: In([userId, friendUserId]),
+      toUserId: In([userId, friendUserId]),
+    });
 
     const result = await this.friendshipsRepo.delete({
       userLowId: low,
