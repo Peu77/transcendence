@@ -13,6 +13,7 @@ import { verify } from "jsonwebtoken";
 import type { Server, Socket } from "socket.io";
 import { REALTIME_NAMESPACE, dmRoom, userRoom } from "./realtime.constants";
 import { RealtimeService } from "./realtime.service";
+import { RealtimePresenceService } from "./realtime-presence.service";
 
 type SocketAuthUser = { userId: string };
 
@@ -47,6 +48,7 @@ export class RealtimeGateway
   constructor(
     configService: ConfigService,
     private readonly realtime: RealtimeService,
+    private readonly realtimePresence: RealtimePresenceService,
   ) {
     this.jwtSecret = configService.getOrThrow<string>("JWT_SECRET");
   }
@@ -90,7 +92,22 @@ export class RealtimeGateway
     }
   }
 
-  async handleDisconnect(_client: Socket) {
+  async handleDisconnect(client: Socket) {
+    const userId: string | undefined = client.data.userId;
+    if (!userId) return;
+
+    // Only mark offline if this was the last active socket for that user.
+    // Socket.IO keeps room membership until after disconnect completes, so we check on next tick.
+    setTimeout(async () => {
+      try {
+        const room = userRoom(userId);
+        const sockets = await this.server.in(room).fetchSockets();
+        if (sockets.length > 0) return;
+        await this.realtimePresence.setOffline(userId);
+      } catch {
+        // best-effort
+      }
+    }, 0);
   }
 
   @SubscribeMessage("dm.join")
