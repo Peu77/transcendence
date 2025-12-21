@@ -61,7 +61,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
       Logger.error(
         message,
-        (exception as any).stack,
         `${request.method} ${request.url}`,
       );
 
@@ -70,18 +69,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         timestamp: new Date().toISOString(),
         message,
         code,
-        ...(details !== undefined ? { details } : {}),
+        ...(details === undefined ? {} : { details }),
         path: request.url,
         method: request.method,
       });
       return;
     }
-
-    Logger.error(
-      message,
-      (exception as any).stack,
-      `${request.method} ${request.url}`,
-    );
 
     switch ((exception as any)?.constructor) {
       case QueryFailedError:
@@ -101,6 +94,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         break;
       default:
         status = HttpStatus.INTERNAL_SERVER_ERROR;
+        Logger.error(
+          message,
+          (exception as any).stack,
+          `${request.method} ${request.url}`,
+        );
         break;
     }
 

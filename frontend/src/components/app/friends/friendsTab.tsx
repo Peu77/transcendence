@@ -7,6 +7,7 @@ import {Button} from "@/components/ui/button.tsx";
 import {Input} from "@/components/ui/input.tsx";
 import {FriendRow} from "@/components/app/friends/friendRow.tsx";
 import {DMPanel} from "@/components/app/friends/dmPanel.tsx";
+import type {AxiosError} from "axios";
 
 export const FriendsTab = (props: { isOpen: boolean }) => {
     const qc = useQueryClient();
@@ -33,10 +34,15 @@ export const FriendsTab = (props: { isOpen: boolean }) => {
             await qc.invalidateQueries({queryKey: ["friends", "requests", "outgoing"]});
             toast.success("Friend request sent");
         },
-        onError: (e: any) => {
-            toast.error(
-                e?.response?.data?.message ?? e?.message ?? "Failed to send friend request",
-            );
+        onError: (e: AxiosError<{
+            message: string
+        }>) => {
+            if (e.response?.status === 422) {
+                toast.error("Invalid user id or username");
+                return;
+            }
+
+            toast.error(e?.response?.data?.message ?? "Failed to send friend request");
         },
     });
 
