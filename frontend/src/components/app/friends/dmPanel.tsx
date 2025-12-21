@@ -113,13 +113,15 @@ export const DMPanel = (props: {
     })();
 
     return (
-        <div className="mt-3 p-3 border border-sidebar-border clip-pixel-corners-btn bg-input/20">
+        <div className="mt-3 p-3  clip-pixel-corners-btn bg-input/20 border">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                     <ProfileImage profilePictureId={props.friend.profilePictureId}/>
                     <div className="min-w-0">
                         <div className="font-semibold truncate">DM: {props.friend.username}</div>
-                        <div className="text-xs text-muted-foreground">Scroll with buttons for now (top/bottom pagination)</div>
+                        <div className="text-xs text-muted-foreground">Scroll with buttons for now (top/bottom
+                            pagination)
+                        </div>
                     </div>
                 </div>
                 <Button size="sm" variant="ghost" onClick={props.onClose}>Close</Button>
@@ -144,7 +146,8 @@ export const DMPanel = (props: {
                 </Button>
             </div>
 
-            <div className="mt-3 max-h-[260px] overflow-auto bg-background/30 border border-sidebar-border/50 clip-pixel-corners-btn p-2 text-sm">
+            <div
+                className="mt-3 max-h-[260px] overflow-auto bg-background/30 border border-sidebar-border/50 clip-pixel-corners-btn p-2 text-sm">
                 {messagesContent}
             </div>
 
