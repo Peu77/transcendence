@@ -8,9 +8,37 @@ import {Input} from "@/components/ui/input.tsx";
 import {FriendRow} from "@/components/app/friends/friendRow.tsx";
 import {DMPanel} from "@/components/app/friends/dmPanel.tsx";
 import type {AxiosError} from "axios";
+import {useLiveEvent} from "@/realtime/hooks.ts";
 
 export const FriendsTab = (props: { isOpen: boolean }) => {
     const qc = useQueryClient();
+
+    useLiveEvent("presence.updated", (evt) => {
+        qc.setQueryData(["friends"], (prev: any) => {
+            if (!Array.isArray(prev)) return prev;
+            return prev.map((f: any) =>
+                f.id === evt.userId
+                    ? {
+                        ...f,
+                        presence: {
+                            ...(f.presence ?? {}),
+                            status: evt.status,
+                            lastSeenAt: evt.lastSeenAt,
+                            updatedAt: evt.updatedAt,
+                        },
+                    }
+                    : f,
+            );
+        });
+    }, [props.isOpen]);
+
+    useLiveEvent("friendship.deleted", async () => {
+        await qc.invalidateQueries({queryKey: ["friends"]});
+    }, [props.isOpen]);
+
+    useLiveEvent("friend_request.accepted", async () => {
+        await qc.invalidateQueries({queryKey: ["friends"]});
+    }, [props.isOpen]);
 
     const [userIdentifier, setUserIdentifier] = useState("");
     const [activeDmFriendId, setActiveDmFriendId] = useState<string | null>(null);

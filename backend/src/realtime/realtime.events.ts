@@ -1,6 +1,7 @@
 import { PresenceStatus } from "../friends/entities/user-presence.entity";
 
 export type LiveEventName =
+  | "ready"
   | "friend_request.created"
   | "friend_request.accepted"
   | "friend_request.denied"
@@ -43,4 +44,3 @@ export interface DirectMessageCreatedEvent {
   content: string;
   createdAt: string;
 }
-

@@ -9,12 +9,16 @@ import {
 import {ProfileImage} from "@/components/app/profileImage.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {Input} from "@/components/ui/input.tsx";
+import {useDmRoom, useLiveEvent} from "@/realtime/hooks.ts";
 
 export const DMPanel = (props: {
     friend: Friend;
     onClose: () => void;
 }) => {
     const qc = useQueryClient();
+
+    useDmRoom(props.friend.id);
+
     const [input, setInput] = useState("");
     const [oldestCursor, setOldestCursor] = useState<string | null>(null);
     const [newestCursor, setNewestCursor] = useState<string | null>(null);
@@ -112,6 +116,30 @@ export const DMPanel = (props: {
         );
     })();
 
+    useLiveEvent("dm.created", (msg) => {
+        const isForThisThread =
+            (msg.senderId === props.friend.id) || (msg.recipientId === props.friend.id);
+        if (!isForThisThread) return;
+
+        qc.setQueryData(queryKey, (prev: any) => {
+            if (!prev) return prev;
+            const existing: any[] = prev.messages ?? [];
+            if (existing.some((m) => m.id === msg.id)) return prev;
+            return {
+                ...prev,
+                messages: [...existing, msg],
+                pageInfo: {
+                    ...prev.pageInfo,
+                    newestCursor: msg.id,
+                    hasNewer: false,
+                },
+            };
+        });
+
+        setNewestCursor((c) => c ?? msg.id);
+        if (!oldestCursor) setOldestCursor(msg.id);
+    }, [props.friend.id, queryKey, oldestCursor]);
+
     return (
         <div className="mt-3 p-3  clip-pixel-corners-btn bg-input/20 border">
             <div className="flex items-center justify-between gap-2">
@@ -164,4 +192,3 @@ export const DMPanel = (props: {
         </div>
     )
 }
-
