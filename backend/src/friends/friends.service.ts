@@ -16,6 +16,7 @@ import { Friendship } from "./entities/friendship.entity";
 import { DirectMessage } from "./entities/direct-message.entity";
 import { PresenceStatus, UserPresence } from "./entities/user-presence.entity";
 import { isUUID } from "class-validator";
+import { RealtimeService } from "../realtime/realtime.service";
 
 @Injectable()
 export class FriendsService {
@@ -29,6 +30,7 @@ export class FriendsService {
     private readonly messagesRepo: Repository<DirectMessage>,
     @InjectRepository(UserPresence)
     private readonly presenceRepo: Repository<UserPresence>,
+    private readonly realtime: RealtimeService,
   ) {}
 
   private canonicalPair(a: string, b: string): { low: string; high: string } {
@@ -61,10 +63,11 @@ export class FriendsService {
     });
     if (alreadyFriends) throw new ConflictException("Already friends");
 
-    const alreadySendtRequest = await this.friendRequestsRepo.exists({
+    const alreadySendRequest = await this.friendRequestsRepo.exists({
       where: { fromUserId, toUserId: toUser.id },
     });
-    if (alreadySendtRequest) throw new ConflictException("Friend request already sent");
+    if (alreadySendRequest)
+      throw new ConflictException("Friend request already sent");
 
     const existing = await this.friendRequestsRepo.findOne({
       where: [
@@ -87,7 +90,25 @@ export class FriendsService {
       toUserId: toUser.id,
       status: FriendRequestStatus.PENDING,
     });
-    return await this.friendRequestsRepo.save(request);
+    const saved = await this.friendRequestsRepo.save(request);
+
+    const fromUser = await this.usersRepo.findOne({
+      where: { id: fromUserId },
+    });
+    if (fromUser) {
+      this.realtime.emitFriendRequestCreated(toUser.id, {
+        requestId: saved.id,
+        fromUser: {
+          id: fromUser.id,
+          username: fromUser.username,
+          profilePictureId: fromUser.profilePictureId,
+        },
+        toUser: { id: toUser.id },
+        createdAt: saved.createdAt.toISOString(),
+      });
+    }
+
+    return saved;
   }
 
   async listIncomingRequests(userId: string): Promise<FriendRequest[]> {
@@ -121,15 +142,29 @@ export class FriendsService {
     req.status = FriendRequestStatus.ACCEPTED;
     await this.friendRequestsRepo.save(req);
 
-    const friendship = this.friendshipsRepo.create({
+    const friendshipEntity = this.friendshipsRepo.create({
       userLowId: low,
       userHighId: high,
     });
 
     try {
-      return await this.friendshipsRepo.save(friendship);
-    } catch (e) {
-      // If friendship already exists due to race, surface conflict.
+      const savedFriendship = await this.friendshipsRepo.save(friendshipEntity);
+      const resolvedAt = new Date().toISOString();
+      this.realtime.emitFriendRequestAccepted(req.fromUserId, {
+        requestId: req.id,
+        fromUserId: req.fromUserId,
+        toUserId: req.toUserId,
+        resolvedAt,
+      });
+      this.realtime.emitFriendRequestAccepted(req.toUserId, {
+        requestId: req.id,
+        fromUserId: req.fromUserId,
+        toUserId: req.toUserId,
+        resolvedAt,
+      });
+      return savedFriendship;
+    } catch {
+      // Any error here is treated as a conflict (most commonly unique constraint).
       throw new ConflictException("Already friends");
     }
   }
@@ -145,6 +180,20 @@ export class FriendsService {
 
     req.status = FriendRequestStatus.DENIED;
     await this.friendRequestsRepo.save(req);
+
+    const resolvedAt = new Date().toISOString();
+    this.realtime.emitFriendRequestDenied(req.fromUserId, {
+      requestId: req.id,
+      fromUserId: req.fromUserId,
+      toUserId: req.toUserId,
+      resolvedAt,
+    });
+    this.realtime.emitFriendRequestDenied(req.toUserId, {
+      requestId: req.id,
+      fromUserId: req.fromUserId,
+      toUserId: req.toUserId,
+      resolvedAt,
+    });
   }
 
   async cancelRequest(
@@ -159,7 +208,23 @@ export class FriendsService {
       throw new BadRequestException("Friend request is not pending");
     if (req.fromUserId !== userId) throw new ForbiddenException("Not allowed");
 
-    return await this.friendRequestsRepo.delete({ id: requestId });
+    const result = await this.friendRequestsRepo.delete({ id: requestId });
+
+    const resolvedAt = new Date().toISOString();
+    this.realtime.emitFriendRequestCanceled(req.toUserId, {
+      requestId: req.id,
+      fromUserId: req.fromUserId,
+      toUserId: req.toUserId,
+      resolvedAt,
+    });
+    this.realtime.emitFriendRequestCanceled(req.fromUserId, {
+      requestId: req.id,
+      fromUserId: req.fromUserId,
+      toUserId: req.toUserId,
+      resolvedAt,
+    });
+
+    return result;
   }
 
   async listFriends(userId: string): Promise<
@@ -210,7 +275,7 @@ export class FriendsService {
           friendedAt: f.createdAt,
         };
       })
-      .filter((x): x is NonNullable<typeof x> => Boolean(x));
+      .filter((f) => f !== null);
   }
 
   async deleteFriend(userId: string, friendUserId: string): Promise<void> {
@@ -219,6 +284,8 @@ export class FriendsService {
     const { low, high } = this.canonicalPair(userId, friendUserId);
 
     await this.assertFriends(userId, friendUserId);
+
+    // Delete any existing pending requests between the two users.
     await this.friendRequestsRepo.delete({
       fromUserId: In([userId, friendUserId]),
       toUserId: In([userId, friendUserId]),
@@ -229,6 +296,12 @@ export class FriendsService {
       userHighId: high,
     });
     if (!result.affected) throw new NotFoundException("Friendship not found");
+
+    this.realtime.emitFriendshipDeleted([userId, friendUserId], {
+      userId,
+      friendUserId,
+      deletedAt: new Date().toISOString(),
+    });
   }
 
   async updateMyPresence(
@@ -239,25 +312,32 @@ export class FriendsService {
     const lastSeenAt = status === PresenceStatus.OFFLINE ? now : null;
 
     const existing = await this.presenceRepo.findOne({ where: { userId } });
-    if (!existing) {
-      const created = this.presenceRepo.create({ userId, status, lastSeenAt });
-      return await this.presenceRepo.save(created);
-    }
+    const presence = existing
+      ? await this.presenceRepo.save(
+          Object.assign(existing, { status, lastSeenAt }),
+        )
+      : await this.presenceRepo.save(
+          this.presenceRepo.create({ userId, status, lastSeenAt }),
+        );
 
-    existing.status = status;
-    existing.lastSeenAt = lastSeenAt;
-    return await this.presenceRepo.save(existing);
-  }
-
-  private async assertFriends(
-    userId: string,
-    friendUserId: string,
-  ): Promise<void> {
-    const { low, high } = this.canonicalPair(userId, friendUserId);
-    const ok = await this.friendshipsRepo.exists({
-      where: { userLowId: low, userHighId: high },
+    // fan-out to friends
+    const friendships = await this.friendshipsRepo.find({
+      where: [{ userLowId: userId }, { userHighId: userId }],
     });
-    if (!ok) throw new ForbiddenException("Not friends");
+    const friendIds = friendships.map((f) =>
+      f.userLowId === userId ? f.userHighId : f.userLowId,
+    );
+
+    this.realtime.emitPresenceUpdated(friendIds, {
+      userId,
+      status: presence.status,
+      lastSeenAt: presence.lastSeenAt
+        ? presence.lastSeenAt.toISOString()
+        : null,
+      updatedAt: presence.updatedAt.toISOString(),
+    });
+
+    return presence;
   }
 
   async sendDirectMessage(
@@ -274,7 +354,17 @@ export class FriendsService {
       recipientId: friendUserId,
       content,
     });
-    return await this.messagesRepo.save(msg);
+    const saved = await this.messagesRepo.save(msg);
+
+    this.realtime.emitDirectMessageCreated([senderId, friendUserId], {
+      id: saved.id,
+      senderId: saved.senderId,
+      recipientId: saved.recipientId,
+      content: saved.content,
+      createdAt: saved.createdAt.toISOString(),
+    });
+
+    return saved;
   }
 
   async getDirectMessages(
@@ -387,5 +477,16 @@ export class FriendsService {
         newestCursor: newest?.id ?? null,
       },
     };
+  }
+
+  private async assertFriends(
+    userId: string,
+    friendUserId: string,
+  ): Promise<void> {
+    const { low, high } = this.canonicalPair(userId, friendUserId);
+    const ok = await this.friendshipsRepo.exists({
+      where: { userLowId: low, userHighId: high },
+    });
+    if (!ok) throw new ForbiddenException("Not friends");
   }
 }
