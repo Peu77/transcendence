@@ -5,12 +5,26 @@ import {createRoute, Outlet, useNavigate} from "@tanstack/react-router";
 import {rootRoute} from "@/main.tsx";
 import {useEffect} from "react";
 import {toast} from "sonner";
+import {Navbar} from "@/components/app/navbar.tsx";
+import {userStore} from "@/store/userStore.ts";
+import {FriendsOverlay} from "@/components/app/friends/friendsOverlay.tsx";
+import { RealtimeMount } from "@/realtime";
+import { useMyPresence } from "@/presence/useMyPresence";
 
 const AppLayout = () => {
     const userQuery = useQuery({
         queryKey: ['user'],
         queryFn: getUser,
     })
+
+    useEffect(() => {
+        if (userQuery.data)
+            userStore.setState(userQuery.data)
+    }, [userQuery.data]);
+
+
+    useMyPresence({ enabled: !!userQuery.data, idleMs: 60_000 });
+
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -29,7 +43,10 @@ const AppLayout = () => {
     }
 
     return (
-        <div className="min-h-screen overflow-hidden">
+        <div className="min-h-screen overflow-hidden bg-background">
+            <RealtimeMount />
+            <FriendsOverlay/>
+            <Navbar/>
             <Outlet/>
         </div>
     )

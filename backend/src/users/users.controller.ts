@@ -34,6 +34,7 @@ export class UsersController {
       email: user.email,
       profilePictureId: user.profilePictureId,
       twoFaEnabled: user.twoFaEnabled,
+      username: user.username,
     };
   }
 
