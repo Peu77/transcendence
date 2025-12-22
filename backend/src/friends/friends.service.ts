@@ -17,6 +17,7 @@ import { DirectMessage } from "./entities/direct-message.entity";
 import { PresenceStatus, UserPresence } from "./entities/user-presence.entity";
 import { isUUID } from "class-validator";
 import { RealtimeService } from "../realtime/realtime.service";
+import { UsersService } from "../users/users.service";
 
 @Injectable()
 export class FriendsService {
@@ -31,6 +32,7 @@ export class FriendsService {
     @InjectRepository(UserPresence)
     private readonly presenceRepo: Repository<UserPresence>,
     private readonly realtime: RealtimeService,
+    private readonly userService: UsersService,
   ) {}
 
   private canonicalPair(a: string, b: string): { low: string; high: string } {
@@ -98,8 +100,8 @@ export class FriendsService {
     if (fromUser) {
       this.realtime.emitFriendRequestCreated(toUser.id, {
         requestId: saved.id,
-        fromUser: {
-          id: fromUser.id,
+        senderId: fromUser.id,
+        senderInfo: {
           username: fromUser.username,
           profilePictureId: fromUser.profilePictureId,
         },
@@ -347,6 +349,8 @@ export class FriendsService {
   ): Promise<DirectMessage> {
     if (!content.trim())
       throw new BadRequestException("Message cannot be empty");
+
+    const senderInfo = await this.userService.getUserInfo(senderId);
     await this.assertFriends(senderId, friendUserId);
 
     const msg = this.messagesRepo.create({
@@ -357,6 +361,7 @@ export class FriendsService {
     const saved = await this.messagesRepo.save(msg);
 
     this.realtime.emitDirectMessageCreated([senderId, friendUserId], {
+      senderInfo,
       id: saved.id,
       senderId: saved.senderId,
       recipientId: saved.recipientId,

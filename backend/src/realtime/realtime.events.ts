@@ -10,9 +10,15 @@ export type LiveEventName =
   | "presence.updated"
   | "dm.created";
 
+export interface UserInfo {
+  username: string;
+  profilePictureId: string | null;
+}
+
 export interface FriendRequestCreatedEvent {
+  senderInfo: UserInfo;
   requestId: string;
-  fromUser: { id: string; username: string; profilePictureId: string | null };
+  senderId: string;
   toUser: { id: string };
   createdAt: string;
 }
@@ -38,6 +44,7 @@ export interface PresenceUpdatedEvent {
 }
 
 export interface DirectMessageCreatedEvent {
+  senderInfo: UserInfo;
   id: string;
   senderId: string;
   recipientId: string;

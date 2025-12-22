@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
+import { UserInfo } from "../realtime/realtime.events";
 
 @Injectable()
 export class UsersService {
@@ -22,5 +23,13 @@ export class UsersService {
 
   async updateProfilePictureId(userId: string, profilePictureId: string | null): Promise<void> {
     await this.usersRepo.update({ id: userId }, { profilePictureId });
+  }
+
+  async getUserInfo(userId: string): Promise<UserInfo>{
+    const user = await this.usersRepo.findOneOrFail({ where: { id: userId } });
+    return {
+      username: user.username,
+      profilePictureId: user.profilePictureId
+    };
   }
 }
