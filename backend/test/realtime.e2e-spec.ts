@@ -1,8 +1,8 @@
 import { Test } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import { io, Socket } from "socket.io-client";
-import { AppModule } from "../app.module";
-import { AuthService } from "../auth/auth.service";
+import { AppModule } from "../src/app.module";
+import { AuthService } from "../src/auth/auth.service";
 
 describe("RealtimeGateway (e2e)", () => {
   let app: INestApplication;

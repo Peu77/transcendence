@@ -9,7 +9,6 @@ import {
 } from "@nestjs/common";
 import { Response } from 'express';
 import * as bcrypt from 'bcryptjs';
-import { randomUUID } from 'node:crypto';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { LoginDto, RegisterDto, TwoFAVerifyDto } from './dto';
@@ -25,17 +24,19 @@ export class AuthController {
   async register(@Body() dto: RegisterDto, @Res() res: Response) {
     const email = dto.email.toLowerCase();
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const id = randomUUID();
+    let userId: string
 
     try {
-      await this.usersService.createUser(id, email, passwordHash);
+      const createdUser = await this.usersService.createUser(email, passwordHash);
+      userId = createdUser.id;
+
     } catch {
       return res
         .status(HttpStatus.CONFLICT)
         .send({ message: 'Email already registered' });
     }
 
-    const token = this.authService.createUserToken(id);
+    const token = this.authService.createUserToken(userId);
     res.cookie('token', token, { httpOnly: true, path: '/' });
     res.status(HttpStatus.CREATED).send({});
   }

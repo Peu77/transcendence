@@ -7,9 +7,9 @@ import { User } from './user.entity';
 export class UsersService {
   constructor(@InjectRepository(User) private readonly usersRepo: Repository<User>) {}
 
-  async createUser(id: string, email: string, passwordHash: string): Promise<void> {
-    const user = this.usersRepo.create({ id, email: email.toLowerCase(), password: passwordHash });
-    await this.usersRepo.save(user);
+  async createUser(email: string, passwordHash: string): Promise<User> {
+    const user = this.usersRepo.create({email: email.toLowerCase(), password: passwordHash });
+    return await this.usersRepo.save(user);
   }
 
   async findByEmail(email: string): Promise<User | null> {
