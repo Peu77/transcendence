@@ -6,6 +6,9 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {toast} from "sonner";
 import {Link, useNavigate} from "@tanstack/react-router";
 import {Button} from "@/components/ui/button.tsx";
+import {FieldSeparator} from "@/components/ui/field.tsx";
+import {GithubIcon} from "lucide-react";
+import {env} from "@/env.ts";
 
 const loginSchema = z.object({
     email: z.email("Please enter a valid email"),
@@ -80,12 +83,25 @@ export default function Login() {
 
                         <form.AppField name={"password"}
                                        children={(field) =>
-                                           <field.TextField label="Password" placeholder={"password"} type={"password"}/>}
+                                           <field.TextField label="Password" placeholder={"password"}
+                                                            type={"password"}/>}
                         />
 
                         <Button size={"sm"} disabled={isBusy}>
                             {isBusy ? "logging in…" : "login"}
                         </Button>
+
+                        <FieldSeparator className="mt-3 mb-3">Or continue with</FieldSeparator>
+
+
+                        <Button asChild className="flex gap-1" variant="secondary">
+                            <Link to={env.VITE_BACKEND_GITHUB_OAUTH_URL}>
+                                <GithubIcon size="18"/>
+                                github
+                            </Link>
+
+                        </Button>
+
 
                         <p className="text-sm text-muted-foreground mt-2 text-center">
                             Don’t have an account?{" "}
