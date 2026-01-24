@@ -4,10 +4,14 @@
 ## Web
 - [ ] Use a frontend framework - (1)
 - [ ] Use a backend framework - (1)
-- [ ] Realtime feature using WebSockets - (2)
-- [ ] User interaction - Basic Chat, friend system, profile system - (2)
+- [ ] Allow users to interact with other users (2)
+  - [x] A basic chat system
+  - [x] A friend system
+  - [ ] A profile system
+- [x] Realtime feature using WebSockets - (2)
+- [x] User interaction - Basic Chat, friend system, profile system - (2)
 - [ ] Public API (at least 5 endpoints) - (2)
-- [ ] ORM - (1)
+- [x] ORM - (1)
 
 
 ## Accessibility and Internationalization
@@ -16,7 +20,13 @@
 ## User Management
 - [ ] Standard User Management and Auth --> Update profile info, upload avatar, add friends and see if online, profile page per user - (2)
 - [ ] Game statistics and match history - (1) --> ? 
-- [ ] Implement OAuth 2.0 (1)
+  - [ ] Track user game statistics (wins, losses, ranking, level, etc.)
+  - [ ] Display match history (1v1 games, dates, results, opponents).
+  - [ ] Show achievements and progression.
+  - [ ] Leaderboard integration.
+- [x] Implement OAuth 2.0 (1)
+- [ ] Users have a profile page displaying their information.
+- [ ] Implement a complete 2FA (Two-Factor Authentication) system for the users
 
 ## Artificial Intelligence
 - None
@@ -27,12 +37,15 @@
 ## Gaming and User Experience | --> Check requirements
 - [ ] Implement Web based Game (2)
 - [ ] Multiplayer game (2)
+- [ ] Remote players — Enable two players on separate computers to play the
+  same game in real-time
 - [ ] Advanced Chat Features (1)
 - [ ] Game customization options (1)
 - [ ] Gamification system (1)
 
 ## Devops
 - [ ] Monitoring System with Prometheus and Grafana (2)
+- [ ] advances data analytics dashboard (2)
 
 ## Data and Analytics
 - None
