@@ -65,14 +65,13 @@ export class AuthController {
     }
 
     const twoFaSession = await this.authService.create2FaSession(user.id);
-    return res.send({ requires2FA: true, twoFaSession });
+    return res.send({ requires2FA: true, twoFaSession, userId: user.id });
   }
 
   @Post('2fa/verify')
-  async verify2Fa(@Body() dto: TwoFAVerifyDto) {
+  async verify2Fa(@Body() dto: TwoFAVerifyDto, @Res() res: Response) {
     const valid = await this.authService.isValidTwoFaToken(
-      dto.twoFaSecret,
-      dto.twoFaId,
+      dto.twoFaSessionId,
       dto.userId,
       dto.token,
     );
@@ -80,7 +79,9 @@ export class AuthController {
     if (!valid)
       throw new BadRequestException('Invalid 2FA token');
 
-    return { token: this.authService.createUserToken(dto.userId) };
+    const token = this.authService.createUserToken(dto.userId);
+    res.cookie('token', token, { httpOnly: true, path: '/' });
+    return res.send({ token });
   }
 
   @Post('logout')

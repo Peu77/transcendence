@@ -33,6 +33,10 @@ export class UsersService {
     await this.usersRepo.update({ id: userId }, { twoFaEnabled: true });
   }
 
+  async disableTwoFa(userId: string): Promise<void> {
+    await this.usersRepo.update({ id: userId }, { twoFaEnabled: false, twoFaSecret: null });
+  }
+
   async getUserInfo(userId: string): Promise<UserInfo>{
     const user = await this.usersRepo.findOneOrFail({ where: { id: userId } });
     return {

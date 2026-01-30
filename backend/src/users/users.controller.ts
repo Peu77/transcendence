@@ -144,4 +144,31 @@ export class UsersController {
     await this.usersService.enableTwoFa(userId);
     return { message: "2FA enabled successfully" };
   }
+
+  @Post("users/2fa/disable")
+  async disableTwoFa(
+    @UserId() userId: string,
+    @Body() body: VerifyTwoFaDto,
+  ) {
+    const user = await this.usersService.getUserByid(userId);
+    if (!user.twoFaEnabled) {
+      throw new BadRequestException("2FA is not enabled");
+    }
+    if (!user.twoFaSecret) {
+      throw new BadRequestException("2FA secret not found");
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFaSecret,
+      encoding: "base32",
+      token: body.code,
+    });
+
+    if (!verified) {
+      throw new BadRequestException("Invalid OTP code");
+    }
+
+    await this.usersService.disableTwoFa(userId);
+    return { message: "2FA disabled successfully" };
+  }
 }
