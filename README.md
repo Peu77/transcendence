@@ -2,12 +2,12 @@
 - Potential points from Modules: 22 / 19 max 
 
 ## Web
-- [ ] Use a frontend framework - (1)
-- [ ] Use a backend framework - (1)
+- [x] Use a frontend framework - (1)
+- [x] Use a backend framework - (1)
 - [ ] Allow users to interact with other users (2)
   - [x] A basic chat system
   - [x] A friend system
-  - [ ] A profile system
+  - [ ] A profile system (Theo)
 - [x] Realtime feature using WebSockets - (2)
 - [x] User interaction - Basic Chat, friend system, profile system - (2)
 - [ ] Public API (at least 5 endpoints) - (2)
@@ -18,15 +18,15 @@
 - None
 
 ## User Management
-- [ ] Standard User Management and Auth --> Update profile info, upload avatar, add friends and see if online, profile page per user - (2)
+- [ ] Standard User Management and Auth --> Update profile info, upload avatar, add friends and see if online, profile page per user - (2) (Theo)
 - [ ] Game statistics and match history - (1) --> ? 
   - [ ] Track user game statistics (wins, losses, ranking, level, etc.)
   - [ ] Display match history (1v1 games, dates, results, opponents).
   - [ ] Show achievements and progression.
   - [ ] Leaderboard integration.
 - [x] Implement OAuth 2.0 (1)
-- [ ] Users have a profile page displaying their information.
-- [ ] Implement a complete 2FA (Two-Factor Authentication) system for the users
+- [ ] Users have a profile page displaying their information. (Theo)
+- [x] Implement a complete 2FA (Two-Factor Authentication) system for the users
 
 ## Artificial Intelligence
 - None
@@ -35,7 +35,7 @@
 - None
 
 ## Gaming and User Experience | --> Check requirements
-- [ ] Implement Web based Game (2)
+- [ ] Implement Web based Game (2) 
 - [ ] Multiplayer game (2)
 - [ ] Remote players — Enable two players on separate computers to play the
   same game in real-time
