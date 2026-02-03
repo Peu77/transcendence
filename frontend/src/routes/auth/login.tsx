@@ -1,7 +1,7 @@
 import {z} from "zod";
 import {useAppForm} from "@/hooks/form.ts";
 import {useMutation} from "@tanstack/react-query";
-import {login} from "@/api/auth.ts";
+import {login, type LoginResponse} from "@/api/auth.ts";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {toast} from "sonner";
 import {Link, useNavigate} from "@tanstack/react-router";
@@ -9,14 +9,20 @@ import {Button} from "@/components/ui/button.tsx";
 import {FieldSeparator} from "@/components/ui/field.tsx";
 import {GithubIcon} from "lucide-react";
 import {env} from "@/env.ts";
+import {useState} from "react";
+import {verifyTwoFaLogin} from "@/api/twofa.ts";
+import {Input} from "@/components/ui/input.tsx";
+import {Label} from "@/components/ui/label.tsx";
 
 const loginSchema = z.object({
-    email: z.email("Please enter a valid email"),
+    email: z.string().email("Please enter a valid email"),
     password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export default function Login() {
     const navigate = useNavigate()
+    const [twoFaData, setTwoFaData] = useState<LoginResponse | null>(null);
+    const [otpCode, setOtpCode] = useState("");
 
     const form = useAppForm({
         validators: {onChange: loginSchema},
@@ -32,10 +38,9 @@ export default function Login() {
     const loginMutation = useMutation({
         mutationFn: login,
         onSuccess: async (data, vars) => {
-            if ((data as any)?.requires2FA) {
-                toast.info("Two-factor authentication required", {
-                    description: "2FA flow not implemented yet.",
-                });
+            if (data.requires2FA) {
+                setTwoFaData(data);
+                toast.info("Two-factor authentication required");
                 return;
             }
 
@@ -54,11 +59,84 @@ export default function Login() {
         },
     });
 
+    const verifyMutation = useMutation({
+        mutationFn: verifyTwoFaLogin,
+        onSuccess: async () => {
+            toast.success("2FA Verified! Logging in...");
+            await navigate({to: "/app"});
+        },
+        onError: (err: any) => {
+            const description =
+                err?.response?.data?.message ||
+                err?.message ||
+                "Invalid 2FA code.";
+            toast.error("2FA Verification failed", {description, duration: 4000});
+            if (description.includes("Too many attempts")) {
+                setOtpCode("");
+            }
+        },
+    });
+
     async function handleSubmit(values: z.infer<typeof loginSchema>) {
         await loginMutation.mutateAsync(values);
     }
 
-    const isBusy = loginMutation.isPending || form.state.isSubmitting;
+    async function handleTwoFaSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        if (!twoFaData || !twoFaData.twoFaSession || !twoFaData.userId) return;
+
+        verifyMutation.mutate({
+            token: otpCode,
+            twoFaSessionId: twoFaData.twoFaSession.twoFaSessionId,
+            userId: twoFaData.userId,
+        });
+    }
+
+    const isBusy = loginMutation.isPending || form.state.isSubmitting || verifyMutation.isPending;
+
+    if (twoFaData) {
+        return (
+            <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+                <Card className="animate-scale-in w-full max-w-md">
+                    <CardHeader>
+                        <CardTitle>Two-Factor Authentication</CardTitle>
+                        <CardDescription>Enter the 6-digit code from your authenticator app.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleTwoFaSubmit} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="otp">Verification Code</Label>
+                                <Input
+                                    id="otp"
+                                    type="text"
+                                    placeholder="123456"
+                                    maxLength={6}
+                                    value={otpCode}
+                                    onChange={(e) => setOtpCode(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <Button type="submit" disabled={isBusy || otpCode.length !== 6}>
+                                    {verifyMutation.isPending ? "Verifying..." : "Verify"}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => {
+                                        setTwoFaData(null);
+                                        setOtpCode("");
+                                    }}
+                                >
+                                    Back to Login
+                                </Button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-background">

@@ -20,6 +20,7 @@ import Register from "@/routes/auth/register.tsx";
 import Home from "@/routes/home.tsx";
 import {AppRoute} from "@/routes/app/layout.tsx";
 import {AppIndexRoute} from "@/routes/app/app.tsx";
+import {SettingsRoute} from "@/routes/app/settings.tsx";
 import {NotFound} from "@/routes/notFound.tsx";
 
 export const rootRoute = createRootRoute<unknown>({
@@ -52,7 +53,8 @@ const routeTree = rootRoute.addChildren([
         path: "register"
     }),
     AppRoute,
-    AppIndexRoute
+    AppIndexRoute,
+    SettingsRoute
 ])
 
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext()

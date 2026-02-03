@@ -3,6 +3,7 @@ import {
   Get,
   Param,
   Post,
+  Body,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -15,9 +16,10 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { createReadStream } from "node:fs";
 import { Response } from "express";
+import * as speakeasy from "speakeasy";
 import { UsersService } from "./users.service";
 import { AuthGuard, UserId } from "../auth/auth.guard";
-import { ProfilePictureDto } from "./dto";
+import { ProfilePictureDto, VerifyTwoFaDto } from "./dto";
 
 const UPLOAD_DIR = "uploads/";
 
@@ -99,5 +101,78 @@ export class UsersController {
     res.setHeader("Cache-Control", "public, max-age=600");
     const stream = createReadStream(filepath);
     stream.pipe(res);
+  }
+
+  @Post("users/2fa/generate")
+  async generateTwoFaSecret(@UserId() userId: string) {
+    const user = await this.usersService.getUserByid(userId);
+    if (user.twoFaEnabled) {
+      throw new BadRequestException("2FA is already enabled");
+    }
+
+    const secret = speakeasy.generateSecret({
+      name: `Transcendence (${user.email})`,
+    });
+
+    await this.usersService.updateTwoFaSecret(userId, secret.base32);
+
+    return {
+      otpauthUrl: secret.otpauth_url,
+      base32: secret.base32,
+    };
+  }
+
+  @Post("users/2fa/enable")
+  async enableTwoFa(
+    @UserId() userId: string,
+    @Body() body: VerifyTwoFaDto,
+  ) {
+    const user = await this.usersService.getUserByid(userId);
+    if (user.twoFaEnabled) {
+      throw new BadRequestException("2FA is already enabled");
+    }
+    if (!user.twoFaSecret) {
+      throw new BadRequestException("2FA secret not generated");
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFaSecret,
+      encoding: "base32",
+      token: body.code,
+    });
+
+    if (!verified) {
+      throw new BadRequestException("Invalid OTP code");
+    }
+
+    await this.usersService.enableTwoFa(userId);
+    return { message: "2FA enabled successfully" };
+  }
+
+  @Post("users/2fa/disable")
+  async disableTwoFa(
+    @UserId() userId: string,
+    @Body() body: VerifyTwoFaDto,
+  ) {
+    const user = await this.usersService.getUserByid(userId);
+    if (!user.twoFaEnabled) {
+      throw new BadRequestException("2FA is not enabled");
+    }
+    if (!user.twoFaSecret) {
+      throw new BadRequestException("2FA secret not found");
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFaSecret,
+      encoding: "base32",
+      token: body.code,
+    });
+
+    if (!verified) {
+      throw new BadRequestException("Invalid OTP code");
+    }
+
+    await this.usersService.disableTwoFa(userId);
+    return { message: "2FA disabled successfully" };
   }
 }

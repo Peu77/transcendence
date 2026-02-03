@@ -24,12 +24,8 @@ export class TwoFAVerifyDto {
   @Length(6, 6)
   token!: string;
 
-  @IsString()
-  @Length(20, 20)
-  twoFaSecret!: string;
-
   @IsUUID()
-  twoFaId!: string;
+  twoFaSessionId!: string;
 
   @IsUUID()
   userId!: string;
