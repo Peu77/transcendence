@@ -1,15 +1,32 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './user.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { User, UserType } from "./user.entity";
 import { UserInfo } from "../realtime/realtime.events";
+import { GithubValidateReturn } from "../auth/github.strategy";
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectRepository(User) private readonly usersRepo: Repository<User>) {}
+  constructor(
+    @InjectRepository(User) private readonly usersRepo: Repository<User>,
+  ) {}
 
-  async createUser(email: string, passwordHash: string): Promise<User> {
-    const user = this.usersRepo.create({email: email.toLowerCase(), password: passwordHash });
+  async createUser(
+    userType: UserType,
+    email: string,
+    username: string,
+    passwordHash: string | null,
+    githubId: string | null,
+    githubAvatarUrl: string | null,
+  ): Promise<User> {
+    const user = this.usersRepo.create({
+      userType,
+      email: email.toLowerCase(),
+      username,
+      password: passwordHash,
+      githubId,
+      githubAvatarUrl,
+    });
     return await this.usersRepo.save(user);
   }
 
@@ -17,11 +34,34 @@ export class UsersService {
     return this.usersRepo.findOne({ where: { email: email.toLowerCase() } });
   }
 
-  async getUserByid(id: string): Promise<User> {
-     return await this.usersRepo.findOneOrFail({ where: { id } });
+  async findByGithubId(githubId: string): Promise<User | null> {
+    return this.usersRepo.findOne({
+      where: { githubId, userType: UserType.GITHUB },
+    });
   }
 
-  async updateProfilePictureId(userId: string, profilePictureId: string | null): Promise<void> {
+  async upsertGithubUser(profile: GithubValidateReturn): Promise<User> {
+    const byGithub = await this.findByGithubId(profile.githubId);
+    if (byGithub) return byGithub;
+
+    return this.createUser(
+      UserType.GITHUB,
+      profile.email,
+      profile.username,
+      null,
+      profile.githubId,
+      profile.avatarUrl,
+    );
+  }
+
+  async getUserByid(id: string): Promise<User> {
+    return await this.usersRepo.findOneOrFail({ where: { id } });
+  }
+
+  async updateProfilePictureId(
+    userId: string,
+    profilePictureId: string | null,
+  ): Promise<void> {
     await this.usersRepo.update({ id: userId }, { profilePictureId });
   }
 
@@ -37,11 +77,11 @@ export class UsersService {
     await this.usersRepo.update({ id: userId }, { twoFaEnabled: false, twoFaSecret: null });
   }
 
-  async getUserInfo(userId: string): Promise<UserInfo>{
+  async getUserInfo(userId: string): Promise<UserInfo> {
     const user = await this.usersRepo.findOneOrFail({ where: { id: userId } });
     return {
       username: user.username,
-      profilePictureId: user.profilePictureId
+      profilePictureId: user.profilePictureId,
     };
   }
 }

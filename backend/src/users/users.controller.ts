@@ -26,7 +26,11 @@ const UPLOAD_DIR = "uploads/";
 @Controller()
 @UseGuards(AuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+
+  constructor(
+    private readonly usersService: UsersService,
+  ) {
+  }
 
   @Get("users/me")
   async getMe(@UserId() userId: string) {

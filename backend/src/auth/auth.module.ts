@@ -6,13 +6,16 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard';
 import { UsersModule } from '../users/users.module';
+import { PassportModule } from '@nestjs/passport';
+import { GithubStrategy } from './github.strategy';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, TwoFa]),
     UsersModule,
+    PassportModule,
   ],
-  providers: [AuthService, AuthGuard],
+  providers: [AuthService, AuthGuard, GithubStrategy],
   controllers: [AuthController],
   exports: [AuthService, AuthGuard],
 })

@@ -1,10 +1,10 @@
-import {
-  Column,
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
-} from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { TwoFa } from "../auth/twofa.entity";
+
+export enum UserType {
+  EMAIL = "email",
+  GITHUB = "github",
+}
 
 @Entity({ name: "users" })
 export class User {
@@ -20,8 +20,17 @@ export class User {
   @Column({ type: "text", nullable: true, unique: true })
   profilePictureId: string | null;
 
-  @Column()
-  password: string;
+  @Column({ type: "text", default: UserType.EMAIL })
+  userType: UserType;
+
+  @Column({ type: "text", nullable: true, unique: true })
+  githubId: string | null;
+
+  @Column({type: "text", nullable: true })
+  githubAvatarUrl: string | null;
+
+  @Column({ type: "text", nullable: true })
+  password: string | null;
 
   @Column({ default: false })
   twoFaEnabled: boolean;
