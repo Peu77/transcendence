@@ -79,3 +79,13 @@ export async function getRoom(roomId: string): Promise<Room> {
     return response.data;
 }
 
+export async function updateMatchSettings(roomId: string, settings: MatchSettings): Promise<Room> {
+    const response = await axios.patch<Room>(`/room/${roomId}/settings/match`, settings);
+    return response.data;
+}
+
+export async function updateRoomSettings(roomId: string, update: { type: RoomType }): Promise<Room> {
+    const response = await axios.patch<Room>(`/room/${roomId}/settings/room`, update);
+    return response.data;
+}
+

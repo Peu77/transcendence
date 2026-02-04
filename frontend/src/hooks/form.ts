@@ -5,6 +5,8 @@ import {
   SubscribeButton,
   TextArea,
   TextField,
+  Switch,
+  Slider,
 } from '../components/formComponents'
 import { fieldContext, formContext } from './form-context.ts'
 
@@ -13,6 +15,8 @@ export const { useAppForm } = createFormHook({
     TextField,
     Select,
     TextArea,
+    Switch,
+    Slider,
   },
   formComponents: {
     SubscribeButton,

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import {
   MatchSettings,
   PieceRandomizer,
@@ -17,13 +22,9 @@ export class RoomService {
   constructor(
     private readonly realtimeService: RealtimeService,
     private readonly usersService: UsersService,
-  ) {
-  }
+  ) {}
 
-  async joinRoom(
-    roomId: string,
-    userId: string,
-  ): Promise<void> {
+  async joinRoom(roomId: string, userId: string): Promise<void> {
     const room = this.rooms.get(roomId);
     if (!room) {
       throw new Error("Room not found");
@@ -94,8 +95,9 @@ export class RoomService {
 
   getPublicRooms(): Promise<Room[]> {
     return Promise.resolve(
-      Array.from(this.rooms.values())
-        .filter((room) => room.type === RoomType.PUBLIC)
+      Array.from(this.rooms.values()).filter(
+        (room) => room.type === RoomType.PUBLIC,
+      ),
     );
   }
 
@@ -103,7 +105,43 @@ export class RoomService {
     this.rooms.delete(roomId);
   }
 
-  sendUpdateRoomEvent(roomId: string){
+  updateRoomSettings(
+    roomId: string,
+    userId: string,
+    update: Partial<Room>,
+  ): Room {
+    const room = this.rooms.get(roomId);
+    if (!room) throw new NotFoundException("Room not found");
+
+    if (room.hostUserId !== userId)
+      throw new BadRequestException("Only the host can update room settings");
+
+    if (update.type) {
+      room.type = update.type;
+    }
+
+    this.sendUpdateRoomEvent(roomId);
+    return room;
+  }
+
+  updateMatchSettings(
+    roomId: string,
+    userId: string,
+    settings: MatchSettings,
+  ): Room {
+    const room = this.rooms.get(roomId);
+    if (!room) throw new NotFoundException("Room not found");
+
+    if (room.hostUserId !== userId)
+      throw new BadRequestException("Only the host can update match settings");
+
+    room.settings = { ...settings };
+
+    this.sendUpdateRoomEvent(roomId);
+    return room;
+  }
+
+  sendUpdateRoomEvent(roomId: string) {
     this.realtimeService.emitToRoom(gameRoom(roomId), "room.updated", {});
   }
 
