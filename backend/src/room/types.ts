@@ -42,7 +42,7 @@ export type MatchSettings = {
    * Rotation system used by the game.
    * Currently only modern SRS is supported.
    */
-  rotation: RotationSystem;
+  rotationSystem: RotationSystem;
 
   /**
    * Enables or disables the hold mechanic entirely.
@@ -151,3 +151,24 @@ export type MatchSettings = {
     backToBackMultiplier: number;
   };
 };
+
+export interface RoomUser {
+  id: string;
+  username: string;
+  profilePictureId: string;
+  ws: WebSocket;
+}
+
+export enum RoomType {
+  PRIVATE = "PRIVATE",
+  PUBLIC = "PUBLIC",
+  SYSTEM = "SYSTEM",
+}
+
+export interface Room {
+  id: string;
+  type: RoomType;
+  settings: MatchSettings;
+  hostUserId: string;
+  users: RoomUser[];
+}
