@@ -15,6 +15,7 @@ import {Button} from "@/components/ui/button.tsx";
 
 const registerSchema = z
     .object({
+        username: z.string().min(2, "Username must be at least 2 characters").max(8, "Username must be at most 8 characters"),
         email: z.email("Please enter a valid email"),
         password: z.string().min(6, "Password must be at least 6 characters"),
         confirmPassword: z.string().min(6, "Confirm your password"),
@@ -30,6 +31,7 @@ export default function Register() {
     const form = useAppForm({
         validators: {onChange: registerSchema},
         defaultValues: {
+            username: "",
             email: "",
             password: "",
             confirmPassword: "",
@@ -59,6 +61,7 @@ export default function Register() {
 
     async function handleSubmit(values: z.infer<typeof registerSchema>) {
         await registerMutation.mutateAsync({
+            username: values.username,
             email: values.email,
             password: values.password,
         });
@@ -82,6 +85,14 @@ export default function Register() {
                         noValidate
                         className="flex flex-col gap-3 w-72"
                     >
+                        <form.AppField name={"username"}
+                                       children={field => (<field.TextField
+                                           label="Username"
+                                           placeholder="enter username"
+                                           type="text"
+                                       />)}
+                        />
+
                         <form.AppField
                             name="email"
                             children={(field) => (
