@@ -11,9 +11,10 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { verify } from "jsonwebtoken";
 import type { Server, Socket } from "socket.io";
-import { REALTIME_NAMESPACE, dmRoom, userRoom } from "./realtime.constants";
+import { REALTIME_NAMESPACE, dmRoom, gameRoom, userRoom } from "./realtime.constants";
 import { RealtimeService } from "./realtime.service";
 import { RealtimePresenceService } from "./realtime-presence.service";
+import { RoomService } from "../room/room.service";
 
 type SocketAuthUser = { userId: string };
 
@@ -49,6 +50,7 @@ export class RealtimeGateway
     configService: ConfigService,
     private readonly realtime: RealtimeService,
     private readonly realtimePresence: RealtimePresenceService,
+    private readonly roomService: RoomService,
   ) {
     this.jwtSecret = configService.getOrThrow<string>("JWT_SECRET");
   }
@@ -96,6 +98,8 @@ export class RealtimeGateway
     const userId: string | undefined = client.data.userId;
     if (!userId) return;
 
+    this.roomService.leaveAllRooms(userId);
+
     // Only mark offline if this was the last active socket for that user.
     // Socket.IO keeps room membership until after disconnect completes, so we check on next tick.
     setTimeout(async () => {
@@ -108,6 +112,38 @@ export class RealtimeGateway
         // best-effort
       }
     }, 0);
+  }
+
+  @SubscribeMessage("room.join")
+  async joinRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { roomId: string },
+  ) {
+    const userId: string | undefined = client.data.userId;
+    if (!userId) return { ok: false, error: "Unauthorized" };
+    if (!body?.roomId) return { ok: false, error: "Missing roomId" };
+
+    try {
+      const room = await this.roomService.joinRoom(body.roomId, userId, client);
+      await client.join(gameRoom(body.roomId));
+      return { ok: true, room };
+    } catch (e: any) {
+      return { ok: false, error: e.message };
+    }
+  }
+
+  @SubscribeMessage("room.leave")
+  async leaveRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { roomId: string },
+  ) {
+    const userId: string | undefined = client.data.userId;
+    if (!userId) return { ok: false };
+    if (!body?.roomId) return { ok: false };
+
+    this.roomService.leaveRoom(body.roomId, userId);
+    await client.leave(gameRoom(body.roomId));
+    return { ok: true };
   }
 
   @SubscribeMessage("dm.join")

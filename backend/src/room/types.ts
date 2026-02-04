@@ -1,3 +1,5 @@
+import { Socket } from "socket.io";
+
 export enum RotationSystem {
   SRS = "SRS",
 }
@@ -155,8 +157,8 @@ export type MatchSettings = {
 export interface RoomUser {
   id: string;
   username: string;
-  profilePictureId: string;
-  ws: WebSocket;
+  profilePictureId: string | null;
+  ws: Socket;
 }
 
 export enum RoomType {

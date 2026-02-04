@@ -1,6 +1,20 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { RoomService } from "./room.service";
+import { AuthGuard, UserId } from "../auth/auth.guard";
+import { Room } from "./types";
 
-@Controller('room')
+@UseGuards(AuthGuard)
+@Controller("room")
 export class RoomController {
+  constructor(private readonly roomService: RoomService) {}
 
+  @Get()
+  getPublicRooms(): Promise<Room[]> {
+    return this.roomService.getPublicRooms();
+  }
+
+  @Post()
+  createRoom(@UserId() userId: string) {
+    return this.roomService.createNewRoom(userId);
+  }
 }
