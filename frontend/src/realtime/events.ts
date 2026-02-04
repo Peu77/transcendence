@@ -42,6 +42,7 @@ export type DirectMessageCreatedEvent = DirectMessage & {
 
 export type LiveEventMap = {
     ready: { userId: string };
+    "room.updated": Record<string, never>;
     "friend_request.created": FriendRequestCreatedEvent;
     "friend_request.accepted": FriendRequestResolvedEvent;
     "friend_request.denied": FriendRequestResolvedEvent;

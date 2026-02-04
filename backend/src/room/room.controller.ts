@@ -17,4 +17,9 @@ export class RoomController {
   createRoom(@UserId() userId: string) {
     return this.roomService.createNewRoom(userId);
   }
+
+  @Get(":roomId")
+  getRoom(@Param("roomId") roomId: string) {
+    return this.roomService.getRoom(roomId);
+  }
 }

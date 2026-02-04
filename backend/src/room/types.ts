@@ -158,7 +158,6 @@ export interface RoomUser {
   id: string;
   username: string;
   profilePictureId: string | null;
-  ws: Socket;
 }
 
 export enum RoomType {

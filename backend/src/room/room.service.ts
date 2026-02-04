@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import {
   MatchSettings,
   PieceRandomizer,
@@ -8,7 +8,7 @@ import {
 } from "./types";
 import { RealtimeService } from "../realtime/realtime.service";
 import { UsersService } from "../users/users.service";
-import { Socket } from "socket.io";
+import { gameRoom } from "../realtime/realtime.constants";
 
 @Injectable()
 export class RoomService {
@@ -20,7 +20,10 @@ export class RoomService {
   ) {
   }
 
-  async joinRoom(roomId: string, userId: string, socket: Socket): Promise<Room> {
+  async joinRoom(
+    roomId: string,
+    userId: string,
+  ): Promise<void> {
     const room = this.rooms.get(roomId);
     if (!room) {
       throw new Error("Room not found");
@@ -28,17 +31,22 @@ export class RoomService {
 
     const existingUser = room.users.find((u) => u.id === userId);
     if (existingUser) {
-      // Reconnection logic
-      existingUser.ws = socket;
-    } else {
-      const userInfo = await this.usersService.getUserInfo(userId);
-      room.users.push({
-        id: userId,
-        username: userInfo.username,
-        profilePictureId: userInfo.profilePictureId,
-        ws: socket,
-      });
+      return;
     }
+
+    const userInfo = await this.usersService.getUserInfo(userId);
+    room.users.push({
+      id: userId,
+      username: userInfo.username,
+      profilePictureId: userInfo.profilePictureId,
+    });
+
+    this.sendUpdateRoomEvent(roomId);
+  }
+
+  getRoom(roomId: string): Room {
+    const room = this.rooms.get(roomId);
+    if (!room) throw new NotFoundException("Room not found");
 
     return room;
   }
@@ -47,11 +55,23 @@ export class RoomService {
     const room = this.rooms.get(roomId);
     if (!room) return;
 
+    const userInRoom = room.users.find((u) => u.id === userId);
+    if (!userInRoom) return;
+
     room.users = room.users.filter((u) => u.id !== userId);
 
-    if (room.users.length === 0 && room.type !== RoomType.SYSTEM) {
+    if (room.users.length === 0) {
       this.deleteRoom(roomId);
+      return;
     }
+
+    if (room.hostUserId === userId) {
+      const nextHost = room.users[0];
+      room.hostUserId = nextHost.id;
+      this.sendUpdateRoomEvent(roomId);
+    }
+
+    this.sendUpdateRoomEvent(roomId);
   }
 
   leaveAllRooms(userId: string) {
@@ -63,7 +83,7 @@ export class RoomService {
   createNewRoom(userId: string): Room {
     const room: Room = {
       id: this.generateFreeRoomId(),
-      type: RoomType.PRIVATE,
+      type: RoomType.PUBLIC,
       hostUserId: userId,
       settings: this.createDefaultMatchSettings(),
       users: [],
@@ -74,14 +94,17 @@ export class RoomService {
 
   getPublicRooms(): Promise<Room[]> {
     return Promise.resolve(
-      Array.from(this.rooms.values()).filter(
-        (room) => room.type === RoomType.PUBLIC,
-      ),
+      Array.from(this.rooms.values())
+        .filter((room) => room.type === RoomType.PUBLIC)
     );
   }
 
   deleteRoom(roomId: string) {
     this.rooms.delete(roomId);
+  }
+
+  sendUpdateRoomEvent(roomId: string){
+    this.realtimeService.emitToRoom(gameRoom(roomId), "room.updated", {});
   }
 
   createDefaultMatchSettings(): MatchSettings {

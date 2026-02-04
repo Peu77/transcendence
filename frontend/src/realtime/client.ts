@@ -5,6 +5,8 @@ import type { LiveEventMap } from "./events";
 type ClientToServerEvents = {
   "dm.join": (body: { withUserId: string }) => void;
   "dm.leave": (body: { withUserId: string }) => void;
+  "room.join": (body: { roomId: string }, callback: (res: { ok: boolean; error?: string }) => void) => void;
+  "room.leave": (body: { roomId: string }) => void;
 };
 
 type ServerToClientEvents = LiveEventMap;

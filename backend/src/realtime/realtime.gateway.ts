@@ -98,6 +98,7 @@ export class RealtimeGateway
     const userId: string | undefined = client.data.userId;
     if (!userId) return;
 
+    console.log(`Socket disconnected for user ${userId}`);
     this.roomService.leaveAllRooms(userId);
 
     // Only mark offline if this was the last active socket for that user.
@@ -120,14 +121,17 @@ export class RealtimeGateway
     @MessageBody() body: { roomId: string },
   ) {
     const userId: string | undefined = client.data.userId;
+    console.log(`room.join message received: roomId=${body?.roomId}, userId=${userId}`);
     if (!userId) return { ok: false, error: "Unauthorized" };
     if (!body?.roomId) return { ok: false, error: "Missing roomId" };
 
     try {
-      const room = await this.roomService.joinRoom(body.roomId, userId, client);
+      await this.roomService.joinRoom(body.roomId, userId);
       await client.join(gameRoom(body.roomId));
-      return { ok: true, room };
+      console.log(`room.join SUCCESS: roomId=${body.roomId}, userId=${userId}`);
+      return { ok: true };
     } catch (e: any) {
+      console.error(`room.join ERROR: ${e.message}`);
       return { ok: false, error: e.message };
     }
   }

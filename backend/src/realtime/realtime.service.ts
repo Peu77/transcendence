@@ -22,6 +22,11 @@ export class RealtimeService {
     this.server.to(userRoom(userId)).emit(event, payload);
   }
 
+  emitToRoom(room: string, event: string, payload: unknown) {
+    if (!this.server) return;
+    this.server.to(room).emit(event, payload);
+  }
+
   emitFriendRequestCreated(toUserId: string, payload: FriendRequestCreatedEvent) {
     this.emitToUser(toUserId, "friend_request.created", payload);
   }
