@@ -65,6 +65,54 @@ function TetrisPage() {
 
   const wireSocket = useCallback(
     (socket: GameSocket) => {
+      // Remove all previous game listeners to avoid duplicates
+      socket.removeAllListeners("tetris.countdown");
+      socket.removeAllListeners("tetris.state");
+      socket.removeAllListeners("tetris.paused");
+      socket.removeAllListeners("tetris.resumed");
+      socket.removeAllListeners("tetris.gameover");
+      socket.removeAllListeners("tetris.session-found");
+      socket.removeAllListeners("tetris.no-session");
+
+      socket.on("tetris.countdown", (data) => {
+        setCountdown(data.count);
+        if (data.count === 0) {
+          setPhase("playing");
+        }
+      });
+
+      socket.on("tetris.state", (state) => {
+        applyState(state);
+      });
+
+      socket.on("tetris.paused", (state) => {
+        setPhase("paused");
+        applyState(state);
+      });
+
+      socket.on("tetris.resumed", (state) => {
+        setPhase("playing");
+        applyState(state);
+      });
+
+      socket.on("tetris.gameover", (data) => {
+        setPhase("gameover");
+        setFinalScore(data);
+        markSessionInactive();
+      });
+
+      socket.on("tetris.session-found", (state) => {
+        // Server found our old session — render its state and show paused overlay
+        setPhase("paused");
+        applyState(state);
+      });
+
+      socket.on("tetris.no-session", () => {
+        // No session on server — go back to idle
+        markSessionInactive();
+        setPhase("idle");
+      });
+    },
     [applyState, setPhase],
   );
 
