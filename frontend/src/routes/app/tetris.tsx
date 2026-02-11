@@ -141,6 +141,32 @@ function TetrisPage() {
       rendererRef.current = null;
     };
   }, []);
+
+  /* ---------------------------------------------------------------- */
+  /*  Auto-reconnect on mount if we had a session                     */
+  /* ---------------------------------------------------------------- */
+
+  useEffect(() => {
+    if (!hasActiveSession()) return;
+
+    const socket = connectGameSocket();
+    socketRef.current = socket;
+    wireSocket(socket);
+
+    const onReady = () => {
+      requestReconnect();
+      socket.off("ready", onReady);
+    };
+
+    socket.on("ready", onReady);
+    if (socket.connected) {
+      requestReconnect();
+    }
+
+    return () => {
+      // Don't disconnect on unmount if game is playing/paused — let it persist
+    };
+  }, [wireSocket]);
 /* ------------------------------------------------------------------ */
 /*  Route                                                             */
 /* ------------------------------------------------------------------ */
