@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { FriendsModule } from './friends/friends.module';
 import { RealtimeModule } from "./realtime/realtime.module";
+import { GameModule } from "./game/game.module";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { RealtimeModule } from "./realtime/realtime.module";
     AuthModule,
     FriendsModule,
     RealtimeModule,
+    GameModule,
   ],
   controllers: [AppController],
   providers: [AppService],
