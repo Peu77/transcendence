@@ -33,3 +33,71 @@ export type GameSocket = Socket<GameServerToClientEvents, GameClientToServerEven
 
 const SESSION_KEY = "tetris_active_session";
 
+export function markSessionActive(): void {
+  sessionStorage.setItem(SESSION_KEY, "1");
+}
+
+export function markSessionInactive(): void {
+  sessionStorage.removeItem(SESSION_KEY);
+}
+
+export function hasActiveSession(): boolean {
+  return sessionStorage.getItem(SESSION_KEY) === "1";
+}
+
+/* ------------------------------------------------------------------ */
+/*  Socket instance & lifecycle                                       */
+/* ------------------------------------------------------------------ */
+
+let socket: GameSocket | null = null;
+
+export function getGameSocket(): GameSocket {
+  if (!socket) {
+    const url = new URL(env.VITE_BACKEND_URL);
+    const baseUrl = `${url.protocol}//${url.host}`;
+
+    socket = io(`${baseUrl}/game`, {
+      withCredentials: true,
+      autoConnect: false,
+      transports: ["websocket"],
+    });
+  }
+  return socket;
+}
+
+export function connectGameSocket(): GameSocket {
+  const s = getGameSocket();
+  if (!s.connected) s.connect();
+  return s;
+}
+
+export function disconnectGameSocket(): void {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Game actions                                                      */
+/* ------------------------------------------------------------------ */
+
+export function startGame(): void {
+  getGameSocket().emit("tetris.start");
+}
+
+export function sendInput(action: InputAction): void {
+  getGameSocket().emit("tetris.input", { action });
+}
+
+export function pauseGame(): void {
+  getGameSocket().emit("tetris.pause");
+}
+
+export function resumeGame(): void {
+  getGameSocket().emit("tetris.resume");
+}
+
+export function requestReconnect(): void {
+  getGameSocket().emit("tetris.reconnect");
+}
