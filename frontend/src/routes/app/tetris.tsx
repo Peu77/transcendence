@@ -167,6 +167,181 @@ function TetrisPage() {
       // Don't disconnect on unmount if game is playing/paused — let it persist
     };
   }, [wireSocket]);
+
+  /* ---------------------------------------------------------------- */
+  /*  Cleanup socket on component unmount                             */
+  /* ---------------------------------------------------------------- */
+
+  useEffect(() => {
+    return () => {
+      disconnectGameSocket();
+    };
+  }, []);
+
+  /* ---------------------------------------------------------------- */
+  /*  Start a new game                                                */
+  /* ---------------------------------------------------------------- */
+
+  const handleStart = useCallback(() => {
+    setPhase("countdown");
+    setFinalScore(null);
+    setScore(0);
+    setLines(0);
+    setLevel(1);
+
+    const socket = connectGameSocket();
+    socketRef.current = socket;
+    wireSocket(socket);
+
+    const onReady = () => {
+      startGame();
+      markSessionActive();
+      socket.off("ready", onReady);
+    };
+
+    socket.on("ready", onReady);
+
+    // If already connected, start right away
+    if (socket.connected) {
+      startGame();
+      markSessionActive();
+    }
+  }, [wireSocket, setPhase]);
+
+  /* ---------------------------------------------------------------- */
+  /*  Resume from pause                                               */
+  /* ---------------------------------------------------------------- */
+
+  const handleResume = useCallback(() => {
+    resumeGame();
+  }, []);
+
+  /* ---------------------------------------------------------------- */
+  /*  Keyboard input                                                  */
+  /* ---------------------------------------------------------------- */
+
+  useEffect(() => {
+    const keyMap: Record<string, InputAction> = {
+      ArrowLeft: "left",
+      a: "left",
+      A: "left",
+      ArrowRight: "right",
+      d: "right",
+      D: "right",
+      ArrowUp: "rotate",
+      w: "rotate",
+      W: "rotate",
+      ArrowDown: "softDrop",
+      s: "softDrop",
+      S: "softDrop",
+      " ": "hardDrop",
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const currentPhase = phaseRef.current;
+
+      // ESC toggles pause
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (currentPhase === "playing") {
+          pauseGame();
+        } else if (currentPhase === "paused") {
+          handleResume();
+        }
+        return;
+      }
+
+      if (currentPhase !== "playing") return;
+      const action = keyMap[e.key];
+      if (action) {
+        e.preventDefault();
+        sendInput(action);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleResume]);
+
+  /* ---------------------------------------------------------------- */
+  /*  Render                                                          */
+  /* ---------------------------------------------------------------- */
+
+  return (
+    <div className="flex flex-col items-center justify-center w-full h-[calc(100vh-4rem)] gap-4 select-none">
+      {/* Score bar */}
+      <div className="flex gap-8 text-lg font-bold tracking-wide text-foreground/80">
+        <span>SCORE {score}</span>
+        <span>LINES {lines}</span>
+        <span>LEVEL {level}</span>
+      </div>
+
+      {/* Game area */}
+      <div className="relative w-full max-w-[700px] aspect-[7/10] flex-shrink-0">
+        <canvas ref={canvasRef} className="w-full h-full" />
+
+        {/* Overlays */}
+        {phase === "idle" && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+            <Button
+              onClick={handleStart}
+              className="clip-pixel-corners-btn bg-cyan-500 hover:bg-cyan-400 text-white px-10 py-6 text-2xl font-bold"
+            >
+              START GAME
+            </Button>
+          </div>
+        )}
+
+        {phase === "countdown" && countdown !== null && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+            <span className="text-8xl font-bold text-white animate-pulse">
+              {countdown === 0 ? "GO!" : countdown}
+            </span>
+          </div>
+        )}
+
+        {phase === "paused" && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-black/60">
+            <span className="text-5xl font-bold text-yellow-300">PAUSED</span>
+            <Button
+              onClick={handleResume}
+              className="clip-pixel-corners-btn bg-cyan-500 hover:bg-cyan-400 text-white px-8 py-4 text-xl font-bold"
+            >
+              RESUME
+            </Button>
+            <span className="text-sm text-white/50">Press ESC to resume</span>
+          </div>
+        )}
+
+        {phase === "gameover" && finalScore && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-black/70">
+            <span className="text-5xl font-bold text-red-400">GAME OVER</span>
+            <div className="flex flex-col items-center gap-1 text-xl text-white/80">
+              <span>Score: {finalScore.score}</span>
+              <span>Lines: {finalScore.lines}</span>
+              <span>Level: {finalScore.level}</span>
+            </div>
+            <Button
+              onClick={handleStart}
+              className="clip-pixel-corners-btn bg-cyan-500 hover:bg-cyan-400 text-white px-8 py-4 text-xl font-bold"
+            >
+              PLAY AGAIN
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Controls hint */}
+      {phase === "playing" && (
+        <div className="text-sm text-foreground/50 tracking-wide">
+          ARROWS / WASD to move &middot; SPACE to hard drop &middot; ESC to
+          pause
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Route                                                             */
 /* ------------------------------------------------------------------ */
