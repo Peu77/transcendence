@@ -21,6 +21,7 @@ import Home from "@/routes/home.tsx";
 import {AppRoute} from "@/routes/app/layout.tsx";
 import {AppIndexRoute} from "@/routes/app/app.tsx";
 import {SettingsRoute} from "@/routes/app/settings.tsx";
+import {TetrisRoute} from "@/routes/app/tetris.tsx";
 import {NotFound} from "@/routes/notFound.tsx";
 
 export const rootRoute = createRootRoute<unknown>({
@@ -54,7 +55,8 @@ const routeTree = rootRoute.addChildren([
     }),
     AppRoute,
     AppIndexRoute,
-    SettingsRoute
+    SettingsRoute,
+    TetrisRoute,
 ])
 
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
