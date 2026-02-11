@@ -116,6 +116,31 @@ function TetrisPage() {
     [applyState, setPhase],
   );
 
+  /* ---------------------------------------------------------------- */
+  /*  Setup renderer on mount                                         */
+  /* ---------------------------------------------------------------- */
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const renderer = new TetrisRenderer(canvas);
+    rendererRef.current = renderer;
+
+    const handleResize = () => {
+      const container = canvas.parentElement;
+      if (!container) return;
+      renderer.resize(container.clientWidth, container.clientHeight);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      renderer.destroy();
+      rendererRef.current = null;
+    };
+  }, []);
 /* ------------------------------------------------------------------ */
 /*  Route                                                             */
 /* ------------------------------------------------------------------ */
