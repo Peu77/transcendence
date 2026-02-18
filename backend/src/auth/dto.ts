@@ -1,6 +1,16 @@
-import { IsEmail, IsNumberString, IsString, IsUUID, Length } from 'class-validator';
+import {
+  IsEmail,
+  IsNumberString,
+  IsString,
+  IsUUID,
+  Length,
+} from "class-validator";
 
 export class RegisterDto {
+  @IsString()
+  @Length(2, 8)
+  username: string;
+
   @IsEmail()
   email!: string;
 
@@ -30,4 +40,3 @@ export class TwoFAVerifyDto {
   @IsUUID()
   userId!: string;
 }
-

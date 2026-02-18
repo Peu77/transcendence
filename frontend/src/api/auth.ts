@@ -14,7 +14,7 @@ export async function login(values: LoginRequest): Promise<LoginResponse> {
   return res.data;
 }
 
-export type RegisterRequest = { email: string; password: string };
+export type RegisterRequest = { username: string, email: string; password: string };
 export type RegisterResponse = {};
 
 export async function register(

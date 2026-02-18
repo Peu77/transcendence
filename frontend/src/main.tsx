@@ -1,4 +1,3 @@
-import {StrictMode} from 'react'
 import ReactDOM from 'react-dom/client'
 import {
     Outlet,
@@ -21,6 +20,8 @@ import Home from "@/routes/home.tsx";
 import {AppRoute} from "@/routes/app/layout.tsx";
 import {AppIndexRoute} from "@/routes/app/app.tsx";
 import {SettingsRoute} from "@/routes/app/settings.tsx";
+import {MultiplayerRoute} from "@/routes/app/multiplayer.tsx";
+import {RoomRoute} from "@/routes/app/room.$roomId.tsx";
 import {NotFound} from "@/routes/notFound.tsx";
 
 export const rootRoute = createRootRoute<unknown>({
@@ -54,7 +55,9 @@ const routeTree = rootRoute.addChildren([
     }),
     AppRoute,
     AppIndexRoute,
-    SettingsRoute
+    SettingsRoute,
+    MultiplayerRoute,
+    RoomRoute
 ])
 
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
@@ -80,11 +83,9 @@ const rootElement = document.getElementById('app')
 if (rootElement && !rootElement.innerHTML) {
     const root = ReactDOM.createRoot(rootElement)
     root.render(
-        <StrictMode>
             <TanStackQueryProvider.Provider {...TanStackQueryProviderContext}>
                 <RouterProvider router={router}/>
             </TanStackQueryProvider.Provider>
-        </StrictMode>,
     )
 }
 

@@ -44,7 +44,7 @@ export class AuthController {
       const createdUser = await this.usersService.createUser(
         UserType.EMAIL,
         email,
-        "",
+        dto.username,
         passwordHash,
         null,
         null,
@@ -119,7 +119,7 @@ export class AuthController {
     if (!valid) throw new BadRequestException("Invalid 2FA token");
 
     const token = this.authService.createUserToken(dto.userId);
-    res.cookie('token', token, { httpOnly: true, path: '/' });
+    res.cookie("token", token, { httpOnly: true, path: "/" });
     return res.send({ token });
   }
 
