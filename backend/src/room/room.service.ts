@@ -2,9 +2,9 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from "@nestjs/common";
 import {
+  GarbageCancel,
   MatchSettings,
   PieceRandomizer,
   Room,
@@ -27,7 +27,7 @@ export class RoomService {
   async joinRoom(roomId: string, userId: string): Promise<void> {
     const room = this.rooms.get(roomId);
     if (!room) {
-      throw new Error("Room not found");
+      throw new NotFoundException("Room not found");
     }
 
     const existingUser = room.users.find((u) => u.id === userId);
@@ -69,7 +69,6 @@ export class RoomService {
     if (room.hostUserId === userId) {
       const nextHost = room.users[0];
       room.hostUserId = nextHost.id;
-      this.sendUpdateRoomEvent(roomId);
     }
 
     this.sendUpdateRoomEvent(roomId);
@@ -163,7 +162,7 @@ export class RoomService {
       garbage: {
         enabled: true,
         delayMs: 1000,
-        cancel: "partial",
+        cancel: GarbageCancel.PARTIAL,
         holeCount: 1,
         messiness: 0.42,
       },

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RotationSystem, PieceRandomizer, RoomType } from "@/api/room.ts";
+import {RotationSystem, PieceRandomizer, RoomType, GarbageCancel} from "@/api/room.ts";
 
 export const matchSettingsSchema = z.object({
     gravity: z.number().min(0),
@@ -18,7 +18,7 @@ export const matchSettingsSchema = z.object({
     garbage: z.object({
         enabled: z.boolean(),
         delayMs: z.number().min(0),
-        cancel: z.enum(["full", "partial", "none"]),
+        cancel: z.enum(GarbageCancel),
         holeCount: z.number().min(1),
         messiness: z.number().min(0).max(1),
     }),

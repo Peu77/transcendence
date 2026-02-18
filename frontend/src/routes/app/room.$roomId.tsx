@@ -11,7 +11,7 @@ import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs.tsx
 import {Button} from "@/components/ui/button.tsx";
 import {useAppForm} from "@/hooks/form.ts";
 import {userStore} from "@/store/userStore";
-import {matchSettingsSchema, roomSettingsSchema} from "./room.settings.ts";
+import {matchSettingsSchema, roomSettingsSchema, type RoomSettingsValues} from "./room.settings.ts";
 
 const RoomPage = () => {
     const {roomId} = RoomRoute.useParams();
@@ -144,7 +144,7 @@ const RoomPage = () => {
     );
 }
 
-function MatchSettingsForm({room, isHost, onSave}: {room: Room, isHost: boolean, onSave: (settings: any) => void}) {
+function MatchSettingsForm({room, isHost, onSave}: {room: Room, isHost: boolean, onSave: (settings: MatchSettings) => void}) {
     const form = useAppForm({
         validators: {onChange: matchSettingsSchema},
         defaultValues: room.settings,
@@ -364,7 +364,7 @@ function MatchSettingsForm({room, isHost, onSave}: {room: Room, isHost: boolean,
     );
 }
 
-function RoomSettingsForm({room, isHost, onSave}: {room: Room, isHost: boolean, onSave: (data: any) => void}) {
+function RoomSettingsForm({room, isHost, onSave}: {room: Room, isHost: boolean, onSave: (data: RoomSettingsValues) => void}) {
     const form = useAppForm({
         validators: {onChange: roomSettingsSchema},
         defaultValues: {

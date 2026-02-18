@@ -8,7 +8,12 @@ import {
   ValidateNested,
 } from "class-validator";
 import { Type } from "class-transformer";
-import { PieceRandomizer, RoomType, RotationSystem } from "./types";
+import {
+  GarbageCancel,
+  PieceRandomizer,
+  RoomType,
+  RotationSystem,
+} from "./types";
 
 export class GarbageSettingsDto {
   @IsBoolean()
@@ -19,8 +24,8 @@ export class GarbageSettingsDto {
   @Max(5000)
   delayMs: number;
 
-  @IsEnum(["full", "partial", "none"])
-  cancel: "full" | "partial" | "none";
+  @IsEnum(GarbageCancel)
+  cancel: GarbageCancel;
 
   @IsNumber()
   @Min(1)
@@ -121,7 +126,7 @@ export class UpdateMatchSettingsDto {
 
   @IsNumber()
   @Min(0)
-  @Max(6)
+  @Max(10)
   nextCount: number;
 
   @IsEnum(PieceRandomizer)
