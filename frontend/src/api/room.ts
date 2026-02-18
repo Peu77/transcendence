@@ -4,6 +4,12 @@ export enum RotationSystem {
     SRS = "SRS",
 }
 
+export enum GarbageCancel {
+    FULL = "full",
+    PARTIAL = "partial",
+    NONE = "none",
+}
+
 export enum PieceRandomizer {
     SEVEN_BAG = "7-bag",
 }
@@ -25,7 +31,7 @@ export type MatchSettings = {
     garbage: {
         enabled: boolean;
         delayMs: number;
-        cancel: "full" | "partial" | "none";
+        cancel: GarbageCancel;
         holeCount: number;
         messiness: number;
     };
