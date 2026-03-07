@@ -1,4 +1,4 @@
-PHONY: setup
+PHONY: setup up down build reset
 
 setup:
 	cp frontend/.env.example frontend/.env
@@ -15,5 +15,5 @@ build:
 	docker compose build
 
 reset:
-	docker compose down -V postgres frontend backend
+	docker compose down -v postgres frontend backend
 
