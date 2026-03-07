@@ -1,4 +1,4 @@
-import { createRoute } from '@tanstack/react-router'
+import { createRoute, useNavigate } from '@tanstack/react-router'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { useEffect, useState } from 'react'
 import { useLiveSocket } from '@/realtime/useRealtimeStore.ts'
@@ -29,6 +29,7 @@ const RoomPage = () => {
   const { roomId } = RoomRoute.useParams()
   const socket = useLiveSocket()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [joinError, setJoinError] = useState<string | null>(null)
   const [isJoining, setIsJoining] = useState(true)
   const me = userStore.state
@@ -82,7 +83,6 @@ const RoomPage = () => {
       setIsJoining(false)
       if (!res.ok) {
         setJoinError(res.error || 'Failed to join room')
-        toast.error(res.error || 'Failed to join room')
       }
     })
 
@@ -91,16 +91,26 @@ const RoomPage = () => {
     }
   }, [socket, roomId])
 
+  useEffect(() => {
+    if (!joinError && !fetchError) {
+      return
+    }
+
+    const errorMessage = joinError || (fetchError as Error)?.message
+    if (errorMessage) {
+      toast.error(errorMessage)
+    }
+
+    navigate({ to: '/app/room' }).catch(console.error)
+  }, [fetchError, joinError, navigate])
+
   const isHost = room?.hostUserId === me?.id
   const error = joinError || (fetchError as Error)?.message
 
   if (error) {
     return (
       <div className="flex h-[calc(100dvh-4rem)] items-center justify-center overflow-hidden p-6 text-foreground">
-        <div className="w-full max-w-2xl rounded-2xl border border-destructive/40 bg-card/95 p-8 shadow-lg">
-          <h1 className="mb-4 text-4xl font-bold">Error</h1>
-          <p className="text-xl text-destructive">{error}</p>
-        </div>
+        Redirecting to room lobby...
       </div>
     )
   }

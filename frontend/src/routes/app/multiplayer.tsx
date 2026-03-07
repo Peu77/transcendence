@@ -1,17 +1,33 @@
 import { createRoute, Link, useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { Button } from '@/components/ui/button.tsx'
+import { Input } from '@/components/ui/input.tsx'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { getRooms, createRoom } from '@/api/room.ts'
 import { toast } from 'sonner'
 
 const Multiplayer = () => {
   const navigate = useNavigate()
+  const [roomIdInput, setRoomIdInput] = useState('')
   const { data: rooms, isLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: getRooms,
     refetchInterval: 5000,
   })
+
+  const joinRoomById = async () => {
+    const trimmedRoomId = roomIdInput.trim()
+    if (!trimmedRoomId) {
+      toast.error('Enter a room ID to join')
+      return
+    }
+
+    await navigate({
+      to: '/app/room/$roomId',
+      params: { roomId: trimmedRoomId },
+    })
+  }
 
   const createRoomMutation = useMutation({
     mutationFn: createRoom,
@@ -57,12 +73,28 @@ const Multiplayer = () => {
   return (
     <div className="w-full flex flex-col items-end pt-10">
       <div className="max-w-[90%] flex flex-col w-full gap-4">
+        <form
+          className="translate-x-48 w-[calc(100%+12rem)]"
+          onSubmit={async (e) => {
+            e.preventDefault()
+            await joinRoomById()
+          }}
+        >
+          <Input
+            id="join-room-id"
+            value={roomIdInput}
+            onChange={(e) => setRoomIdInput(e.target.value)}
+            placeholder="Paste a room ID and press Enter to join"
+            autoComplete="off"
+          />
+        </form>
+
         {isLoading && (
           <div className="text-white text-right pr-10">Loading rooms...</div>
         )}
-        {menuItems.map((item, idx) => (
+        {menuItems.map((item) => (
           <div
-            key={idx}
+            key={item.path ?? item.label}
             className={`pb-1 pr-1 ${item.borderColor} clip-pixel-corners-btn translate-x-48 hover:translate-x-40 transition-transform w-[calc(100%+12rem)] overflow-hidden`}
           >
             <Button
