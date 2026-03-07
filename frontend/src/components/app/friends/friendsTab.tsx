@@ -14,7 +14,12 @@ export const FriendsTab = (props: { isOpen: boolean }) => {
   const qc = useQueryClient()
 
   const handlePresenceUpdated = useCallback(
-    (evt: { userId: string; status: string; lastSeenAt: string | null; updatedAt: string }) => {
+    (evt: {
+      userId: string
+      status: string
+      lastSeenAt: string | null
+      updatedAt: string
+    }) => {
       qc.setQueryData(['friends'], (prev: any) => {
         if (!Array.isArray(prev)) return prev
         return prev.map((f: any) =>
@@ -94,7 +99,7 @@ export const FriendsTab = (props: { isOpen: boolean }) => {
   const friends = friendsQuery.data ?? []
 
   const activeDmFriend = activeDmFriendId
-    ? friends.find((f) => f.id === activeDmFriendId) ?? null
+    ? (friends.find((f) => f.id === activeDmFriendId) ?? null)
     : null
 
   // If friend list changes (removed etc.), close the DM panel.
