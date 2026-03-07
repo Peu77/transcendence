@@ -6,162 +6,162 @@ import {
   Max,
   Min,
   ValidateNested,
-} from "class-validator";
-import { Type } from "class-transformer";
+} from 'class-validator'
+import { Type } from 'class-transformer'
 import {
   GarbageCancel,
   PieceRandomizer,
   RoomType,
   RotationSystem,
-} from "./types";
+} from './types'
 
 export class GarbageSettingsDto {
   @IsBoolean()
-  enabled: boolean;
+  enabled: boolean
 
   @IsNumber()
   @Min(0)
   @Max(5000)
-  delayMs: number;
+  delayMs: number
 
   @IsEnum(GarbageCancel)
-  cancel: GarbageCancel;
+  cancel: GarbageCancel
 
   @IsNumber()
   @Min(1)
   @Max(4)
-  holeCount: number;
+  holeCount: number
 
   @IsNumber()
   @Min(0)
   @Max(1)
-  messiness: number;
+  messiness: number
 }
 
 export class DamageTableDto {
   @IsNumber()
   @Min(0)
   @Max(10)
-  single: number;
+  single: number
 
   @IsNumber()
   @Min(0)
   @Max(10)
-  double: number;
+  double: number
 
   @IsNumber()
   @Min(0)
   @Max(10)
-  triple: number;
+  triple: number
 
   @IsNumber()
   @Min(0)
   @Max(20)
-  tetris: number;
+  tetris: number
 
   @IsNumber()
   @Min(0)
   @Max(10)
-  tSpinSingle: number;
+  tSpinSingle: number
 
   @IsNumber()
   @Min(0)
   @Max(15)
-  tSpinDouble: number;
+  tSpinDouble: number
 
   @IsNumber()
   @Min(0)
   @Max(20)
-  tSpinTriple: number;
+  tSpinTriple: number
 }
 
 export class DamageSettingsDto {
   @IsObject()
   @ValidateNested()
   @Type(() => DamageTableDto)
-  table: DamageTableDto;
+  table: DamageTableDto
 
   @IsNumber()
   @Min(0)
   @Max(5)
-  comboMultiplier: number;
+  comboMultiplier: number
 
   @IsNumber()
   @Min(1)
   @Max(5)
-  backToBackMultiplier: number;
+  backToBackMultiplier: number
 }
 
 export class UpdateMatchSettingsDto {
   @IsNumber()
   @Min(0)
   @Max(20)
-  gravity: number;
+  gravity: number
 
   @IsNumber()
   @Min(0)
   @Max(2000)
-  lockDelayMs: number;
+  lockDelayMs: number
 
   @IsNumber()
   @Min(0)
   @Max(30)
-  lockResetLimit: number;
+  lockResetLimit: number
 
   @IsNumber()
   @Min(0)
   @Max(1000)
-  areMs: number;
+  areMs: number
 
   @IsNumber()
   @Min(0)
   @Max(1000)
-  lineClearDelayMs: number;
+  lineClearDelayMs: number
 
   @IsEnum(RotationSystem)
-  rotationSystem: RotationSystem;
+  rotationSystem: RotationSystem
 
   @IsBoolean()
-  hold: boolean;
+  hold: boolean
 
   @IsNumber()
   @Min(0)
   @Max(10)
-  nextCount: number;
+  nextCount: number
 
   @IsEnum(PieceRandomizer)
-  bag: PieceRandomizer;
+  bag: PieceRandomizer
 
   @IsBoolean()
-  forbidInitialSZ: boolean;
+  forbidInitialSZ: boolean
 
   @IsNumber()
   @Min(4)
   @Max(20)
-  width: number;
+  width: number
 
   @IsNumber()
   @Min(10)
   @Max(40)
-  height: number;
+  height: number
 
   @IsNumber()
   @Min(0)
   @Max(20)
-  hiddenRows: number;
+  hiddenRows: number
 
   @IsObject()
   @ValidateNested()
   @Type(() => GarbageSettingsDto)
-  garbage: GarbageSettingsDto;
+  garbage: GarbageSettingsDto
 
   @IsObject()
   @ValidateNested()
   @Type(() => DamageSettingsDto)
-  damage: DamageSettingsDto;
+  damage: DamageSettingsDto
 }
 
 export class UpdateRoomSettingsDto {
   @IsEnum(RoomType)
-  type: RoomType;
+  type: RoomType
 }

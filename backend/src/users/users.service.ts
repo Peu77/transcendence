@@ -1,9 +1,9 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { User, UserType } from "./user.entity";
-import { UserInfo } from "../realtime/realtime.events";
-import { GithubValidateReturn } from "../auth/github.strategy";
+import { Injectable } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+import { User, UserType } from './user.entity'
+import { UserInfo } from '../realtime/realtime.events'
+import { GithubValidateReturn } from '../auth/github.strategy'
 
 @Injectable()
 export class UsersService {
@@ -26,23 +26,23 @@ export class UsersService {
       password: passwordHash,
       githubId,
       githubAvatarUrl,
-    });
-    return await this.usersRepo.save(user);
+    })
+    return await this.usersRepo.save(user)
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepo.findOne({ where: { email: email.toLowerCase() } });
+    return this.usersRepo.findOne({ where: { email: email.toLowerCase() } })
   }
 
   async findByGithubId(githubId: string): Promise<User | null> {
     return this.usersRepo.findOne({
       where: { githubId, userType: UserType.GITHUB },
-    });
+    })
   }
 
   async upsertGithubUser(profile: GithubValidateReturn): Promise<User> {
-    const byGithub = await this.findByGithubId(profile.githubId);
-    if (byGithub) return byGithub;
+    const byGithub = await this.findByGithubId(profile.githubId)
+    if (byGithub) return byGithub
 
     return this.createUser(
       UserType.GITHUB,
@@ -51,37 +51,43 @@ export class UsersService {
       null,
       profile.githubId,
       profile.avatarUrl,
-    );
+    )
   }
 
   async getUserByid(id: string): Promise<User> {
-    return await this.usersRepo.findOneOrFail({ where: { id } });
+    return await this.usersRepo.findOneOrFail({ where: { id } })
   }
 
   async updateProfilePictureId(
     userId: string,
     profilePictureId: string | null,
   ): Promise<void> {
-    await this.usersRepo.update({ id: userId }, { profilePictureId });
+    await this.usersRepo.update({ id: userId }, { profilePictureId })
   }
 
-  async updateTwoFaSecret(userId: string, twoFaSecret: string | null): Promise<void> {
-    await this.usersRepo.update({ id: userId }, { twoFaSecret });
+  async updateTwoFaSecret(
+    userId: string,
+    twoFaSecret: string | null,
+  ): Promise<void> {
+    await this.usersRepo.update({ id: userId }, { twoFaSecret })
   }
 
   async enableTwoFa(userId: string): Promise<void> {
-    await this.usersRepo.update({ id: userId }, { twoFaEnabled: true });
+    await this.usersRepo.update({ id: userId }, { twoFaEnabled: true })
   }
 
   async disableTwoFa(userId: string): Promise<void> {
-    await this.usersRepo.update({ id: userId }, { twoFaEnabled: false, twoFaSecret: null });
+    await this.usersRepo.update(
+      { id: userId },
+      { twoFaEnabled: false, twoFaSecret: null },
+    )
   }
 
   async getUserInfo(userId: string): Promise<UserInfo> {
-    const user = await this.usersRepo.findOneOrFail({ where: { id: userId } });
+    const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
     return {
       username: user.username,
       profilePictureId: user.profilePictureId,
-    };
+    }
   }
 }

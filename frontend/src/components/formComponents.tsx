@@ -44,13 +44,13 @@ function ErrorMessages({
 
 export function TextField({
   label,
-  type = "text",
+  type = 'text',
   placeholder,
   disabled,
 }: {
-  label: string,
-  type?: string,
-  placeholder?: string,
+  label: string
+  type?: string
+  placeholder?: string
   disabled?: boolean
 }) {
   const field = useFieldContext<any>()
@@ -68,8 +68,9 @@ export function TextField({
         disabled={disabled}
         onBlur={field.handleBlur}
         onChange={(e) => {
-          const val = type === "number" ? e.target.valueAsNumber : e.target.value;
-          field.handleChange(val as any);
+          const val =
+            type === 'number' ? e.target.valueAsNumber : e.target.value
+          field.handleChange(val as any)
         }}
       />
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}

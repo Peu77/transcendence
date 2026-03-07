@@ -1,13 +1,12 @@
-import { IsUUID, IsString, IsNotEmpty } from 'class-validator';
+import { IsUUID, IsString, IsNotEmpty } from 'class-validator'
 
 export class ProfilePictureDto {
   @IsUUID()
-  id!: string;
+  id!: string
 }
 
 export class VerifyTwoFaDto {
   @IsString()
   @IsNotEmpty()
-  code!: string;
+  code!: string
 }
-
