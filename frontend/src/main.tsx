@@ -9,6 +9,7 @@ import {
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider.tsx'
+import { getQueryContext } from './integrations/tanstack-query/query-context.ts'
 
 import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
@@ -60,7 +61,7 @@ const routeTree = rootRoute.addChildren([
   RoomRoute,
 ])
 
-const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
+const TanStackQueryProviderContext = getQueryContext()
 const router = createRouter({
   defaultNotFoundComponent: NotFound,
   routeTree,

@@ -53,7 +53,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         )
         if (extraKeys.length > 0) {
           details = details ?? {}
-          for (const k of extraKeys) (details as any)[k] = body[k]
+          for (const k of extraKeys) details[k] = body[k]
         }
       } else {
         message = exception.message

@@ -66,7 +66,7 @@ export class AuthController {
   async login(@Body() dto: LoginDto, @Res() res: Response) {
     const email = dto.email.toLowerCase()
     const user = await this.usersService.findByEmail(email)
-    if (!user || !user.password || user.username !== UserType.EMAIL) {
+    if (!user || !user.password || user.userType !== UserType.EMAIL) {
       return res
         .status(HttpStatus.UNAUTHORIZED)
         .send({ error: 'Invalid credentials' })

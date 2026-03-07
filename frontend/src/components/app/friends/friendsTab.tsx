@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
@@ -13,9 +13,8 @@ import { useLiveEvent } from '@/realtime/hooks.ts'
 export const FriendsTab = (props: { isOpen: boolean }) => {
   const qc = useQueryClient()
 
-  useLiveEvent(
-    'presence.updated',
-    (evt) => {
+  const handlePresenceUpdated = useCallback(
+    (evt: { userId: string; status: string; lastSeenAt: string | null; updatedAt: string }) => {
       qc.setQueryData(['friends'], (prev: any) => {
         if (!Array.isArray(prev)) return prev
         return prev.map((f: any) =>
@@ -23,7 +22,7 @@ export const FriendsTab = (props: { isOpen: boolean }) => {
             ? {
                 ...f,
                 presence: {
-                  ...(f.presence ?? {}),
+                  ...(f.presence || undefined),
                   status: evt.status,
                   lastSeenAt: evt.lastSeenAt,
                   updatedAt: evt.updatedAt,
@@ -33,24 +32,16 @@ export const FriendsTab = (props: { isOpen: boolean }) => {
         )
       })
     },
-    [props.isOpen],
+    [qc],
   )
 
-  useLiveEvent(
-    'friendship.deleted',
-    async () => {
-      await qc.invalidateQueries({ queryKey: ['friends'] })
-    },
-    [props.isOpen],
-  )
+  const invalidateFriends = useCallback(async () => {
+    await qc.invalidateQueries({ queryKey: ['friends'] })
+  }, [qc])
 
-  useLiveEvent(
-    'friend_request.accepted',
-    async () => {
-      await qc.invalidateQueries({ queryKey: ['friends'] })
-    },
-    [props.isOpen],
-  )
+  useLiveEvent('presence.updated', handlePresenceUpdated)
+  useLiveEvent('friendship.deleted', invalidateFriends)
+  useLiveEvent('friend_request.accepted', invalidateFriends)
 
   const [userIdentifier, setUserIdentifier] = useState('')
   const [activeDmFriendId, setActiveDmFriendId] = useState<string | null>(null)
@@ -102,10 +93,9 @@ export const FriendsTab = (props: { isOpen: boolean }) => {
 
   const friends = friendsQuery.data ?? []
 
-  const activeDmFriend = useMemo(() => {
-    if (!activeDmFriendId) return null
-    return friends.find((f) => f.id === activeDmFriendId) ?? null
-  }, [activeDmFriendId, friends])
+  const activeDmFriend = activeDmFriendId
+    ? friends.find((f) => f.id === activeDmFriendId) ?? null
+    : null
 
   // If friend list changes (removed etc.), close the DM panel.
   useEffect(() => {

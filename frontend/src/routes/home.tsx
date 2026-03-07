@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { Button, buttonVariants } from '@/components/ui/button.tsx'
+import { Button } from '@/components/ui/button.tsx'
+import { buttonVariants } from '@/components/ui/button-variants'
 import { toast } from 'sonner'
 
 const authors = ['Emil', 'Konrad', 'Jonas', 'Theo', 'Charlotte']

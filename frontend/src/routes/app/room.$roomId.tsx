@@ -67,14 +67,10 @@ const RoomPage = () => {
     },
   })
 
-  useLiveEvent(
-    'room.updated',
-    async () => {
-      console.log('Room updated event received, refetching...')
-      await queryClient.invalidateQueries({ queryKey: ['room', roomId] })
-    },
-    [roomId],
-  )
+  useLiveEvent('room.updated', async () => {
+    console.log('Room updated event received, refetching...')
+    await queryClient.invalidateQueries({ queryKey: ['room', roomId] })
+  })
 
   useEffect(() => {
     if (!socket || !roomId) return

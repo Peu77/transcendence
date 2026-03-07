@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -16,53 +17,33 @@ import { useLiveEvent } from '@/realtime/hooks.ts'
 export const RequestsTab = (props: { isOpen: boolean }) => {
   const qc = useQueryClient()
 
-  useLiveEvent(
-    'friend_request.created',
-    async () => {
-      await qc.invalidateQueries({
-        queryKey: ['friends', 'requests', 'incoming'],
-      })
-    },
-    [props.isOpen],
-  )
+  const invalidateIncoming = useCallback(async () => {
+    await qc.invalidateQueries({
+      queryKey: ['friends', 'requests', 'incoming'],
+    })
+  }, [qc])
 
-  useLiveEvent(
-    'friend_request.canceled',
-    async () => {
-      await qc.invalidateQueries({
-        queryKey: ['friends', 'requests', 'incoming'],
-      })
-      await qc.invalidateQueries({
-        queryKey: ['friends', 'requests', 'outgoing'],
-      })
-    },
-    [props.isOpen],
-  )
+  const invalidateIncomingAndOutgoing = useCallback(async () => {
+    await qc.invalidateQueries({
+      queryKey: ['friends', 'requests', 'incoming'],
+    })
+    await qc.invalidateQueries({
+      queryKey: ['friends', 'requests', 'outgoing'],
+    })
+  }, [qc])
 
-  useLiveEvent(
-    'friend_request.denied',
-    async () => {
-      await qc.invalidateQueries({
-        queryKey: ['friends', 'requests', 'incoming'],
-      })
-      await qc.invalidateQueries({
-        queryKey: ['friends', 'requests', 'outgoing'],
-      })
-    },
-    [props.isOpen],
-  )
+  const invalidateAllRequestData = useCallback(async () => {
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ['friends'] }),
+      qc.invalidateQueries({ queryKey: ['friends', 'requests', 'incoming'] }),
+      qc.invalidateQueries({ queryKey: ['friends', 'requests', 'outgoing'] }),
+    ])
+  }, [qc])
 
-  useLiveEvent(
-    'friend_request.accepted',
-    async () => {
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ['friends'] }),
-        qc.invalidateQueries({ queryKey: ['friends', 'requests', 'incoming'] }),
-        qc.invalidateQueries({ queryKey: ['friends', 'requests', 'outgoing'] }),
-      ])
-    },
-    [props.isOpen],
-  )
+  useLiveEvent('friend_request.created', invalidateIncoming)
+  useLiveEvent('friend_request.canceled', invalidateIncomingAndOutgoing)
+  useLiveEvent('friend_request.denied', invalidateIncomingAndOutgoing)
+  useLiveEvent('friend_request.accepted', invalidateAllRequestData)
 
   const incomingQuery = useQuery({
     queryKey: ['friends', 'requests', 'incoming'],

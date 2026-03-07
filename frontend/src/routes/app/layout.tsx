@@ -30,7 +30,7 @@ const AppLayout = () => {
       toast.error('You must be logged in to access this page.')
       navigate({ to: '/login' }).catch(console.error)
     }
-  }, [userQuery.isError])
+  }, [navigate, userQuery.isError])
 
   if (userQuery.isLoading) {
     return (

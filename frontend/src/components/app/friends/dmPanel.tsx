@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -125,9 +125,14 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
     )
   })()
 
-  useLiveEvent(
-    'dm.created',
-    (msg) => {
+  const handleDmCreated = useCallback(
+    (msg: {
+      id: string
+      senderId: string
+      recipientId: string
+      createdAt: string
+      content: string
+    }) => {
       const isForThisThread =
         msg.senderId === props.friend.id || msg.recipientId === props.friend.id
       if (!isForThisThread) return
@@ -148,10 +153,12 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
       })
 
       setNewestCursor((c) => c ?? msg.id)
-      if (!oldestCursor) setOldestCursor(msg.id)
+      setOldestCursor((c) => c ?? msg.id)
     },
-    [props.friend.id, queryKey, oldestCursor],
+    [props.friend.id, qc, queryKey],
   )
+
+  useLiveEvent('dm.created', handleDmCreated)
 
   return (
     <div className="mt-3 p-3  clip-pixel-corners-btn bg-input/20 border">
