@@ -3,7 +3,7 @@ import {Button} from "@/components/ui/button.tsx";
 import {MoonIcon, SunIcon, UsersIcon} from "lucide-react";
 import {ProfileImage} from "@/components/app/profileImage.tsx";
 import {userStore} from "@/store/userStore.ts";
-import {useStore} from "@tanstack/react-form";
+import {useStore} from "@tanstack/react-store";
 import {setFriendsOverlayIsOpen} from "@/store/friendsOverlayStore.tsx";
 
 export const Navbar = () => {
