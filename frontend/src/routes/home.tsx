@@ -3,7 +3,7 @@ import {Link} from "@tanstack/react-router";
 import {Button, buttonVariants} from "@/components/ui/button.tsx";
 import {toast} from "sonner";
 
-const authors = ["Emil", "Kira", "Konrad", "Matthias"];
+const authors = ["Emil", "Konrad", "Jonas", "Theo", "Charlotte"];
 const githubUrl = "https://github.com/peu77/transcendence";
 
 export default function Home() {
