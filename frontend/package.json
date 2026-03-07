@@ -1,9 +1,9 @@
 {
-  "name": "frontend2",
+  "name": "frontend",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3000",
+    "dev": "vite --host --port 3000",
     "build": "vite build && tsc",
     "preview": "vite preview",
     "test": "vitest run"

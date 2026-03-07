@@ -1,4 +1,4 @@
-import {useStore} from "@tanstack/react-form";
+import {useStore} from "@tanstack/react-store";
 import {friendsOverlayStore, setFriendsOverlayIsOpen} from "@/store/friendsOverlayStore.tsx";
 import {useEffect} from "react";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs.tsx";

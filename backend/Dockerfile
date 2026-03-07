@@ -1,13 +1,19 @@
-FROM node:20-alpine
+FROM node:24
 
 WORKDIR /app
 
+ENV CI=true
+
+RUN corepack enable
+RUN corepack prepare pnpm@latest --activate
+
 COPY package*.json ./
 
-RUN npm install
+RUN pnpm install
+
 
 COPY . .
 
 EXPOSE 4000
 
-CMD ["sh", "-c", "npm install && npm run dev"]
+CMD ["pnpm", "run", "start:dev"]

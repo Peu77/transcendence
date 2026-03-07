@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17
+    image: postgres:18
     container_name: transcendence-postgres
     environment:
       POSTGRES_USER: postgres
@@ -29,13 +29,13 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: ./frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
     
     container_name: transcendence-frontend
     
     ports:
-      - "5173:5173"
+      - "3000:3000"
     
     volumes:
       - ./frontend:/app
