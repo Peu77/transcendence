@@ -120,6 +120,9 @@ importers:
       '@types/passport-github2':
         specifier: ^1.2.9
         version: 1.2.9
+      '@types/speakeasy':
+        specifier: ^2.0.10
+        version: 2.0.10
       '@types/supertest':
         specifier: ^6.0.2
         version: 6.0.3
@@ -1171,6 +1174,9 @@ packages:
 
   '@types/serve-static@2.2.0':
     resolution: {integrity: sha512-8mam4H1NHLtu7nmtalF7eyBH14QyOASmcxHhSfEoRyr0nP/YdoesEtU+uSRvMe96TW/HPTtkoKqQLl53N7UXMQ==}
+
+  '@types/speakeasy@2.0.10':
+    resolution: {integrity: sha512-QVRlDW5r4yl7p7xkNIbAIC/JtyOcClDIIdKfuG7PWdDT1MmyhtXSANsildohy0K+Lmvf/9RUtLbNLMacvrVwxA==}
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
@@ -5029,6 +5035,10 @@ snapshots:
   '@types/serve-static@2.2.0':
     dependencies:
       '@types/http-errors': 2.0.5
+      '@types/node': 22.19.2
+
+  '@types/speakeasy@2.0.10':
+    dependencies:
       '@types/node': 22.19.2
 
   '@types/stack-utils@2.0.3': {}

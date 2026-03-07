@@ -12,21 +12,21 @@ import { User } from '../../users/user.entity'
 @Index(['userLowId', 'userHighId'], { unique: true })
 export class Friendship {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   // Canonical ordering: userLowId < userHighId (string compare works for UUID for deterministic ordering)
   @Column('uuid')
-  userLowId: string
+  userLowId!: string
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  userLow: User
+  userLow!: User
 
   @Column('uuid')
-  userHighId: string
+  userHighId!: string
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  userHigh: User
+  userHigh!: User
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt!: Date
 }

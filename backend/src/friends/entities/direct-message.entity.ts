@@ -12,23 +12,23 @@ import { User } from '../../users/user.entity'
 @Index(['senderId', 'recipientId', 'createdAt'])
 export class DirectMessage {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column('uuid')
-  senderId: string
+  senderId!: string
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  sender: User
+  sender!: User
 
   @Column('uuid')
-  recipientId: string
+  recipientId!: string
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  recipient: User
+  recipient!: User
 
   @Column({ type: 'text' })
-  content: string
+  content!: string
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt!: Date
 }

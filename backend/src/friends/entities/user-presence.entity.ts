@@ -16,21 +16,21 @@ export enum PresenceStatus {
 @Entity({ name: 'user_presence' })
 export class UserPresence {
   @PrimaryColumn('uuid')
-  userId: string
+  userId!: string
 
   @OneToOne(() => User, { onDelete: 'CASCADE' })
-  user: User
+  user!: User
 
   @Column({
     type: 'enum',
     enum: PresenceStatus,
     default: PresenceStatus.OFFLINE,
   })
-  status: PresenceStatus
+  status!: PresenceStatus
 
   @Column({ type: 'timestamp', nullable: true })
-  lastSeenAt: Date | null
+  lastSeenAt!: Date | null
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt!: Date
 }

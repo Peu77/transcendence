@@ -1,9 +1,7 @@
 import {
   IsEnum,
-  IsInt,
   IsNotEmpty,
   IsNumber,
-  IsNumberString,
   IsOptional,
   IsString,
   IsUUID,
@@ -20,13 +18,13 @@ export class SendFriendRequestDto {
   @IsNotEmpty()
   @IsString()
   @MaxLength(50)
-  userIdentifier: string
+  userIdentifier!: string
 }
 
 export class SendDirectMessageDto {
   @IsString()
   @MinLength(1)
-  content: string
+  content!: string
 }
 
 export class GetMessagesQueryDto {
@@ -48,5 +46,5 @@ export class GetMessagesQueryDto {
 
 export class UpdatePresenceDto {
   @IsEnum(PresenceStatus)
-  status: PresenceStatus
+  status!: PresenceStatus
 }

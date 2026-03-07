@@ -9,38 +9,38 @@ export enum UserType {
 @Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column({ unique: true })
-  email: string
+  email!: string
 
   @Column({ unique: true, default: '' })
-  username: string
+  username!: string
 
   @Column({ type: 'text', nullable: true, unique: true })
-  profilePictureId: string | null
+  profilePictureId!: string | null
 
   @Column({ type: 'text', default: UserType.EMAIL })
-  userType: UserType
+  userType!: UserType
 
   @Column({ type: 'text', nullable: true, unique: true })
-  githubId: string | null
+  githubId!: string | null
 
   @Column({ type: 'text', nullable: true })
-  githubAvatarUrl: string | null
+  githubAvatarUrl!: string | null
 
   @Column({ type: 'text', nullable: true })
-  password: string | null
+  password!: string | null
 
   @Column({ default: false })
-  twoFaEnabled: boolean
+  twoFaEnabled!: boolean
 
   @Column({ type: 'text', nullable: true })
-  twoFaSecret: string | null
+  twoFaSecret!: string | null
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date
+  createdAt!: Date
 
   @OneToMany(() => TwoFa, (twofa) => twofa.user)
-  twoFaSessions: TwoFa[]
+  twoFaSessions!: TwoFa[]
 }

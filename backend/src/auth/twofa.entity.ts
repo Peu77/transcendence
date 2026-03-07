@@ -4,26 +4,26 @@ import { User } from '../users/user.entity'
 @Entity({ name: 'users_2fa' })
 export class TwoFa {
   @PrimaryColumn('uuid')
-  id: string
+  id!: string
 
   @Column('uuid')
-  userId: string
+  userId!: string
 
   @ManyToOne(() => User, (user) => user.twoFaSessions, { onDelete: 'CASCADE' })
-  user: User
+  user!: User
 
   @Column({ type: 'varchar' })
-  secret: string
+  secret!: string
 
   @Column({ type: 'int', default: 0 })
-  failedAttempts: number
+  failedAttempts!: number
 
   @Column({ type: 'timestamp', nullable: true })
-  lastAttemptAt: Date | null
+  lastAttemptAt!: Date | null
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date
+  createdAt!: Date
 
   @Column({ type: 'timestamp' })
-  expiredAt: Date
+  expiredAt!: Date
 }

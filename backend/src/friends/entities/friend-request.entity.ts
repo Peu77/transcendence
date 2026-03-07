@@ -19,30 +19,30 @@ export enum FriendRequestStatus {
 @Index(['fromUserId', 'toUserId'], { unique: true })
 export class FriendRequest {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id!: string
 
   @Column('uuid')
-  fromUserId: string
+  fromUserId!: string
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  fromUser: User
+  fromUser!: User
 
   @Column('uuid')
-  toUserId: string
+  toUserId!: string
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  toUser: User
+  toUser!: User
 
   @Column({
     type: 'enum',
     enum: FriendRequestStatus,
     default: FriendRequestStatus.PENDING,
   })
-  status: FriendRequestStatus
+  status!: FriendRequestStatus
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt!: Date
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt!: Date
 }
