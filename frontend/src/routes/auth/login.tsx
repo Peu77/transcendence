@@ -15,13 +15,13 @@ import { Button } from '@/components/ui/button.tsx'
 import { FieldSeparator } from '@/components/ui/field.tsx'
 import { GithubIcon } from 'lucide-react'
 import { env } from '@/env.ts'
-import { useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { verifyTwoFaLogin } from '@/api/twofa.ts'
 import { Input } from '@/components/ui/input.tsx'
 import { Label } from '@/components/ui/label.tsx'
 
 const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email'),
+  email: z.email('Please enter a valid email'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 })
 
@@ -37,7 +37,7 @@ export default function Login() {
       password: '',
     },
     onSubmit: async (data) => {
-      await handleSubmit(data.value)
+      await loginMutation.mutateAsync(data.value)
     },
   })
 
@@ -81,11 +81,7 @@ export default function Login() {
     },
   })
 
-  async function handleSubmit(values: z.infer<typeof loginSchema>) {
-    await loginMutation.mutateAsync(values)
-  }
-
-  async function handleTwoFaSubmit(e: React.FormEvent) {
+  async function handleTwoFaSubmit(e: FormEvent) {
     e.preventDefault()
     if (!twoFaData || !twoFaData.twoFaSession || !twoFaData.userId) return
 
