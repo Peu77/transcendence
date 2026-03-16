@@ -1,0 +1,101 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: System Health
+    folder: Alerts
+    interval: 1m
+    rules:
+      - uid: high-cpu-alert
+        title: High CPU Usage
+        condition: threshold
+        for: 2m
+        noDataState: NoData
+        execErrState: Alerting
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage above 90%"
+          description: "Node.js process CPU has been above 90% for more than 5 minutes."
+        data:
+          - refId: cpu
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: rate(process_cpu_user_seconds_total[2m]) * 100
+              instant: true
+              refId: cpu
+          - refId: threshold
+            datasourceUid: "-100"
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 90
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - cpu
+                  reducer:
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: "-100"
+              expression: cpu
+              refId: threshold
+              type: threshold
+
+      - uid: high-memory-alert
+        title: High Heap Memory Usage
+        condition: threshold
+        for: 2m
+        noDataState: NoData
+        execErrState: Alerting
+        labels:
+          severity: warning
+        annotations:
+          summary: "Heap memory usage above 90%"
+          description: "Node.js heap memory has been above 90% for more than 5 minutes."
+        data:
+          - refId: memory
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: nodejs_heap_size_used_bytes / nodejs_heap_size_total_bytes * 100
+              instant: true
+              refId: memory
+          - refId: threshold
+            datasourceUid: "-100"
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 90
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - memory
+                  reducer:
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: "-100"
+              expression: memory
+              refId: threshold
+              type: threshold

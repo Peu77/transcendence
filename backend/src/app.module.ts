@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module'
 import { FriendsModule } from './friends/friends.module'
 import { RealtimeModule } from './realtime/realtime.module'
 import { RoomModule } from './room/room.module'
+import { MetricsModule } from './metrics/metrics.module'
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { RoomModule } from './room/room.module'
     FriendsModule,
     RealtimeModule,
     RoomModule,
+    MetricsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
