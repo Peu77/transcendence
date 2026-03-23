@@ -1,33 +1,42 @@
-import { IsEmail, IsNumberString, IsString, IsUUID, Length } from 'class-validator';
+import {
+  IsEmail,
+  IsNumberString,
+  IsString,
+  IsUUID,
+  Length,
+} from 'class-validator'
 
 export class RegisterDto {
+  @IsString()
+  @Length(2, 8)
+  username!: string
+
   @IsEmail()
-  email!: string;
+  email!: string
 
   @IsString()
   @Length(6, 128)
-  password!: string;
+  password!: string
 }
 
 export class LoginDto {
   @IsEmail()
-  email!: string;
+  email!: string
 
   @IsString()
   @Length(6, 128)
-  password!: string;
+  password!: string
 }
 
 export class TwoFAVerifyDto {
   @IsString()
   @IsNumberString()
   @Length(6, 6)
-  token!: string;
+  token!: string
 
   @IsUUID()
-  twoFaSessionId!: string;
+  twoFaSessionId!: string
 
   @IsUUID()
-  userId!: string;
+  userId!: string
 }
-

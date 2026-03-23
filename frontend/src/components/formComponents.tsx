@@ -44,14 +44,16 @@ function ErrorMessages({
 
 export function TextField({
   label,
-  type = "text",
+  type = 'text',
   placeholder,
+  disabled,
 }: {
-  label: string,
-  type?: string,
+  label: string
+  type?: string
   placeholder?: string
+  disabled?: boolean
 }) {
-  const field = useFieldContext<string>()
+  const field = useFieldContext<any>()
   const errors = useStore(field.store, (state) => state.meta.errors)
 
   return (
@@ -63,8 +65,13 @@ export function TextField({
         type={type}
         value={field.state.value}
         placeholder={placeholder}
+        disabled={disabled}
         onBlur={field.handleBlur}
-        onChange={(e) => field.handleChange(e.target.value)}
+        onChange={(e) => {
+          const val =
+            type === 'number' ? e.target.valueAsNumber : e.target.value
+          field.handleChange(val as any)
+        }}
       />
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>
@@ -102,10 +109,12 @@ export function Select({
   label,
   values,
   placeholder,
+  disabled,
 }: {
   label: string
   values: Array<{ label: string; value: string }>
   placeholder?: string
+  disabled?: boolean
 }) {
   const field = useFieldContext<string>()
   const errors = useStore(field.store, (state) => state.meta.errors)
@@ -116,6 +125,7 @@ export function Select({
         name={field.name}
         value={field.state.value}
         onValueChange={(value) => field.handleChange(value)}
+        disabled={disabled}
       >
         <ShadcnSelect.SelectTrigger className="w-full">
           <ShadcnSelect.SelectValue placeholder={placeholder} />
@@ -136,27 +146,54 @@ export function Select({
   )
 }
 
-export function Slider({ label }: { label: string }) {
+export function Slider({
+  label,
+  min = 0,
+  max = 100,
+  step = 1,
+  disabled,
+}: {
+  label: string
+  min?: number
+  max?: number
+  step?: number
+  disabled?: boolean
+}) {
   const field = useFieldContext<number>()
   const errors = useStore(field.store, (state) => state.meta.errors)
 
   return (
-    <div>
-      <Label htmlFor={label} className="mb-2 font-bold">
-        {label}
-      </Label>
+    <div className="flex flex-col gap-2">
+      <div className="flex justify-between items-center">
+        <Label htmlFor={label} className="font-bold">
+          {label}
+        </Label>
+        <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded border border-border">
+          {field.state.value}
+        </span>
+      </div>
       <ShadcnSlider
         id={label}
         onBlur={field.handleBlur}
         value={[field.state.value]}
         onValueChange={(value) => field.handleChange(value[0])}
+        min={min}
+        max={max}
+        step={step}
+        disabled={disabled}
       />
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>
   )
 }
 
-export function Switch({ label }: { label: string }) {
+export function Switch({
+  label,
+  disabled,
+}: {
+  label: string
+  disabled?: boolean
+}) {
   const field = useFieldContext<boolean>()
   const errors = useStore(field.store, (state) => state.meta.errors)
 
@@ -168,6 +205,7 @@ export function Switch({ label }: { label: string }) {
           onBlur={field.handleBlur}
           checked={field.state.value}
           onCheckedChange={(checked) => field.handleChange(checked)}
+          disabled={disabled}
         />
         <Label htmlFor={label}>{label}</Label>
       </div>

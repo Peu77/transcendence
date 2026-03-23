@@ -1,6 +1,6 @@
-import { useStore } from "@tanstack/react-store";
-import { realtimeStore, type RealtimeState } from "./store";
+import { useStore } from '@tanstack/react-store'
+import { realtimeStore, type RealtimeState } from './store'
 
 export function useLiveSocket() {
-  return useStore(realtimeStore, (s: RealtimeState) => s.socket);
+  return useStore(realtimeStore, (s: RealtimeState) => s.socket)
 }

@@ -1,19 +1,19 @@
-import {axios} from "@/lib/client.ts";
+import { axios } from '@/lib/client.ts'
 
 export type User = {
-    id: string;
-    email: string;
-    profilePictureId: string | null;
-    username: string;
-    twoFaEnabled: boolean;
-};
+  id: string
+  email: string
+  profilePictureId: string | null
+  username: string
+  twoFaEnabled: boolean
+}
 
 export async function getUser() {
-    const res = await axios.get<User>("/users/me");
-    return res.data;
+  const res = await axios.get<User>('/users/me')
+  return res.data
 }
 
 export async function logout() {
-    const res = await axios.post("/auth/logout");
-    return res.data;
+  const res = await axios.post('/auth/logout')
+  return res.data
 }

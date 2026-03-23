@@ -1,17 +1,16 @@
-import { useEffect } from "react";
-import { connectRealtime, disconnectRealtime } from "./store";
-import {useGlobalListeners} from "@/realtime/globalListeners.ts";
+import { useEffect } from 'react'
+import { connectRealtime, disconnectRealtime } from './store'
+import { useGlobalListeners } from '@/realtime/globalListeners.ts'
 
 /**
  * Mount this once in the authenticated area to connect the websocket.
  */
 export function RealtimeMount() {
-  useGlobalListeners();
+  useGlobalListeners()
   useEffect(() => {
-    connectRealtime();
-    return () => disconnectRealtime();
-  }, []);
+    connectRealtime()
+    return () => disconnectRealtime()
+  }, [])
 
-  return null;
+  return null
 }
-

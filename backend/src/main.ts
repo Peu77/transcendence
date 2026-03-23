@@ -1,26 +1,28 @@
-import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module";
-import { ValidationPipe } from "@nestjs/common";
-import * as cookieParser from "cookie-parser";
-import { GlobalExceptionFilter } from "./common/globalExceptionFilter";
-import { ConfigService } from "@nestjs/config";
+import { NestFactory } from '@nestjs/core'
+import { AppModule } from './app.module'
+import { ValidationPipe } from '@nestjs/common'
+import * as cookieParser from 'cookie-parser'
+import { GlobalExceptionFilter } from './common/globalExceptionFilter'
+import { ConfigService } from '@nestjs/config'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const configService = new ConfigService();
+  const app = await NestFactory.create(AppModule)
+  const configService = new ConfigService()
   app.enableCors({
-    origin: configService.getOrThrow<string>("CORS_ORIGIN"),
+    origin: configService.getOrThrow<string>('CORS_ORIGIN'),
     credentials: true,
-  });
-  app.useGlobalFilters(new GlobalExceptionFilter());
+  })
+  app.useGlobalFilters(new GlobalExceptionFilter())
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
     }),
-  );
-  app.use(cookieParser());
-  await app.listen(process.env.PORT ?? 4000);
+  )
+  app.use(cookieParser())
+  await app.listen(process.env.PORT ?? 4000)
 }
-bootstrap();
+
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+bootstrap()

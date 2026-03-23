@@ -1,14 +1,14 @@
-import {Store} from "@tanstack/store";
+import { Store } from '@tanstack/store'
 
 export const friendsOverlayStore = new Store<{
-    isOpen: boolean
+  isOpen: boolean
 }>({
-    isOpen: false
+  isOpen: false,
 })
 
 export const setFriendsOverlayIsOpen = (isOpen: boolean) => {
-    friendsOverlayStore.setState(s => ({
-        ...s,
-        isOpen
-    }));
-};
+  friendsOverlayStore.setState((s) => ({
+    ...s,
+    isOpen,
+  }))
+}

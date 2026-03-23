@@ -6,43 +6,43 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from "typeorm";
-import { User } from "../../users/user.entity";
+} from 'typeorm'
+import { User } from '../../users/user.entity'
 
 export enum FriendRequestStatus {
-  PENDING = "pending",
-  ACCEPTED = "accepted",
-  DENIED = "denied",
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  DENIED = 'denied',
 }
 
-@Entity({ name: "friend_requests" })
-@Index(["fromUserId", "toUserId"], { unique: true })
+@Entity({ name: 'friend_requests' })
+@Index(['fromUserId', 'toUserId'], { unique: true })
 export class FriendRequest {
-  @PrimaryGeneratedColumn("uuid")
-  id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id!: string
 
-  @Column("uuid")
-  fromUserId: string;
+  @Column('uuid')
+  fromUserId!: string
 
-  @ManyToOne(() => User, { onDelete: "CASCADE" })
-  fromUser: User;
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  fromUser!: User
 
-  @Column("uuid")
-  toUserId: string;
+  @Column('uuid')
+  toUserId!: string
 
-  @ManyToOne(() => User, { onDelete: "CASCADE" })
-  toUser: User;
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  toUser!: User
 
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: FriendRequestStatus,
     default: FriendRequestStatus.PENDING,
   })
-  status: FriendRequestStatus;
+  status!: FriendRequestStatus
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date
 }

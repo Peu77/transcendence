@@ -41,9 +41,15 @@ export const NotFound = () => {
             <div aria-hidden className="crt-flicker" />
 
             <div className="relative">
-              <p className="text-sm tracking-[0.25em] text-muted-foreground">SYSTEM</p>
+              <p className="text-sm tracking-[0.25em] text-muted-foreground">
+                SYSTEM
+              </p>
               <h1 className="mt-2 text-5xl leading-none tracking-widest md:text-6xl">
-                4<span className="inline-block animate-[notfound-jitter_2.2s_ease-in-out_infinite]">0</span>4
+                4
+                <span className="inline-block animate-[notfound-jitter_2.2s_ease-in-out_infinite]">
+                  0
+                </span>
+                4
               </h1>
 
               <p className="mt-4 text-base text-foreground/90">
@@ -51,18 +57,22 @@ export const NotFound = () => {
               </p>
 
               <div className="mt-6 rounded-md border border-border/70 bg-muted/40 px-4 py-3">
-                <p className="text-xs tracking-[0.22em] text-muted-foreground">DIAGNOSTICS</p>
+                <p className="text-xs tracking-[0.22em] text-muted-foreground">
+                  DIAGNOSTICS
+                </p>
                 <p className="mt-2 text-sm leading-relaxed text-foreground/90">
-                  <span className="text-primary">&gt;</span>
-                  {' '}Try a different menu option
-                  <span className="ml-2 inline-block w-[1ch] animate-[notfound-blink_1s_steps(1,end)_infinite] bg-foreground align-[-2px]">&nbsp;</span>
+                  <span className="text-primary">&gt;</span> Try a different
+                  menu option
+                  <span className="ml-2 inline-block w-[1ch] animate-[notfound-blink_1s_steps(1,end)_infinite] bg-foreground align-[-2px]">
+                    &nbsp;
+                  </span>
                 </p>
               </div>
 
               <p className="mt-4 text-xs tracking-[0.25em] text-muted-foreground">
                 TIP: lower saturation by changing{' '}
-                <span className="text-foreground">.notfound-desat</span>
-                {' '}in <span className="text-foreground">styles.css</span>.
+                <span className="text-foreground">.notfound-desat</span> in{' '}
+                <span className="text-foreground">styles.css</span>.
               </p>
             </div>
           </Card>

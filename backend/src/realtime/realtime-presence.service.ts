@@ -1,9 +1,12 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { Friendship } from "../friends/entities/friendship.entity";
-import { PresenceStatus, UserPresence } from "../friends/entities/user-presence.entity";
-import { RealtimeService } from "./realtime.service";
+import { Injectable } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+import { Friendship } from '../friends/entities/friendship.entity'
+import {
+  PresenceStatus,
+  UserPresence,
+} from '../friends/entities/user-presence.entity'
+import { RealtimeService } from './realtime.service'
 
 @Injectable()
 export class RealtimePresenceService {
@@ -20,12 +23,15 @@ export class RealtimePresenceService {
    * Best-effort: if user has no friends, still upserts the presence row.
    */
   async setOffline(userId: string): Promise<void> {
-    const now = new Date();
+    const now = new Date()
 
-    const existing = await this.presenceRepo.findOne({ where: { userId } });
+    const existing = await this.presenceRepo.findOne({ where: { userId } })
     const presence = existing
       ? await this.presenceRepo.save(
-          Object.assign(existing, { status: PresenceStatus.OFFLINE, lastSeenAt: now }),
+          Object.assign(existing, {
+            status: PresenceStatus.OFFLINE,
+            lastSeenAt: now,
+          }),
         )
       : await this.presenceRepo.save(
           this.presenceRepo.create({
@@ -33,23 +39,25 @@ export class RealtimePresenceService {
             status: PresenceStatus.OFFLINE,
             lastSeenAt: now,
           }),
-        );
+        )
 
     const friendships = await this.friendshipsRepo.find({
       where: [{ userLowId: userId }, { userHighId: userId }],
-    });
+    })
 
     const friendIds = friendships.map((f) =>
       f.userLowId === userId ? f.userHighId : f.userLowId,
-    );
+    )
 
-    if (friendIds.length === 0) return;
+    if (friendIds.length === 0) return
 
     this.realtime.emitPresenceUpdated(friendIds, {
       userId,
       status: presence.status,
-      lastSeenAt: presence.lastSeenAt ? presence.lastSeenAt.toISOString() : null,
+      lastSeenAt: presence.lastSeenAt
+        ? presence.lastSeenAt.toISOString()
+        : null,
       updatedAt: presence.updatedAt.toISOString(),
-    });
+    })
   }
 }
