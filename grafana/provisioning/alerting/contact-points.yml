@@ -4,11 +4,11 @@ contactPoints:
   - orgId: 1
     name: default-contact
     receivers:
-      # Webhook receiver — swap the URL for Slack/Discord/email/etc.
+      # TODO: Add a permanent reciever
       # For quick testing, grab a free URL from https://webhook.site
       - uid: default-webhook
         type: webhook
         settings:
-          url: https://webhook.site/595c553b-43f7-4f84-bf99-f1efeb7ac105
+          url: placeholder_url
           httpMethod: POST
         disableResolveMessage: false
