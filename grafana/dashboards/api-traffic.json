@@ -24,7 +24,7 @@
 	  {
 		"datasource": {
 		  "type": "prometheus",
-		  "uid": "PBFA97CFB590B2093"
+		  "uid": "prometheus"
 		},
 		"fieldConfig": {
 		  "defaults": {
@@ -107,7 +107,7 @@
 		  {
 			"datasource": {
 			  "type": "prometheus",
-			  "uid": "PBFA97CFB590B2093"
+			  "uid": "prometheus"
 			},
 			"editorMode": "code",
 			"expr": "sum(rate(http_requests_total[2m]))",
@@ -123,7 +123,7 @@
 	  {
 		"datasource": {
 		  "type": "prometheus",
-		  "uid": "PBFA97CFB590B2093"
+		  "uid": "prometheus"
 		},
 		"fieldConfig": {
 		  "defaults": {
@@ -217,7 +217,7 @@
 	  {
 		"datasource": {
 		  "type": "prometheus",
-		  "uid": "PBFA97CFB590B2093"
+		  "uid": "prometheus"
 		},
 		"fieldConfig": {
 		  "defaults": {
@@ -311,7 +311,7 @@
 	  {
 		"datasource": {
 		  "type": "prometheus",
-		  "uid": "PBFA97CFB590B2093"
+		  "uid": "prometheus"
 		},
 		"fieldConfig": {
 		  "defaults": {
@@ -416,6 +416,6 @@
 	"timepicker": {},
 	"timezone": "browser",
 	"title": "API-Traffic",
-	"uid": "adq6l4b",
+	"uid": "api-traffic",
 	"version": 10
   }
