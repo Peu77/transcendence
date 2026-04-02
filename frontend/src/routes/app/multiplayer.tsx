@@ -1,4 +1,9 @@
-import { createRoute, Link, useNavigate } from '@tanstack/react-router'
+import {
+  createRoute,
+  Link,
+  useNavigate,
+  useRouter,
+} from '@tanstack/react-router'
 import { useState } from 'react'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { Button } from '@/components/ui/button.tsx'
@@ -6,9 +11,11 @@ import { Input } from '@/components/ui/input.tsx'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { getRooms, createRoom } from '@/api/room.ts'
 import { toast } from 'sonner'
+import { ArrowLeftIcon } from 'lucide-react'
 
 const Multiplayer = () => {
   const navigate = useNavigate()
+  const router = useRouter()
   const [roomIdInput, setRoomIdInput] = useState('')
   const { data: rooms, isLoading } = useQuery({
     queryKey: ['rooms'],
@@ -73,6 +80,16 @@ const Multiplayer = () => {
   return (
     <div className="w-full flex flex-col items-end pt-10">
       <div className="max-w-[90%] flex flex-col w-full gap-4">
+        <div className="flex items-center  translate-x-48 w-[calc(100%+12rem)] gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.history.back()}
+          >
+            <ArrowLeftIcon />
+          </Button>
+          <h1 className="text-3xl font-bold">Multiplayer</h1>
+        </div>
         <form
           className="translate-x-48 w-[calc(100%+12rem)]"
           onSubmit={async (e) => {
