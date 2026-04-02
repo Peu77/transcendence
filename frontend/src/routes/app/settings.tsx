@@ -1,14 +1,10 @@
 import { createRoute } from '@tanstack/react-router'
 import { AppRoute } from '@/routes/app/layout.tsx'
-import { useQuery } from '@tanstack/react-query'
-import { getUser } from '@/api/user.ts'
 import { TwoFactorAuth } from '@/components/TwoFactorAuth.tsx'
+import { useGetUser } from '@/api/user.ts'
 
 const Settings = () => {
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: getUser,
-  })
+  const { data: user } = useGetUser()
 
   if (!user) return null
 

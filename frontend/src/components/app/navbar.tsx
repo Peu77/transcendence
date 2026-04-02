@@ -5,7 +5,7 @@ import { userStore } from '@/store/userStore.ts'
 import { useStore } from '@tanstack/react-store'
 import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Theme, toggleTheme } from '@/api/user.ts'
+import { Theme, toggleTheme, USER_QUERY_KEYS } from '@/api/user.ts'
 
 export const Navbar = () => {
   const profileImageId = useStore(userStore, (state) => state?.profilePictureId)
@@ -19,7 +19,7 @@ export const Navbar = () => {
     mutationFn: toggleTheme,
     onSuccess: (theme: Theme) => {
       document.documentElement.classList.toggle('dark', theme === Theme.DARK)
-      queryClient.invalidateQueries({ queryKey: ['user'] })
+      queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.USER })
     },
   })
 

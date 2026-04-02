@@ -1,4 +1,5 @@
 import { axios } from '@/lib/client.ts'
+import { useQuery } from '@tanstack/react-query'
 
 export enum Theme {
   LIGHT = 'light',
@@ -14,9 +15,18 @@ export type User = {
   theme: Theme
 }
 
-export async function getUser() {
-  const res = await axios.get<User>('/users/me')
-  return res.data
+export const USER_QUERY_KEYS = {
+  USER: ['user'],
+}
+
+export function useGetUser() {
+  return useQuery({
+    queryKey: USER_QUERY_KEYS.USER,
+    queryFn: async () => {
+      const user = await axios.get<User>('/users/me')
+      return user.data
+    },
+  })
 }
 
 export async function toggleTheme() {
