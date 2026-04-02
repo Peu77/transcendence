@@ -1,5 +1,6 @@
 import { axios } from '@/lib/client.ts'
 import { useQuery } from '@tanstack/react-query'
+import { formatDistanceToNow } from 'date-fns'
 
 export enum Theme {
   LIGHT = 'light',
@@ -17,6 +18,7 @@ export type User = {
 
 export const USER_QUERY_KEYS = {
   USER: ['user'],
+  PUBLIC_PROFILE: (userId: string) => ['publicProfile', userId],
 }
 
 export function useGetUser() {
@@ -27,6 +29,31 @@ export function useGetUser() {
       return user.data
     },
   })
+}
+
+export type PublicProfile = {
+  id: string
+  username: string
+  profilePictureId: string | null
+  level: number
+  createdAt: string
+}
+
+export async function getPublicProfile(userId: string) {
+  const res = await axios.get<PublicProfile>(`/users/profile/${userId}`)
+  return res.data
+}
+
+export function useGetPublicProfile(userId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: USER_QUERY_KEYS.PUBLIC_PROFILE(userId),
+    queryFn: () => getPublicProfile(userId),
+    enabled,
+  })
+}
+
+export function timeAgo(date: Date): string {
+  return formatDistanceToNow(date, { addSuffix: true })
 }
 
 export async function toggleTheme() {
