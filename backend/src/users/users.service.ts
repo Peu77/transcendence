@@ -90,6 +90,17 @@ export class UsersService {
     return newTheme
   }
 
+  async getPublicProfile(userId: string) {
+    const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
+    return {
+      id: user.id,
+      username: user.username,
+      profilePictureId: user.profilePictureId,
+      level: user.level,
+      createdAt: user.createdAt,
+    }
+  }
+
   async getUserInfo(userId: string): Promise<UserInfo> {
     const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
     return {

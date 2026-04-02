@@ -100,6 +100,11 @@ export class UsersController {
     stream.pipe(res)
   }
 
+  @Get('users/profile/:id')
+  async getPublicProfile(@Param('id') id: string) {
+    return this.usersService.getPublicProfile(id)
+  }
+
   @Post('users/toggleTheme')
   async toggleTheme(@UserId() userId: string) {
     const theme = await this.usersService.toggleTheme(userId)
