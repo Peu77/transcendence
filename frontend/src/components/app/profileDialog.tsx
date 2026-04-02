@@ -37,7 +37,7 @@ export const ProfileDialog = ({
             </DialogHeader>
             <div className="flex flex-col items-center gap-4">
               <div className="flex items-center gap-3">
-                  <ProfileImage profilePictureId={profile.profilePictureId} />
+                <ProfileImage profilePictureId={profile.profilePictureId} />
                 <h2 className="text-2xl font-bold">{profile.username}</h2>
               </div>
               <div className="flex flex-col items-center gap-1 text-muted-foreground text-sm">
