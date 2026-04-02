@@ -18,7 +18,10 @@ const AppLayout = () => {
   })
 
   useEffect(() => {
-    if (userQuery.data) userStore.setState(userQuery.data)
+    if (userQuery.data) {
+      userStore.setState(userQuery.data)
+      document.documentElement.classList.toggle('dark', userQuery.data.theme === 'dark')
+    }
   }, [userQuery.data])
 
   useMyPresence({ enabled: !!userQuery.data, idleMs: 60_000 })

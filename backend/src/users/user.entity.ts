@@ -6,6 +6,11 @@ export enum UserType {
   GITHUB = 'github',
 }
 
+export enum Theme {
+  LIGHT = 'light',
+  DARK = 'dark',
+}
+
 @Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -16,6 +21,9 @@ export class User {
 
   @Column({ unique: true, default: '' })
   username!: string
+
+  @Column({ type: 'text', default: Theme.LIGHT })
+  theme!: Theme
 
   @Column({ type: 'text', nullable: true, unique: true })
   profilePictureId!: string | null

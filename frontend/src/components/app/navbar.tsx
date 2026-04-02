@@ -1,21 +1,30 @@
-import { useState } from 'react'
 import { Button } from '@/components/ui/button.tsx'
 import { MoonIcon, SunIcon, UsersIcon } from 'lucide-react'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { userStore } from '@/store/userStore.ts'
 import { useStore } from '@tanstack/react-store'
 import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Theme, toggleTheme } from '@/api/user.ts'
 
 export const Navbar = () => {
-  const [isDark, setIsDark] = useState(() =>
-    document.documentElement.classList.contains('dark'),
-  )
   const profileImageId = useStore(userStore, (state) => state?.profilePictureId)
   const username = useStore(userStore, (state) => state?.username)
+  const theme = useStore(userStore, (state) => state?.theme)
+  const isDark = theme === 'dark'
+
+  const queryClient = useQueryClient()
+
+  const toggleThemeMutation = useMutation({
+    mutationFn: toggleTheme,
+    onSuccess: (theme: Theme) => {
+      document.documentElement.classList.toggle('dark', theme === Theme.DARK)
+      queryClient.invalidateQueries({ queryKey: ['user'] })
+    },
+  })
 
   const toggleDarkMode = () => {
-    document.documentElement.classList.toggle('dark')
-    setIsDark(document.documentElement.classList.contains('dark'))
+    toggleThemeMutation.mutate()
   }
 
   return (
