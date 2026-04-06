@@ -10,6 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - ./postgres-init:/docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql
     restart: unless-stopped
   backend:
     build:
@@ -26,6 +27,34 @@ services:
       - ./backend:/app
       - /app/node_modules
     
+    restart: unless-stopped
+
+    depends_on:
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: transcendence-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./backend/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: transcendence-grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/etc/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
     restart: unless-stopped
 
   frontend:
@@ -46,3 +75,8 @@ services:
       - backend
     
     restart: unless-stopped
+
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
+  postgres_data: {}
