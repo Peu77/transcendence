@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button.tsx'
 import { useAppForm } from '@/hooks/form.ts'
 import { roomSettingsSchema } from '../../../routes/app/room.settings.ts'
 import type { RoomSettingsFormProps } from './types.ts'
+import { ScrollArea } from '@radix-ui/react-scroll-area'
 
 export function RoomSettingsForm({
   room,
@@ -42,7 +43,7 @@ export function RoomSettingsForm({
         )}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto pr-2">
+      <ScrollArea className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto pr-2">
         <div className="max-w-sm rounded-xl border border-border/50 bg-background/40 p-4">
           <form.AppField name="type">
             {(field) => (
@@ -57,7 +58,7 @@ export function RoomSettingsForm({
             )}
           </form.AppField>
         </div>
-      </div>
+      </ScrollArea>
     </form>
   )
 }
