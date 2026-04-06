@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button.tsx'
 import { generateTwoFa, enableTwoFa, disableTwoFa } from '@/api/twofa.ts'
-import type { User } from '@/api/user.ts'
+import { type User, USER_QUERY_KEYS } from '@/api/user.ts'
 import { TwoFaSetup } from '@/components/two-fa/TwoFaSetup.tsx'
 import { TwoFaStatus } from '@/components/two-fa/TwoFaStatus.tsx'
 
@@ -36,23 +36,19 @@ export const TwoFactorAuth = ({ user }: TwoFactorAuthProps) => {
   const enableMutation = useMutation({
     mutationFn: enableTwoFa,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['user'] })
+      await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.USER })
       setTwoFaData(null)
       toast.success('2FA enabled successfully')
     },
-    onError: (error: any) => {
-      const message =
-        error.response?.data?.message || error.message || 'Failed to enable 2FA'
-      toast.error(
-        typeof message === 'string' ? message : JSON.stringify(message),
-      )
+    onError: () => {
+      toast.error('Failed to enable 2FA')
     },
   })
 
   const disableMutation = useMutation({
     mutationFn: disableTwoFa,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['user'] })
+      await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.USER })
       setIsDisabling(false)
       toast.success('2FA disabled successfully')
     },

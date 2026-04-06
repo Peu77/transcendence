@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { User, UserType } from './user.entity'
+import { Theme, User, UserType } from './user.entity'
 import { UserInfo } from '../realtime/realtime.events'
 import { GithubValidateReturn } from '../auth/github.strategy'
 
@@ -81,6 +81,24 @@ export class UsersService {
       { id: userId },
       { twoFaEnabled: false, twoFaSecret: null },
     )
+  }
+
+  async toggleTheme(userId: string): Promise<Theme> {
+    const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
+    const newTheme = user.theme === Theme.LIGHT ? Theme.DARK : Theme.LIGHT
+    await this.usersRepo.update({ id: userId }, { theme: newTheme })
+    return newTheme
+  }
+
+  async getPublicProfile(userId: string) {
+    const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
+    return {
+      id: user.id,
+      username: user.username,
+      profilePictureId: user.profilePictureId,
+      level: user.level,
+      createdAt: user.createdAt,
+    }
   }
 
   async getUserInfo(userId: string): Promise<UserInfo> {

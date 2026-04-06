@@ -37,6 +37,7 @@ export class UsersController {
       profilePictureId: user.profilePictureId,
       twoFaEnabled: user.twoFaEnabled,
       username: user.username,
+      theme: user.theme,
     }
   }
 
@@ -97,6 +98,17 @@ export class UsersController {
     res.setHeader('Cache-Control', 'public, max-age=600')
     const stream = createReadStream(filepath)
     stream.pipe(res)
+  }
+
+  @Get('users/profile/:id')
+  async getPublicProfile(@Param('id') id: string) {
+    return this.usersService.getPublicProfile(id)
+  }
+
+  @Post('users/toggleTheme')
+  async toggleTheme(@UserId() userId: string) {
+    const theme = await this.usersService.toggleTheme(userId)
+    return { theme }
   }
 
   @Post('users/2fa/generate')
