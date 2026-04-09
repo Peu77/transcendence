@@ -277,7 +277,8 @@ export class RealtimeGateway
     if (!session) return
 
     const playerGame = session.players.get(userId)
-    if (!playerGame || playerGame.game.gameOver || playerGame.game.paused) return
+    if (!playerGame || playerGame.game.gameOver || playerGame.game.paused)
+      return
 
     playerGame.game.processInput(body.action)
     this.emitAllPlayerStates(body.roomId)
@@ -353,9 +354,7 @@ export class RealtimeGateway
     this.server.to(gameRoom(roomId)).emit(event, data)
   }
 
-  private getAllPlayerStates(
-    roomId: string,
-  ): Record<string, TetrisState> {
+  private getAllPlayerStates(roomId: string): Record<string, TetrisState> {
     const session = this.gameSessions.get(roomId)
     if (!session) return {}
 
@@ -408,10 +407,7 @@ export class RealtimeGateway
       playerGame.tickTimer = setTimeout(tick, playerGame.game.getTickInterval())
     }
 
-    playerGame.tickTimer = setTimeout(
-      tick,
-      playerGame.game.getTickInterval(),
-    )
+    playerGame.tickTimer = setTimeout(tick, playerGame.game.getTickInterval())
   }
 
   private handlePlayerGameOver(roomId: string, userId: string) {
