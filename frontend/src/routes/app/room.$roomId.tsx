@@ -81,7 +81,9 @@ function GameBoard({
   }, [state])
 
   return (
-    <div className={`flex flex-col items-center gap-2 ${large ? 'flex-1' : ''}`}>
+    <div
+      className={`flex flex-col items-center gap-2 ${large ? 'flex-1' : ''}`}
+    >
       <div className="flex gap-4 text-sm font-bold tracking-wide text-foreground/80">
         <span>{label}</span>
         {state && (
@@ -156,9 +158,7 @@ function LobbyPhase({
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
               Room overview
             </p>
-            <h1 className="text-3xl font-bold xl:text-4xl">
-              Room: {room.id}
-            </h1>
+            <h1 className="text-3xl font-bold xl:text-4xl">Room: {room.id}</h1>
           </div>
         </div>
 
@@ -333,9 +333,9 @@ const RoomPage = () => {
   const [gamePhase, setGamePhase] = useState<GamePhase>('lobby')
   const gamePhaseRef = useRef<GamePhase>('lobby')
   const [countdown, setCountdown] = useState<number | null>(null)
-  const [playerStates, setPlayerStates] = useState<
-    Record<string, TetrisState>
-  >({})
+  const [playerStates, setPlayerStates] = useState<Record<string, TetrisState>>(
+    {},
+  )
   const [results, setResults] = useState<GamePlayerResult[] | null>(null)
 
   const setPhase = useCallback((p: GamePhase) => {
@@ -505,11 +505,7 @@ const RoomPage = () => {
   return (
     <div className="h-[calc(100dvh-4rem)] overflow-hidden p-4 text-foreground md:p-6">
       {gamePhase === 'lobby' ? (
-        <LobbyPhase
-          room={room}
-          isHost={isHost}
-          onStartGame={handleStartGame}
-        />
+        <LobbyPhase room={room} isHost={isHost} onStartGame={handleStartGame} />
       ) : (
         <GamePhaseUI
           gamePhase={gamePhase}
