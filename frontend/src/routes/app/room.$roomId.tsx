@@ -72,7 +72,7 @@ function GameBoard({
       renderer.destroy()
       rendererRef.current = null
     }
-  }, [])
+  }, [state])
 
   useEffect(() => {
     if (state && rendererRef.current) {
