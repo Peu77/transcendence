@@ -4,12 +4,16 @@ import { Repository } from 'typeorm'
 import { Theme, User, UserType } from './user.entity'
 import { UserInfo } from '../realtime/realtime.events'
 import { GithubValidateReturn } from '../auth/github.strategy'
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepo: Repository<User>,
   ) {}
+
+  static readonly UPLOAD_DIR = 'uploads/'
 
   async createUser(
     userType: UserType,
@@ -106,6 +110,20 @@ export class UsersService {
     return {
       username: user.username,
       profilePictureId: user.profilePictureId,
+    }
+  }
+
+  async existUserProfilePictureInFs(
+    profilePictureId: string,
+  ): Promise<boolean> {
+    try {
+      console.log('Checking if profile picture exists:', profilePictureId)
+      console.log('Upload directory:', UsersService.UPLOAD_DIR)
+      await fs.access(path.join(UsersService.UPLOAD_DIR, profilePictureId))
+      return true
+    } catch (e) {
+      console.log('Profile picture does not exist:', e)
+      return false
     }
   }
 }

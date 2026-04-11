@@ -65,7 +65,7 @@ export class RealtimeGateway
   server!: Server
 
   private readonly jwtSecret: string
-  private gameSessions = new Map<string, RoomGameSession>() // roomId → session
+  private readonly gameSessions = new Map<string, RoomGameSession>() // roomId → session
 
   constructor(
     configService: ConfigService,
@@ -432,11 +432,32 @@ export class RealtimeGateway
       level: state.level,
     })
 
-    // Check if ALL players are game over
-    const allOver = Array.from(session.players.values()).every(
-      (p) => p.game.gameOver,
+    this.checkGameEndCondition(roomId)
+  }
+
+  private checkGameEndCondition(roomId: string) {
+    const session = this.gameSessions.get(roomId)
+    if (!session) return
+
+    // Check if only one player (or zero) is left alive
+    const totalPlayers = session.players.size
+    const activePlayers = Array.from(session.players.values()).filter(
+      (p) => !p.game.gameOver,
     )
-    if (allOver) {
+
+    const shouldEnd =
+      activePlayers.length === 0 ||
+      (totalPlayers > 1 && activePlayers.length === 1)
+
+    if (shouldEnd) {
+      // Mark any remaining active player as game over so results are complete
+      for (const p of activePlayers) {
+        p.game.gameOver = true
+        if (p.tickTimer) {
+          clearTimeout(p.tickTimer)
+          p.tickTimer = null
+        }
+      }
       this.handleAllPlayersGameOver(roomId)
     }
   }
@@ -496,13 +517,7 @@ export class RealtimeGateway
       level: pg.game.getState().level,
     })
 
-    // Check if all players are now game over
-    const allOver = Array.from(session.players.values()).every(
-      (p) => p.game.gameOver,
-    )
-    if (allOver) {
-      this.handleAllPlayersGameOver(roomId)
-    }
+    this.checkGameEndCondition(roomId)
   }
 
   private destroyGameSession(roomId: string) {

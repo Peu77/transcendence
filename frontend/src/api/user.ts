@@ -1,5 +1,5 @@
 import { axios } from '@/lib/client.ts'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { formatDistanceToNow } from 'date-fns'
 
 export enum Theme {
@@ -27,6 +27,28 @@ export function useGetUser() {
     queryFn: async () => {
       const user = await axios.get<User>('/users/me')
       return user.data
+    },
+  })
+}
+
+export function useUploadProfilePicture() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await axios.post<{
+        message: string
+        profilePictureId: string
+      }>('/users/profilePicture', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      return res.data
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.USER })
     },
   })
 }
