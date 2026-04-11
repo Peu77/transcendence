@@ -23,6 +23,7 @@ import { ConfigService } from '@nestjs/config'
 @Controller('auth')
 export class AuthController {
   private readonly frontendSuccessLoginUrl: string
+  private readonly frontend2FaUrl: string
 
   constructor(
     private readonly authService: AuthService,
@@ -32,6 +33,8 @@ export class AuthController {
     this.frontendSuccessLoginUrl = this.configService.getOrThrow<string>(
       'FRONTEND_SUCCESS_LOGIN_URL',
     )
+    this.frontend2FaUrl =
+      this.configService.getOrThrow<string>('FRONTEND_2FA_URL')
   }
 
   @Post('register')
@@ -102,6 +105,16 @@ export class AuthController {
     }
 
     const user = await this.usersService.upsertGithubUser(oauthUser)
+
+    if (user.twoFaEnabled) {
+      const { twoFaSessionId } = await this.authService.create2FaSession(
+        user.id,
+      )
+      const url = new URL(this.frontend2FaUrl)
+      url.searchParams.set('twoFaSessionId', twoFaSessionId)
+      url.searchParams.set('userId', user.id)
+      return res.redirect(url.toString())
+    }
 
     const token = this.authService.createUserToken(user.id)
     res.cookie('token', token, { httpOnly: true, path: '/' })
