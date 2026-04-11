@@ -1,6 +1,7 @@
 import { io, type Socket } from 'socket.io-client'
 import { env } from '@/env'
 import type { LiveEventMap } from './events'
+import type { InputAction } from '@/game/tetris/types'
 
 type ClientToServerEvents = {
   'dm.join': (body: { withUserId: string }) => void
@@ -10,6 +11,13 @@ type ClientToServerEvents = {
     callback: (res: { ok: boolean; error?: string }) => void,
   ) => void
   'room.leave': (body: { roomId: string }) => void
+  'game.start': (
+    body: { roomId: string },
+    callback: (res: { ok: boolean; error?: string }) => void,
+  ) => void
+  'game.input': (body: { roomId: string; action: InputAction }) => void
+  'game.pause': (body: { roomId: string }) => void
+  'game.resume': (body: { roomId: string }) => void
 }
 
 type ServerToClientEvents = LiveEventMap

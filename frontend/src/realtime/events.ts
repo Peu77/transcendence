@@ -1,4 +1,5 @@
 import type { DirectMessage, PresenceStatus } from '@/api/friends'
+import type { TetrisState } from '@/game/tetris/types'
 
 export type UserInfo = {
   username: string
@@ -37,6 +38,14 @@ export type DirectMessageCreatedEvent = DirectMessage & {
   senderInfo: UserInfo
 }
 
+export type GamePlayerResult = {
+  userId: string
+  username: string
+  score: number
+  lines: number
+  level: number
+}
+
 export type LiveEventMap = {
   ready: { userId: string }
   'room.updated': Record<string, never>
@@ -47,4 +56,16 @@ export type LiveEventMap = {
   'friendship.deleted': FriendshipDeletedEvent
   'presence.updated': PresenceUpdatedEvent
   'dm.created': DirectMessageCreatedEvent
+  'game.countdown': { roomId: string; count: number }
+  'game.state': { roomId: string; players: Record<string, TetrisState> }
+  'game.paused': { roomId: string; players: Record<string, TetrisState> }
+  'game.resumed': { roomId: string; players: Record<string, TetrisState> }
+  'game.player-over': {
+    roomId: string
+    userId: string
+    score: number
+    lines: number
+    level: number
+  }
+  'game.finished': { roomId: string; results: GamePlayerResult[] }
 }

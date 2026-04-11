@@ -7,7 +7,7 @@ ENV CI=true
 RUN corepack enable
 RUN corepack prepare pnpm@latest --activate
 
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml ./
 
 RUN pnpm install
 
