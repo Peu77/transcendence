@@ -84,12 +84,35 @@ export class RoomService {
     const room: Room = {
       id: this.generateFreeRoomId(),
       type: RoomType.PUBLIC,
+      status: 'waiting',
       hostUserId: userId,
       settings: this.createDefaultMatchSettings(),
       users: [],
     }
     this.rooms.set(room.id, room)
     return room
+  }
+
+  startGame(roomId: string, userId: string): Room {
+    const room = this.rooms.get(roomId)
+    if (!room) throw new NotFoundException('Room not found')
+
+    if (room.hostUserId !== userId)
+      throw new BadRequestException('Only the host can start the game')
+
+    if (room.status === 'playing')
+      throw new BadRequestException('Game is already in progress')
+
+    room.status = 'playing'
+    return room
+  }
+
+  endGame(roomId: string): void {
+    const room = this.rooms.get(roomId)
+    if (!room) return
+
+    room.status = 'waiting'
+    this.sendUpdateRoomEvent(roomId)
   }
 
   getPublicRooms(): Promise<Room[]> {

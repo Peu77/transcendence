@@ -175,6 +175,7 @@ export enum RoomType {
 export interface Room {
   id: string
   type: RoomType
+  status: 'waiting' | 'playing' | 'finished'
   settings: MatchSettings
   hostUserId: string
   users: RoomUser[]
