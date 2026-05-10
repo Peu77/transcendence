@@ -100,6 +100,10 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
       await qc.invalidateQueries({ queryKey })
     },
     onError: (e: any) => {
+      if (e?.response?.status === 403) {
+        toast.error('You cannot send messages to this user')
+        return
+      }
       toast.error(e?.response?.data?.message ?? 'Failed to send message')
     },
   })

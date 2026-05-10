@@ -7,6 +7,7 @@ import { FriendRequest } from './entities/friend-request.entity'
 import { Friendship } from './entities/friendship.entity'
 import { DirectMessage } from './entities/direct-message.entity'
 import { UserPresence } from './entities/user-presence.entity'
+import { UserBlock } from './entities/block.entity'
 import { RealtimeModule } from '../realtime/realtime.module'
 import { UsersModule } from '../users/users.module'
 
@@ -18,6 +19,7 @@ import { UsersModule } from '../users/users.module'
       Friendship,
       DirectMessage,
       UserPresence,
+      UserBlock,
     ]),
     RealtimeModule,
     UsersModule,

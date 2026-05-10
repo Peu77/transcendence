@@ -7,6 +7,7 @@ export const FriendRow = (props: {
   friend: Friend
   onOpenDM: () => void
   onDelete: () => void
+  onBlock: () => void
 }) => {
   const { friend } = props
 
@@ -24,8 +25,11 @@ export const FriendRow = (props: {
         <Button size="sm" variant="secondary" onClick={props.onOpenDM}>
           DM
         </Button>
-        <Button size="sm" variant="destructive" onClick={props.onDelete}>
+        <Button size="sm" variant="outline" onClick={props.onDelete}>
           Remove
+        </Button>
+        <Button size="sm" variant="destructive" onClick={props.onBlock}>
+          Block
         </Button>
       </div>
     </div>

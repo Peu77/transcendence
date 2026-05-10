@@ -174,3 +174,28 @@ export async function getDirectMessages(
   )
   return res.data
 }
+
+export type BlockedUser = {
+  id: string
+  username: string
+  profilePictureId: string | null
+}
+
+export type GetBlockedUsersResponse = {
+  blocked: BlockedUser[]
+}
+
+export async function blockUser(userId: string): Promise<{}> {
+  const res = await axios.post(`/friends/block/${userId}`)
+  return res.data
+}
+
+export async function unblockUser(userId: string): Promise<{}> {
+  const res = await axios.delete(`/friends/block/${userId}`)
+  return res.data
+}
+
+export async function getBlockedUsers(): Promise<BlockedUser[]> {
+  const res = await axios.get<GetBlockedUsersResponse>('/friends/blocked')
+  return res.data.blocked
+}

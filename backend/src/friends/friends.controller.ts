@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -171,5 +172,30 @@ export class FriendsController {
       })),
       pageInfo: result.pageInfo,
     }
+  }
+
+  @Post('friends/block/:userId')
+  @HttpCode(200)
+  async blockUser(
+    @UserId() userId: string,
+    @Param('userId') targetUserId: string,
+  ) {
+    await this.friendsService.blockUser(userId, targetUserId)
+    return {}
+  }
+
+  @Delete('friends/block/:userId')
+  async unblockUser(
+    @UserId() userId: string,
+    @Param('userId') targetUserId: string,
+  ) {
+    await this.friendsService.unblockUser(userId, targetUserId)
+    return {}
+  }
+
+  @Get('friends/blocked')
+  async listBlocked(@UserId() userId: string) {
+    const blocked = await this.friendsService.listBlocked(userId)
+    return { blocked }
   }
 }

@@ -15,6 +15,7 @@ import {
 import { Friendship } from './entities/friendship.entity'
 import { DirectMessage } from './entities/direct-message.entity'
 import { PresenceStatus, UserPresence } from './entities/user-presence.entity'
+import { UserBlock } from './entities/block.entity'
 import { isUUID } from 'class-validator'
 import { RealtimeService } from '../realtime/realtime.service'
 import { UsersService } from '../users/users.service'
@@ -31,6 +32,8 @@ export class FriendsService {
     private readonly messagesRepo: Repository<DirectMessage>,
     @InjectRepository(UserPresence)
     private readonly presenceRepo: Repository<UserPresence>,
+    @InjectRepository(UserBlock)
+    private readonly blocksRepo: Repository<UserBlock>,
     private readonly realtime: RealtimeService,
     private readonly userService: UsersService,
   ) {}
@@ -42,6 +45,16 @@ export class FriendsService {
   private async assertUserExists(userId: string): Promise<void> {
     const exists = await this.usersRepo.exists({ where: { id: userId } })
     if (!exists) throw new NotFoundException('User not found')
+  }
+
+  private async assertNotBlocked(a: string, b: string): Promise<void> {
+    const blocked = await this.blocksRepo.exists({
+      where: [
+        { blockerId: a, blockedId: b },
+        { blockerId: b, blockedId: a },
+      ],
+    })
+    if (blocked) throw new ForbiddenException('Blocked')
   }
 
   async sendFriendRequest(
@@ -58,6 +71,7 @@ export class FriendsService {
     if (fromUserId === toUser.id)
       throw new BadRequestException('Cannot friend yourself')
     await this.assertUserExists(toUser.id)
+    await this.assertNotBlocked(fromUserId, toUser.id)
 
     const { low, high } = this.canonicalPair(fromUserId, toUser.id)
     const alreadyFriends = await this.friendshipsRepo.exists({
@@ -492,5 +506,57 @@ export class FriendsService {
       where: { userLowId: low, userHighId: high },
     })
     if (!ok) throw new ForbiddenException('Not friends')
+  }
+
+  async blockUser(blockerId: string, blockedId: string): Promise<void> {
+    if (blockerId === blockedId)
+      throw new BadRequestException('Cannot block yourself')
+    await this.assertUserExists(blockedId)
+
+    const { low, high } = this.canonicalPair(blockerId, blockedId)
+    const areFriends = await this.friendshipsRepo.exists({
+      where: { userLowId: low, userHighId: high },
+    })
+
+    if (areFriends) {
+      await this.friendRequestsRepo.delete({
+        fromUserId: In([blockerId, blockedId]),
+        toUserId: In([blockerId, blockedId]),
+      })
+      await this.friendshipsRepo.delete({ userLowId: low, userHighId: high })
+      this.realtime.emitFriendshipDeleted([blockerId, blockedId], {
+        userId: blockerId,
+        friendUserId: blockedId,
+        deletedAt: new Date().toISOString(),
+      })
+    }
+
+    await this.blocksRepo
+      .createQueryBuilder()
+      .insert()
+      .into(UserBlock)
+      .values({ blockerId, blockedId })
+      .orIgnore()
+      .execute()
+  }
+
+  async unblockUser(blockerId: string, blockedId: string): Promise<void> {
+    await this.blocksRepo.delete({ blockerId, blockedId })
+  }
+
+  async listBlocked(userId: string): Promise<
+    Array<{ id: string; username: string; profilePictureId: string | null }>
+  > {
+    const blocks = await this.blocksRepo.find({
+      where: { blockerId: userId },
+      relations: { blocked: true },
+      order: { createdAt: 'DESC' },
+    })
+
+    return blocks.map((b) => ({
+      id: b.blocked.id,
+      username: b.blocked.username,
+      profilePictureId: b.blocked.profilePictureId,
+    }))
   }
 }

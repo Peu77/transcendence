@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/tabs.tsx'
 import { FriendsTab } from '@/components/app/friends/friendsTab.tsx'
 import { RequestsTab } from '@/components/app/friends/requestsTab.tsx'
+import { BlockedTab } from '@/components/app/friends/blockedTab.tsx'
 
 export const FriendsOverlay = () => {
   const isOpen = useStore(friendsOverlayStore, (s) => s.isOpen)
@@ -71,6 +72,9 @@ export const FriendsOverlay = () => {
             <TabsTrigger className="w-full" value={'requests'}>
               Requests
             </TabsTrigger>
+            <TabsTrigger className="w-full" value={'blocked'}>
+              Blocked
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value={'friends'}>
@@ -79,6 +83,10 @@ export const FriendsOverlay = () => {
 
           <TabsContent value={'requests'}>
             <RequestsTab isOpen={isOpen} />
+          </TabsContent>
+
+          <TabsContent value={'blocked'}>
+            <BlockedTab isOpen={isOpen} />
           </TabsContent>
         </Tabs>
       </div>
