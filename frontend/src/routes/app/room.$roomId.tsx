@@ -21,7 +21,12 @@ import {
 } from '@/components/ui/tabs.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { userStore } from '@/store/userStore'
-import { DEFAULT_GAME_CONTROLS, type GameControls } from '@/api/user.ts'
+import {
+  DEFAULT_GAME_CONTROLS,
+  DEFAULT_TETRIS_HANDLING_SETTINGS,
+  type GameControls,
+  type TetrisHandlingSettings,
+} from '@/api/user.ts'
 import { type RoomSettingsValues } from './room.settings.ts'
 import { MatchSettingsForm } from '@/components/app/room/match-settings-form.tsx'
 import { RoomPlayersSidebar } from '@/components/app/room/room-players-sidebar.tsx'
@@ -47,6 +52,13 @@ const buildKeyMap = (controls?: GameControls): Record<string, InputAction> => {
     {},
   )
 }
+
+const normalizeHandlingSettings = (
+  settings?: TetrisHandlingSettings,
+): TetrisHandlingSettings => ({
+  ...DEFAULT_TETRIS_HANDLING_SETTINGS,
+  ...settings,
+})
 
 /* ------------------------------------------------------------------ */
 /*  Game Board component                                               */
@@ -440,6 +452,61 @@ const RoomPage = () => {
   // Keyboard input for game
   useEffect(() => {
     const keyMap = buildKeyMap(me?.gameControls)
+    const handlingSettings = normalizeHandlingSettings(
+      me?.tetrisHandlingSettings,
+    )
+    const pressedActions = new Set<InputAction>()
+    const timers: Partial<
+      Record<InputAction, { delay?: number; repeat?: number }>
+    > = {}
+
+    const clearActionTimers = (action: InputAction) => {
+      const actionTimers = timers[action]
+      if (actionTimers?.delay) window.clearTimeout(actionTimers.delay)
+      if (actionTimers?.repeat) window.clearInterval(actionTimers.repeat)
+      delete timers[action]
+    }
+
+    const clearHorizontalTimers = () => {
+      clearActionTimers('left')
+      clearActionTimers('right')
+    }
+
+    const emitInput = (action: InputAction) => {
+      socket.emit('game.input', { roomId, action })
+    }
+
+    const startHorizontalRepeat = (action: 'left' | 'right') => {
+      clearHorizontalTimers()
+      const oppositeAction = action === 'left' ? 'right' : 'left'
+      pressedActions.delete(oppositeAction)
+      pressedActions.add(action)
+      emitInput(action)
+
+      timers[action] = {
+        delay: window.setTimeout(() => {
+          emitInput(action)
+          timers[action] = {
+            repeat: window.setInterval(
+              () => emitInput(action),
+              Math.max(handlingSettings.arr, 16),
+            ),
+          }
+        }, handlingSettings.das + handlingSettings.dcd),
+      }
+    }
+
+    const startSoftDropRepeat = () => {
+      if (pressedActions.has('softDrop')) return
+      pressedActions.add('softDrop')
+      emitInput('softDrop')
+      timers.softDrop = {
+        repeat: window.setInterval(
+          () => emitInput('softDrop'),
+          Math.max(handlingSettings.sdf, 16),
+        ),
+      }
+    }
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const currentPhase = gamePhaseRef.current
@@ -458,13 +525,41 @@ const RoomPage = () => {
       const action = keyMap[e.key]
       if (action) {
         e.preventDefault()
-        socket.emit('game.input', { roomId, action })
+
+        if (action === 'left' || action === 'right') {
+          if (!pressedActions.has(action)) startHorizontalRepeat(action)
+          return
+        }
+
+        if (action === 'softDrop') {
+          startSoftDropRepeat()
+          return
+        }
+
+        if (!e.repeat) emitInput(action)
+      }
+    }
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const action = keyMap[e.key]
+      if (!action) return
+
+      if (action === 'left' || action === 'right' || action === 'softDrop') {
+        pressedActions.delete(action)
+        clearActionTimers(action)
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [socket, roomId, me?.gameControls])
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+      for (const action of Object.keys(timers) as InputAction[]) {
+        clearActionTimers(action)
+      }
+    }
+  }, [socket, roomId, me?.gameControls, me?.tetrisHandlingSettings])
 
   const handleStartGame = useCallback(() => {
     socket.emit('game.start', { roomId }, (res) => {

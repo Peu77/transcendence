@@ -21,12 +21,26 @@ export enum GameControlAction {
 
 export type GameControls = Record<GameControlAction, string>
 
+export type TetrisHandlingSettings = {
+  arr: number
+  das: number
+  dcd: number
+  sdf: number
+}
+
 export const DEFAULT_GAME_CONTROLS: GameControls = {
   [GameControlAction.LEFT]: 'ArrowLeft',
   [GameControlAction.RIGHT]: 'ArrowRight',
   [GameControlAction.ROTATE]: 'ArrowUp',
   [GameControlAction.SOFT_DROP]: 'ArrowDown',
   [GameControlAction.HARD_DROP]: ' ',
+}
+
+export const DEFAULT_TETRIS_HANDLING_SETTINGS: TetrisHandlingSettings = {
+  arr: 33,
+  das: 167,
+  dcd: 0,
+  sdf: 33,
 }
 
 @Entity({ name: 'users' })
@@ -48,6 +62,13 @@ export class User {
     default: () => `'${JSON.stringify(DEFAULT_GAME_CONTROLS)}'::jsonb`,
   })
   gameControls!: GameControls
+
+  @Column({
+    type: 'jsonb',
+    default: () =>
+      `'${JSON.stringify(DEFAULT_TETRIS_HANDLING_SETTINGS)}'::jsonb`,
+  })
+  tetrisHandlingSettings!: TetrisHandlingSettings
 
   @Column({ type: 'text', nullable: true, unique: true })
   profilePictureId!: string | null

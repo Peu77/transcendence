@@ -16,12 +16,26 @@ export type GameControlAction =
 
 export type GameControls = Record<GameControlAction, string>
 
+export type TetrisHandlingSettings = {
+  arr: number
+  das: number
+  dcd: number
+  sdf: number
+}
+
 export const DEFAULT_GAME_CONTROLS: GameControls = {
   left: 'ArrowLeft',
   right: 'ArrowRight',
   rotate: 'ArrowUp',
   softDrop: 'ArrowDown',
   hardDrop: ' ',
+}
+
+export const DEFAULT_TETRIS_HANDLING_SETTINGS: TetrisHandlingSettings = {
+  arr: 33,
+  das: 167,
+  dcd: 0,
+  sdf: 33,
 }
 
 export type User = {
@@ -32,6 +46,7 @@ export type User = {
   twoFaEnabled: boolean
   theme: Theme
   gameControls: GameControls
+  tetrisHandlingSettings: TetrisHandlingSettings
 }
 
 export const USER_QUERY_KEYS = {
@@ -80,6 +95,21 @@ export function useUpdateGameControls() {
         { controls },
       )
       return res.data.gameControls
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.USER })
+    },
+  })
+}
+
+export function useUpdateTetrisHandlingSettings() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (settings: TetrisHandlingSettings) => {
+      const res = await axios.post<{
+        tetrisHandlingSettings: TetrisHandlingSettings
+      }>('/users/tetrisHandlingSettings', { settings })
+      return res.data.tetrisHandlingSettings
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.USER })

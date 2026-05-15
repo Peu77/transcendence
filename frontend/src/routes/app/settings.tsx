@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/accordion.tsx'
 import { UserSettingsAccordion } from '@/components/settings/UserSettingsAccordion.tsx'
 import { GameControlsAccordion } from '@/components/settings/GameControlsAccordion.tsx'
+import { TetrisHandlingAccordion } from '@/components/settings/TetrisHandlingAccordion.tsx'
 
 const Settings = () => {
   const { data: user } = useGetUser()
@@ -47,6 +48,12 @@ const Settings = () => {
           <AccordionTrigger>Game controls</AccordionTrigger>
           <AccordionContent>
             <GameControlsAccordion controls={user.gameControls} />
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="tetris-handling">
+          <AccordionTrigger>handling</AccordionTrigger>
+          <AccordionContent>
+            <TetrisHandlingAccordion settings={user.tetrisHandlingSettings} />
           </AccordionContent>
         </AccordionItem>
       </Accordion>

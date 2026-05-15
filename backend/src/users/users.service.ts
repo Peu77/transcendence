@@ -3,8 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import {
   DEFAULT_GAME_CONTROLS,
+  DEFAULT_TETRIS_HANDLING_SETTINGS,
   GameControlAction,
   GameControls,
+  TetrisHandlingSettings,
   Theme,
   User,
   UserType,
@@ -118,6 +120,16 @@ export class UsersService {
     return gameControls
   }
 
+  async updateTetrisHandlingSettings(
+    userId: string,
+    settings: Partial<TetrisHandlingSettings>,
+  ): Promise<TetrisHandlingSettings> {
+    const tetrisHandlingSettings =
+      this.normalizeTetrisHandlingSettings(settings)
+    await this.usersRepo.update({ id: userId }, { tetrisHandlingSettings })
+    return tetrisHandlingSettings
+  }
+
   normalizeGameControls(controls: Partial<GameControls> | null): GameControls {
     const normalized = { ...DEFAULT_GAME_CONTROLS }
 
@@ -125,6 +137,28 @@ export class UsersService {
       const key = controls?.[action]
       if (typeof key === 'string' && key.length > 0) {
         normalized[action] = key
+      }
+    }
+
+    return normalized
+  }
+
+  normalizeTetrisHandlingSettings(
+    settings: Partial<TetrisHandlingSettings> | null,
+  ): TetrisHandlingSettings {
+    const normalized = { ...DEFAULT_TETRIS_HANDLING_SETTINGS }
+    const limits: Record<keyof TetrisHandlingSettings, [number, number]> = {
+      arr: [0, 1000],
+      das: [0, 1000],
+      dcd: [0, 1000],
+      sdf: [0, 1000],
+    }
+
+    for (const key of Object.keys(limits) as (keyof TetrisHandlingSettings)[]) {
+      const value = settings?.[key]
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        const [min, max] = limits[key]
+        normalized[key] = Math.min(Math.max(Math.round(value), min), max)
       }
     }
 

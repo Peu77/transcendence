@@ -1,8 +1,4 @@
-import {
-  createRoute,
-  Link,
-  useNavigate,
-} from '@tanstack/react-router'
+import { createRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { Button } from '@/components/ui/button.tsx'

@@ -17,5 +17,7 @@ export class UpdateGameControlsDto {
   controls!: Record<GameControlAction, string>
 }
 
-export const GAME_CONTROL_ACTIONS = Object.values(GameControlAction)
-export const DEFAULT_GAME_CONTROL_KEYS = Object.values(DEFAULT_GAME_CONTROLS)
+export class UpdateTetrisHandlingSettingsDto {
+  @IsObject()
+  settings!: Record<string, number>
+}

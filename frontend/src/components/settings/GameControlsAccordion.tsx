@@ -50,13 +50,14 @@ export const GameControlsAccordion = ({
     setDraftControls(normalizeControls(controls))
   }, [controls])
 
-  const handleKeyDown = (action: GameControlAction) => (e: React.KeyboardEvent) => {
-    e.preventDefault()
-    setDraftControls((current) => ({
-      ...current,
-      [action]: e.key,
-    }))
-  }
+  const handleKeyDown =
+    (action: GameControlAction) => (e: React.KeyboardEvent) => {
+      e.preventDefault()
+      setDraftControls((current) => ({
+        ...current,
+        [action]: e.key,
+      }))
+    }
 
   const handleReset = () => setDraftControls(DEFAULT_GAME_CONTROLS)
 

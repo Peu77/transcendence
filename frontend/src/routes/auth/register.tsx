@@ -64,8 +64,7 @@ export default function Register() {
 
       if (err.response?.status === 409 && conflictField) {
         const message =
-          err.response.data.message ??
-          `${conflictField} already registered`
+          err.response.data.message ?? `${conflictField} already registered`
 
         form.setFieldMeta(conflictField, (prev) => ({
           ...prev,
