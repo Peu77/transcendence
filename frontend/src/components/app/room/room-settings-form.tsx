@@ -1,7 +1,7 @@
 import { RoomType } from '@/api/room.ts'
 import { Button } from '@/components/ui/button.tsx'
 import { useAppForm } from '@/hooks/form.ts'
-import { roomSettingsSchema } from '../../../routes/app/room.settings.ts'
+import { roomSettingsSchema } from '@/routes/app/room.settings.ts'
 import type { RoomSettingsFormProps } from './types.ts'
 import { ScrollArea } from '@radix-ui/react-scroll-area'
 

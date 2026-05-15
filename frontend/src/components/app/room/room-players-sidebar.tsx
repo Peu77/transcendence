@@ -8,13 +8,9 @@ export function RoomPlayersSidebar({
   return (
     <aside className="flex h-full min-h-0 flex-col rounded-2xl border border-border bg-card/95 p-5 text-card-foreground shadow-lg backdrop-blur">
       <div className="border-b border-border/70 pb-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-          Room lobby
-        </p>
-        <h2 className="mt-2 text-2xl font-bold">Players</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {room.users.length} connected in this room
-        </p>
+        <h2 className="mt-2 text-2xl font-bold">
+          Players ({room.users.length})
+        </h2>
       </div>
 
       <ul className="mt-4 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
