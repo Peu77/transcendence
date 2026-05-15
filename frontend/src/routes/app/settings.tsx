@@ -116,8 +116,7 @@ const Settings = () => {
           <CardHeader>
             <CardTitle>Profile Picture</CardTitle>
             <CardDescription>
-              Update your profile picture. Images are compressed for better
-              performance.
+              Image will get compressed
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-6">

@@ -2,7 +2,6 @@ import {
   createRoute,
   Link,
   useNavigate,
-  useRouter,
 } from '@tanstack/react-router'
 import { useState } from 'react'
 import { AppRoute } from '@/routes/app/layout.tsx'
@@ -15,7 +14,6 @@ import { ArrowLeftIcon } from 'lucide-react'
 
 const Multiplayer = () => {
   const navigate = useNavigate()
-  const router = useRouter()
   const [roomIdInput, setRoomIdInput] = useState('')
   const { data: rooms, isLoading } = useQuery({
     queryKey: ['rooms'],
@@ -84,7 +82,11 @@ const Multiplayer = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.history.back()}
+            onClick={() =>
+              navigate({
+                to: '/app',
+              })
+            }
           >
             <ArrowLeftIcon />
           </Button>
