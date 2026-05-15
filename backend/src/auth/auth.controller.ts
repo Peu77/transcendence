@@ -41,25 +41,29 @@ export class AuthController {
   async register(@Body() dto: RegisterDto, @Res() res: Response) {
     const email = dto.email.toLowerCase()
     const passwordHash = await bcrypt.hash(dto.password, 10)
-    let userId: string
 
-    try {
-      const createdUser = await this.usersService.createUser(
-        UserType.EMAIL,
-        email,
-        dto.username,
-        passwordHash,
-        null,
-        null,
-      )
-      userId = createdUser.id
-    } catch {
-      return res
-        .status(HttpStatus.CONFLICT)
-        .send({ message: 'Email already registered' })
-    }
+    if (await this.usersService.existsByUsername(dto.username))
+      return res.status(HttpStatus.CONFLICT).send({
+        message: 'Username already registered',
+        fieldAlreadyExists: 'username',
+      })
 
-    const token = this.authService.createUserToken(userId)
+    if (await this.usersService.existsByEmail(email))
+      return res.status(HttpStatus.CONFLICT).send({
+        message: 'Email already registered',
+        fieldAlreadyExists: 'email',
+      })
+
+    const createdUser = await this.usersService.createUser(
+      UserType.EMAIL,
+      email,
+      dto.username,
+      passwordHash,
+      null,
+      null,
+    )
+
+    const token = this.authService.createUserToken(createdUser.id)
     res.cookie('token', token, { httpOnly: true, path: '/' })
     res.status(HttpStatus.CREATED).send({})
   }

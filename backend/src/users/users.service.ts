@@ -26,12 +26,20 @@ export class UsersService {
     const user = this.usersRepo.create({
       userType,
       email: email.toLowerCase(),
-      username,
+      username: username,
       password: passwordHash,
       githubId,
       githubAvatarUrl,
     })
     return await this.usersRepo.save(user)
+  }
+
+  async existsByEmail(email: string): Promise<boolean> {
+    return await this.usersRepo.existsBy({ email: email.toLowerCase() })
+  }
+
+  async existsByUsername(username: string): Promise<boolean> {
+    return await this.usersRepo.existsBy({ username })
   }
 
   async findByEmail(email: string): Promise<User | null> {
