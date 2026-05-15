@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsObject, IsString, IsUUID } from 'class-validator'
-import { DEFAULT_GAME_CONTROLS, GameControlAction } from './user.entity'
+import { GameControlAction } from './user.entity'
 
 export class ProfilePictureDto {
   @IsUUID()

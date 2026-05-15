@@ -13,6 +13,7 @@ export type GameControlAction =
   | 'rotate'
   | 'softDrop'
   | 'hardDrop'
+  | 'toggleChat'
 
 export type GameControls = Record<GameControlAction, string>
 
@@ -29,6 +30,7 @@ export const DEFAULT_GAME_CONTROLS: GameControls = {
   rotate: 'ArrowUp',
   softDrop: 'ArrowDown',
   hardDrop: ' ',
+  toggleChat: 't',
 }
 
 export const DEFAULT_TETRIS_HANDLING_SETTINGS: TetrisHandlingSettings = {

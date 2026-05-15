@@ -20,12 +20,20 @@ export const buildKeyMap = (
 
   return Object.entries(normalizedControls).reduce<Record<string, InputAction>>(
     (keyMap, [action, key]) => {
+      if (action === 'toggleChat') return keyMap
       keyMap[key] = action as InputAction
       return keyMap
     },
     {},
   )
 }
+
+export const normalizeGameControls = (
+  controls?: GameControls,
+): GameControls => ({
+  ...DEFAULT_GAME_CONTROLS,
+  ...controls,
+})
 
 export const normalizeHandlingSettings = (
   settings?: TetrisHandlingSettings,

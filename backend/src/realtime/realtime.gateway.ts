@@ -181,6 +181,44 @@ export class RealtimeGateway
     return { ok: true }
   }
 
+  @SubscribeMessage('room.chat.send')
+  async sendRoomChatMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { roomId: string; content: string },
+  ) {
+    const userId: string | undefined = client.data.userId
+    if (!userId) return { ok: false, error: 'Unauthorized' }
+    if (!body?.roomId) return { ok: false, error: 'Missing roomId' }
+
+    const content = typeof body.content === 'string' ? body.content.trim() : ''
+    if (!content) return { ok: false, error: 'Message is empty' }
+    if (content.length > 500) return { ok: false, error: 'Message is too long' }
+
+    try {
+      const room = this.roomService.getRoom(body.roomId)
+      if (!room.users.some((user) => user.id === userId)) {
+        return { ok: false, error: 'You are not in this room' }
+      }
+
+      const sender = room.users.find((user) => user.id === userId)
+      this.emitToGameRoom(body.roomId, 'room.chat.message', {
+        id: `${Date.now()}-${userId}`,
+        roomId: body.roomId,
+        senderId: userId,
+        senderInfo: {
+          username: sender?.username ?? 'Player',
+          profilePictureId: sender?.profilePictureId ?? null,
+        },
+        content,
+        createdAt: new Date().toISOString(),
+      })
+
+      return { ok: true }
+    } catch (e: any) {
+      return { ok: false, error: e.message }
+    }
+  }
+
   @SubscribeMessage('dm.join')
   async joinDm(
     @ConnectedSocket() client: Socket,

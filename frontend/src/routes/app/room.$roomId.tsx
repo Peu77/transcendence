@@ -15,6 +15,7 @@ const RoomPage = () => {
     countdown,
     playerStates,
     results,
+    isChatOpen,
     handleStartGame,
     handleBackToLobby,
   } = useRoomGame(roomId, me)
@@ -53,6 +54,7 @@ const RoomPage = () => {
           results={results}
           myUserId={me?.id ?? ''}
           room={room}
+          isChatOpen={isChatOpen}
           onBackToLobby={handleBackToLobby}
         />
       )}

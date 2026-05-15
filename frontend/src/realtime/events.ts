@@ -38,6 +38,15 @@ export type DirectMessageCreatedEvent = DirectMessage & {
   senderInfo: UserInfo
 }
 
+export type RoomChatMessageEvent = {
+  id: string
+  roomId: string
+  senderId: string
+  senderInfo: UserInfo
+  content: string
+  createdAt: string
+}
+
 export type GamePlayerResult = {
   userId: string
   username: string
@@ -49,6 +58,7 @@ export type GamePlayerResult = {
 export type LiveEventMap = {
   ready: { userId: string }
   'room.updated': Record<string, never>
+  'room.chat.message': RoomChatMessageEvent
   'friend_request.created': FriendRequestCreatedEvent
   'friend_request.accepted': FriendRequestResolvedEvent
   'friend_request.denied': FriendRequestResolvedEvent

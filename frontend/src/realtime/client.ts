@@ -11,6 +11,10 @@ type ClientToServerEvents = {
     callback: (res: { ok: boolean; error?: string }) => void,
   ) => void
   'room.leave': (body: { roomId: string }) => void
+  'room.chat.send': (
+    body: { roomId: string; content: string },
+    callback: (res: { ok: boolean; error?: string }) => void,
+  ) => void
   'game.start': (
     body: { roomId: string },
     callback: (res: { ok: boolean; error?: string }) => void,

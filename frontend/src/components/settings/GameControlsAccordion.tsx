@@ -18,6 +18,7 @@ const CONTROL_LABELS: Record<GameControlAction, string> = {
   rotate: 'Rotate',
   softDrop: 'Soft drop',
   hardDrop: 'Hard drop',
+  toggleChat: 'Open chat',
 }
 
 const CONTROL_ACTIONS = Object.keys(CONTROL_LABELS) as GameControlAction[]
@@ -72,7 +73,8 @@ export const GameControlsAccordion = ({
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Click a field and press the key you want to use in game.
+        Click a field and press the key you want to use in game. Escape closes
+        the chat again while playing.
       </p>
 
       <div className="grid gap-4">

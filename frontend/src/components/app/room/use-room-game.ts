@@ -8,6 +8,7 @@ import type { TetrisState, InputAction } from '@/game/tetris/types'
 import type { GamePlayerResult } from '@/realtime/events'
 import {
   buildKeyMap,
+  normalizeGameControls,
   normalizeHandlingSettings,
   type GamePhase,
 } from './room-game.ts'
@@ -22,6 +23,13 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
     {},
   )
   const [results, setResults] = useState<GamePlayerResult[] | null>(null)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const isChatOpenRef = useRef(false)
+
+  const setChatOpen = useCallback((open: boolean) => {
+    isChatOpenRef.current = open
+    setIsChatOpen(open)
+  }, [])
 
   const setPhase = useCallback((phase: GamePhase) => {
     gamePhaseRef.current = phase
@@ -67,6 +75,7 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
     if (!socket) return
 
     const keyMap = buildKeyMap(me?.gameControls)
+    const gameControls = normalizeGameControls(me?.gameControls)
     const handlingSettings = normalizeHandlingSettings(
       me?.tetrisHandlingSettings,
     )
@@ -128,6 +137,10 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
 
       if (e.key === 'Escape') {
         e.preventDefault()
+        if (isChatOpenRef.current) {
+          setChatOpen(false)
+          return
+        }
         if (currentPhase === 'playing') {
           socket.emit('game.pause', { roomId })
         } else if (currentPhase === 'paused') {
@@ -137,6 +150,14 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
       }
 
       if (currentPhase !== 'playing') return
+      if (e.key === gameControls.toggleChat && !isChatOpenRef.current) {
+        e.preventDefault()
+        setChatOpen(true)
+        return
+      }
+
+      if (isChatOpenRef.current) return
+
       const action = keyMap[e.key]
       if (!action) return
 
@@ -174,7 +195,13 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
         clearActionTimers(action)
       }
     }
-  }, [socket, roomId, me?.gameControls, me?.tetrisHandlingSettings])
+  }, [
+    socket,
+    roomId,
+    me?.gameControls,
+    me?.tetrisHandlingSettings,
+    setChatOpen,
+  ])
 
   const handleStartGame = useCallback(() => {
     if (!socket) return
@@ -191,14 +218,16 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
     setPlayerStates({})
     setResults(null)
     setCountdown(null)
+    setChatOpen(false)
     queryClient.invalidateQueries({ queryKey: ['room', roomId] })
-  }, [setPhase, queryClient, roomId])
+  }, [setPhase, setChatOpen, queryClient, roomId])
 
   return {
     gamePhase,
     countdown,
     playerStates,
     results,
+    isChatOpen,
     handleStartGame,
     handleBackToLobby,
   }

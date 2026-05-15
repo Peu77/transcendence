@@ -19,6 +19,7 @@ import { type RoomSettingsValues } from '@/routes/app/room.settings.ts'
 import { MatchSettingsForm } from './match-settings-form.tsx'
 import { RoomPlayersSidebar } from './room-players-sidebar.tsx'
 import { RoomSettingsForm } from './room-settings-form.tsx'
+import { RoomChat } from './room-chat.tsx'
 
 type RoomLobbyPhaseProps = {
   room: Room
@@ -59,7 +60,7 @@ export function RoomLobbyPhase({
   })
 
   return (
-    <div className="grid h-full min-h-0 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+    <div className="grid h-full min-h-0 gap-4 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
       <RoomPlayersSidebar room={room} currentUserId={me?.id} />
 
       <section className="flex min-h-0 flex-col gap-4">
@@ -121,6 +122,8 @@ export function RoomLobbyPhase({
           )}
         </div>
       </section>
+
+      <RoomChat roomId={room.id} currentUserId={me?.id} />
     </div>
   )
 }

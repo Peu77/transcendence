@@ -3,6 +3,7 @@ import type { Room } from '@/api/room.ts'
 import type { GamePlayerResult } from '@/realtime/events'
 import type { TetrisState } from '@/game/tetris/types'
 import { GameBoard } from './game-board.tsx'
+import { RoomChat } from './room-chat.tsx'
 import type { GamePhase } from './room-game.ts'
 
 type RoomGamePhaseProps = {
@@ -12,6 +13,7 @@ type RoomGamePhaseProps = {
   results: GamePlayerResult[] | null
   myUserId: string
   room: Room
+  isChatOpen: boolean
   onBackToLobby: () => void
 }
 
@@ -22,6 +24,7 @@ export function RoomGamePhase({
   results,
   myUserId,
   room,
+  isChatOpen,
   onBackToLobby,
 }: RoomGamePhaseProps) {
   const myState = playerStates[myUserId] ?? null
@@ -35,6 +38,15 @@ export function RoomGamePhase({
 
   return (
     <div className="relative flex h-full items-center justify-center gap-8">
+      {isChatOpen && (
+        <RoomChat
+          roomId={room.id}
+          currentUserId={myUserId}
+          autoFocus
+          className="absolute left-0 top-0 z-20 h-full w-full max-w-sm"
+        />
+      )}
+
       <GameBoard state={myState} label="You" large />
 
       {opponentEntries.map(([userId, state]) => (
@@ -87,8 +99,8 @@ export function RoomGamePhase({
 
       {gamePhase === 'playing' && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm tracking-wide text-foreground/50">
-          ARROWS / WASD to move &middot; SPACE to hard drop &middot; ESC to
-          pause
+          ARROWS / WASD to move &middot; SPACE to hard drop &middot; T to chat
+          &middot; ESC to pause/close chat
         </div>
       )}
     </div>
