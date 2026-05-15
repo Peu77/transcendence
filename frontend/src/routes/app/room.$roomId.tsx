@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/tabs.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { userStore } from '@/store/userStore'
+import { DEFAULT_GAME_CONTROLS, type GameControls } from '@/api/user.ts'
 import { type RoomSettingsValues } from './room.settings.ts'
 import { MatchSettingsForm } from '@/components/app/room/match-settings-form.tsx'
 import { RoomPlayersSidebar } from '@/components/app/room/room-players-sidebar.tsx'
@@ -34,6 +35,18 @@ import type { GamePlayerResult } from '@/realtime/events'
 /* ------------------------------------------------------------------ */
 
 type GamePhase = 'lobby' | 'countdown' | 'playing' | 'paused' | 'finished'
+
+const buildKeyMap = (controls?: GameControls): Record<string, InputAction> => {
+  const normalizedControls = { ...DEFAULT_GAME_CONTROLS, ...controls }
+
+  return Object.entries(normalizedControls).reduce<Record<string, InputAction>>(
+    (keyMap, [action, key]) => {
+      keyMap[key] = action as InputAction
+      return keyMap
+    },
+    {},
+  )
+}
 
 /* ------------------------------------------------------------------ */
 /*  Game Board component                                               */
@@ -426,21 +439,7 @@ const RoomPage = () => {
 
   // Keyboard input for game
   useEffect(() => {
-    const keyMap: Record<string, InputAction> = {
-      ArrowLeft: 'left',
-      a: 'left',
-      A: 'left',
-      ArrowRight: 'right',
-      d: 'right',
-      D: 'right',
-      ArrowUp: 'rotate',
-      w: 'rotate',
-      W: 'rotate',
-      ArrowDown: 'softDrop',
-      s: 'softDrop',
-      S: 'softDrop',
-      ' ': 'hardDrop',
-    }
+    const keyMap = buildKeyMap(me?.gameControls)
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const currentPhase = gamePhaseRef.current
@@ -465,7 +464,7 @@ const RoomPage = () => {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [socket, roomId])
+  }, [socket, roomId, me?.gameControls])
 
   const handleStartGame = useCallback(() => {
     socket.emit('game.start', { roomId }, (res) => {

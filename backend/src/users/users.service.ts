@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { Theme, User, UserType } from './user.entity'
+import {
+  DEFAULT_GAME_CONTROLS,
+  GameControlAction,
+  GameControls,
+  Theme,
+  User,
+  UserType,
+} from './user.entity'
 import { UserInfo } from '../realtime/realtime.events'
 import { GithubValidateReturn } from '../auth/github.strategy'
 import * as fs from 'node:fs/promises'
@@ -100,6 +107,28 @@ export class UsersService {
     const newTheme = user.theme === Theme.LIGHT ? Theme.DARK : Theme.LIGHT
     await this.usersRepo.update({ id: userId }, { theme: newTheme })
     return newTheme
+  }
+
+  async updateGameControls(
+    userId: string,
+    controls: Partial<GameControls>,
+  ): Promise<GameControls> {
+    const gameControls = this.normalizeGameControls(controls)
+    await this.usersRepo.update({ id: userId }, { gameControls })
+    return gameControls
+  }
+
+  normalizeGameControls(controls: Partial<GameControls> | null): GameControls {
+    const normalized = { ...DEFAULT_GAME_CONTROLS }
+
+    for (const action of Object.values(GameControlAction)) {
+      const key = controls?.[action]
+      if (typeof key === 'string' && key.length > 0) {
+        normalized[action] = key
+      }
+    }
+
+    return normalized
   }
 
   async getPublicProfile(userId: string) {

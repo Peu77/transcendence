@@ -11,6 +11,24 @@ export enum Theme {
   DARK = 'dark',
 }
 
+export enum GameControlAction {
+  LEFT = 'left',
+  RIGHT = 'right',
+  ROTATE = 'rotate',
+  SOFT_DROP = 'softDrop',
+  HARD_DROP = 'hardDrop',
+}
+
+export type GameControls = Record<GameControlAction, string>
+
+export const DEFAULT_GAME_CONTROLS: GameControls = {
+  [GameControlAction.LEFT]: 'ArrowLeft',
+  [GameControlAction.RIGHT]: 'ArrowRight',
+  [GameControlAction.ROTATE]: 'ArrowUp',
+  [GameControlAction.SOFT_DROP]: 'ArrowDown',
+  [GameControlAction.HARD_DROP]: ' ',
+}
+
 @Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -24,6 +42,12 @@ export class User {
 
   @Column({ type: 'text', default: Theme.LIGHT })
   theme!: Theme
+
+  @Column({
+    type: 'jsonb',
+    default: () => `'${JSON.stringify(DEFAULT_GAME_CONTROLS)}'::jsonb`,
+  })
+  gameControls!: GameControls
 
   @Column({ type: 'text', nullable: true, unique: true })
   profilePictureId!: string | null

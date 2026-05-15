@@ -7,6 +7,23 @@ export enum Theme {
   DARK = 'dark',
 }
 
+export type GameControlAction =
+  | 'left'
+  | 'right'
+  | 'rotate'
+  | 'softDrop'
+  | 'hardDrop'
+
+export type GameControls = Record<GameControlAction, string>
+
+export const DEFAULT_GAME_CONTROLS: GameControls = {
+  left: 'ArrowLeft',
+  right: 'ArrowRight',
+  rotate: 'ArrowUp',
+  softDrop: 'ArrowDown',
+  hardDrop: ' ',
+}
+
 export type User = {
   id: string
   email: string
@@ -14,6 +31,7 @@ export type User = {
   username: string
   twoFaEnabled: boolean
   theme: Theme
+  gameControls: GameControls
 }
 
 export const USER_QUERY_KEYS = {
@@ -46,6 +64,22 @@ export function useUploadProfilePicture() {
         },
       })
       return res.data
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.USER })
+    },
+  })
+}
+
+export function useUpdateGameControls() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (controls: GameControls) => {
+      const res = await axios.post<{ gameControls: GameControls }>(
+        '/users/gameControls',
+        { controls },
+      )
+      return res.data.gameControls
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.USER })
