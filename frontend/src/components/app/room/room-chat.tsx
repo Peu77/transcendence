@@ -65,13 +65,12 @@ export function RoomChat({
 
   return (
     <section
-      className={cn(
-        'flex min-h-0 flex-col bg-background/80 px-7 py-9',
-        className,
-      )}
+      className={cn('flex min-h-0 flex-col bg-background/80 px-7', className)}
     >
       <div className="border-b border-border/70 pb-6">
-        <h2 className="text-2xl font-bold uppercase tracking-wide">Room chat</h2>
+        <h2 className="text-2xl font-bold uppercase tracking-wide">
+          Room chat
+        </h2>
         <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">
           Talk to everyone currently in this room.
         </p>

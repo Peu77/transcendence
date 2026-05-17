@@ -6,7 +6,7 @@ export function RoomPlayersSidebar({
   currentUserId,
 }: RoomPlayersSidebarProps) {
   return (
-    <aside className="flex h-full min-h-0 flex-col bg-background/80 px-7 py-9 text-card-foreground">
+    <aside className="flex h-full min-h-0 flex-col bg-background/80 px-7 pt-4 text-card-foreground">
       <div className="border-b border-border/70 pb-6">
         <h2 className="text-2xl font-bold uppercase tracking-wide">
           Players ({room.users.length})

@@ -40,7 +40,7 @@ export function RoomGamePhase({
   }
 
   return (
-    <div className="relative flex h-full items-center justify-center gap-8">
+    <div className="relative flex h-full min-h-0 items-center justify-center overflow-hidden">
       {isChatOpen && (
         <RoomChat
           roomId={room.id}
@@ -51,7 +51,7 @@ export function RoomGamePhase({
       )}
 
       <div
-        className="flex items-center justify-center gap-8 transition-transform duration-75 ease-out"
+        className="flex h-full min-h-0 w-full items-center justify-center gap-10 px-8 py-4 transition-transform duration-75 ease-out"
         style={{ transform: `scale(${escapeHoldScale})` }}
       >
         <GameBoard state={myState} label="You" large />

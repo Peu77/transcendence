@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button.tsx'
 import { Loader2 } from 'lucide-react'
+import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import {
   Tabs,
   TabsContent,
@@ -66,7 +67,7 @@ export function RoomLobbyPhase({
     <div className="grid h-full min-h-0 overflow-hidden border-border/70 bg-background/95 xl:grid-cols-[360px_minmax(0,1fr)_400px]">
       <RoomPlayersSidebar room={room} currentUserId={me?.id} />
 
-      <section className="flex min-h-0 flex-col border-x border-border/70 px-8 py-9 xl:px-10">
+      <section className="flex min-h-0 flex-col border-x border-border/70 px-8  xl:px-10">
         <div className="border-b border-border/70 pb-8">
           <div className="flex flex-wrap items-start justify-center gap-4 sm:justify-between">
             <h1 className="text-3xl font-bold uppercase tracking-wide xl:text-4xl">
@@ -113,7 +114,7 @@ export function RoomLobbyPhase({
               </TabsList>
             </div>
 
-            <div className="mt-8 min-h-0 flex-1 overflow-hidden">
+            <ScrollArea className="mt-8 min-h-0 flex-1 relative">
               <TabsContent value="match" className="mt-0 h-full">
                 <MatchSettingsForm
                   room={room}
@@ -133,7 +134,7 @@ export function RoomLobbyPhase({
                   }
                 />
               </TabsContent>
-            </div>
+            </ScrollArea>
           </Tabs>
         </div>
       </section>

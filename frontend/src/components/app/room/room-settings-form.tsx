@@ -29,7 +29,7 @@ export function RoomSettingsForm({
       }}
       className="flex h-full min-h-0 flex-col"
     >
-      <div className="flex flex-wrap items-center justify-end gap-3 pb-3 lg:gap-4 lg:pb-4">
+      <div className="flex flex-wrap items-center justify-end gap-3 pb-3 lg:gap-4 lg:pb-4 ticky top-0 z-100 pr-5">
         {isHost && (
           <Button
             type="submit"
