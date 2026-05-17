@@ -176,6 +176,9 @@ export class RealtimeGateway
     if (!userId) return { ok: false }
     if (!body?.roomId) return { ok: false }
 
+    if (this.gameSessions.get(body.roomId)?.players.has(userId)) {
+      this.handlePlayerDisconnectFromGame(body.roomId, userId)
+    }
     this.roomService.leaveRoom(body.roomId, userId)
     await client.leave(gameRoom(body.roomId))
     return { ok: true }
@@ -315,8 +318,7 @@ export class RealtimeGateway
     if (!session) return
 
     const playerGame = session.players.get(userId)
-    if (!playerGame || playerGame.game.gameOver || playerGame.game.paused)
-      return
+    if (!playerGame || playerGame.game.gameOver) return
 
     playerGame.game.processInput(body.action)
     this.emitAllPlayerStates(body.roomId)
@@ -325,63 +327,6 @@ export class RealtimeGateway
     if (playerGame.game.gameOver) {
       this.handlePlayerGameOver(body.roomId, userId)
     }
-  }
-
-  @SubscribeMessage('game.pause')
-  handleGamePause(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() body: { roomId: string },
-  ) {
-    const userId: string | undefined = client.data.userId
-    if (!userId || !body?.roomId) return
-
-    const session = this.gameSessions.get(body.roomId)
-    if (!session) return
-
-    // Pause ALL games in the room
-    for (const [, pg] of session.players) {
-      if (!pg.game.gameOver) {
-        pg.game.pause()
-        if (pg.tickTimer) {
-          clearTimeout(pg.tickTimer)
-          pg.tickTimer = null
-        }
-      }
-    }
-
-    this.logger.log(`Game paused in room ${body.roomId} by user ${userId}`)
-    this.emitToGameRoom(body.roomId, 'game.paused', {
-      roomId: body.roomId,
-      players: this.getAllPlayerStates(body.roomId),
-    })
-  }
-
-  @SubscribeMessage('game.resume')
-  handleGameResume(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() body: { roomId: string },
-  ) {
-    const userId: string | undefined = client.data.userId
-    if (!userId || !body?.roomId) return
-
-    const session = this.gameSessions.get(body.roomId)
-    if (!session) return
-
-    // Resume ALL games in the room
-    for (const [, pg] of session.players) {
-      if (!pg.game.gameOver && pg.game.paused) {
-        pg.game.resume()
-      }
-    }
-
-    this.logger.log(`Game resumed in room ${body.roomId} by user ${userId}`)
-    this.emitToGameRoom(body.roomId, 'game.resumed', {
-      roomId: body.roomId,
-      players: this.getAllPlayerStates(body.roomId),
-    })
-
-    // Restart game loops for non-game-over players
-    this.startAllGameLoops(body.roomId)
   }
 
   /* ---------------------------------------------------------------- */
@@ -415,7 +360,7 @@ export class RealtimeGateway
     if (!session) return
 
     for (const [userId, pg] of session.players) {
-      if (!pg.game.gameOver && !pg.game.paused) {
+      if (!pg.game.gameOver) {
         this.startPlayerGameLoop(roomId, userId, pg)
       }
     }
@@ -432,7 +377,7 @@ export class RealtimeGateway
     }
 
     const tick = () => {
-      if (playerGame.game.paused || playerGame.game.gameOver) return
+      if (playerGame.game.gameOver) return
 
       const running = playerGame.game.tick()
       this.emitAllPlayerStates(roomId)

@@ -6,12 +6,7 @@ import {
 } from '@/api/user.ts'
 import type { InputAction } from '@/game/tetris/types'
 
-export type GamePhase =
-  | 'lobby'
-  | 'countdown'
-  | 'playing'
-  | 'paused'
-  | 'finished'
+export type GamePhase = 'lobby' | 'countdown' | 'playing' | 'finished'
 
 export const buildKeyMap = (
   controls?: GameControls,

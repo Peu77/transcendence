@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useLiveEvent } from '@/realtime/hooks.ts'
@@ -15,6 +16,7 @@ import {
 
 export function useRoomGame(roomId: string, me: User | null | undefined) {
   const socket = useLiveSocket()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [gamePhase, setGamePhase] = useState<GamePhase>('lobby')
   const gamePhaseRef = useRef<GamePhase>('lobby')
@@ -24,12 +26,19 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
   )
   const [results, setResults] = useState<GamePlayerResult[] | null>(null)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [escapeHoldProgress, setEscapeHoldProgress] = useState(0)
   const isChatOpenRef = useRef(false)
 
   const setChatOpen = useCallback((open: boolean) => {
     isChatOpenRef.current = open
     setIsChatOpen(open)
   }, [])
+
+  const quitRoom = useCallback(() => {
+    socket?.emit('room.leave', { roomId })
+    setChatOpen(false)
+    navigate({ to: '/app/room' }).catch(console.error)
+  }, [socket, roomId, navigate, setChatOpen])
 
   const setPhase = useCallback((phase: GamePhase) => {
     gamePhaseRef.current = phase
@@ -53,18 +62,6 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
     setPlayerStates(data.players)
   })
 
-  useLiveEvent('game.paused', (data) => {
-    if (data.roomId !== roomId) return
-    setPhase('paused')
-    setPlayerStates(data.players)
-  })
-
-  useLiveEvent('game.resumed', (data) => {
-    if (data.roomId !== roomId) return
-    setPhase('playing')
-    setPlayerStates(data.players)
-  })
-
   useLiveEvent('game.finished', (data) => {
     if (data.roomId !== roomId) return
     setPhase('finished')
@@ -83,6 +80,12 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
     const timers: Partial<
       Record<InputAction, { delay?: number; repeat?: number }>
     > = {}
+    const escapeHoldDuration = 900
+    const escapeHoldAnimationDelay = 180
+    let escapeHoldStart = 0
+    let escapeHoldFrame: number | null = null
+    let escapeHoldTimer: number | null = null
+    let escapeHoldAnimationTimer: number | null = null
 
     const clearActionTimers = (action: InputAction) => {
       const actionTimers = timers[action]
@@ -98,6 +101,45 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
 
     const emitInput = (action: InputAction) => {
       socket.emit('game.input', { roomId, action })
+    }
+
+    const cancelEscapeHold = () => {
+      if (escapeHoldFrame !== null) window.cancelAnimationFrame(escapeHoldFrame)
+      if (escapeHoldTimer !== null) window.clearTimeout(escapeHoldTimer)
+      if (escapeHoldAnimationTimer !== null) {
+        window.clearTimeout(escapeHoldAnimationTimer)
+      }
+      escapeHoldFrame = null
+      escapeHoldTimer = null
+      escapeHoldAnimationTimer = null
+      escapeHoldStart = 0
+      setEscapeHoldProgress(0)
+    }
+
+    const tickEscapeHold = () => {
+      if (!escapeHoldStart) return
+      const progress = Math.min(
+        (performance.now() - escapeHoldStart) / escapeHoldDuration,
+        1,
+      )
+      setEscapeHoldProgress(progress)
+      if (progress < 1) {
+        escapeHoldFrame = window.requestAnimationFrame(tickEscapeHold)
+      }
+    }
+
+    const startEscapeHold = () => {
+      if (escapeHoldStart) return
+      escapeHoldStart = performance.now()
+      escapeHoldAnimationTimer = window.setTimeout(() => {
+        escapeHoldAnimationTimer = null
+        if (!escapeHoldStart) return
+        tickEscapeHold()
+      }, escapeHoldAnimationDelay)
+      escapeHoldTimer = window.setTimeout(() => {
+        setEscapeHoldProgress(1)
+        quitRoom()
+      }, escapeHoldDuration)
     }
 
     const startHorizontalRepeat = (action: 'left' | 'right') => {
@@ -137,15 +179,10 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
 
       if (e.key === 'Escape') {
         e.preventDefault()
-        if (isChatOpenRef.current) {
+        if (!e.repeat && isChatOpenRef.current) {
           setChatOpen(false)
-          return
         }
-        if (currentPhase === 'playing') {
-          socket.emit('game.pause', { roomId })
-        } else if (currentPhase === 'paused') {
-          socket.emit('game.resume', { roomId })
-        }
+        if (!e.repeat) startEscapeHold()
         return
       }
 
@@ -177,6 +214,12 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        cancelEscapeHold()
+        return
+      }
+
       const action = keyMap[e.key]
       if (!action) return
 
@@ -194,6 +237,7 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
       for (const action of Object.keys(timers) as InputAction[]) {
         clearActionTimers(action)
       }
+      cancelEscapeHold()
     }
   }, [
     socket,
@@ -201,6 +245,7 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
     me?.gameControls,
     me?.tetrisHandlingSettings,
     setChatOpen,
+    quitRoom,
   ])
 
   const handleStartGame = useCallback(() => {
@@ -228,6 +273,7 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
     playerStates,
     results,
     isChatOpen,
+    escapeHoldProgress,
     handleStartGame,
     handleBackToLobby,
   }

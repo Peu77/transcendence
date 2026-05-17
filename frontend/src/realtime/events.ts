@@ -68,8 +68,6 @@ export type LiveEventMap = {
   'dm.created': DirectMessageCreatedEvent
   'game.countdown': { roomId: string; count: number }
   'game.state': { roomId: string; players: Record<string, TetrisState> }
-  'game.paused': { roomId: string; players: Record<string, TetrisState> }
-  'game.resumed': { roomId: string; players: Record<string, TetrisState> }
   'game.player-over': {
     roomId: string
     userId: string

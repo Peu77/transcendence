@@ -14,6 +14,7 @@ type RoomGamePhaseProps = {
   myUserId: string
   room: Room
   isChatOpen: boolean
+  escapeHoldProgress: number
   onBackToLobby: () => void
 }
 
@@ -25,12 +26,14 @@ export function RoomGamePhase({
   myUserId,
   room,
   isChatOpen,
+  escapeHoldProgress,
   onBackToLobby,
 }: RoomGamePhaseProps) {
   const myState = playerStates[myUserId] ?? null
   const opponentEntries = Object.entries(playerStates).filter(
     ([id]) => id !== myUserId,
   )
+  const escapeHoldScale = 1 - Math.min(escapeHoldProgress, 1) * 0.18
 
   const getUsernameForId = (userId: string) => {
     return room.users.find((u) => u.id === userId)?.username ?? 'Opponent'
@@ -47,28 +50,26 @@ export function RoomGamePhase({
         />
       )}
 
-      <GameBoard state={myState} label="You" large />
+      <div
+        className="flex items-center justify-center gap-8 transition-transform duration-75 ease-out"
+        style={{ transform: `scale(${escapeHoldScale})` }}
+      >
+        <GameBoard state={myState} label="You" large />
 
-      {opponentEntries.map(([userId, state]) => (
-        <GameBoard
-          key={userId}
-          state={state}
-          label={getUsernameForId(userId)}
-        />
-      ))}
+        {opponentEntries.map(([userId, state]) => (
+          <GameBoard
+            key={userId}
+            state={state}
+            label={getUsernameForId(userId)}
+          />
+        ))}
+      </div>
 
       {gamePhase === 'countdown' && countdown !== null && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-10">
           <span className="animate-pulse text-8xl font-bold text-white">
             {countdown === 0 ? 'GO!' : countdown}
           </span>
-        </div>
-      )}
-
-      {gamePhase === 'paused' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-black/60 z-10">
-          <span className="text-5xl font-bold text-yellow-300">PAUSED</span>
-          <span className="text-sm text-white/50">Press ESC to resume</span>
         </div>
       )}
 
@@ -100,7 +101,7 @@ export function RoomGamePhase({
       {gamePhase === 'playing' && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm tracking-wide text-foreground/50">
           ARROWS / WASD to move &middot; SPACE to hard drop &middot; T to chat
-          &middot; ESC to pause/close chat
+          &middot; HOLD ESC to quit
         </div>
       )}
     </div>

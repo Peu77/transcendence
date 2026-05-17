@@ -31,7 +31,6 @@ export class TetrisGame {
   lines = 0
   level = 1
   gameOver = false
-  paused = false
 
   constructor() {
     this.board = this.createEmptyBoard()
@@ -114,21 +113,6 @@ export class TetrisGame {
       lines: this.lines,
       level: this.level,
       gameOver: this.gameOver,
-      paused: this.paused,
-    }
-  }
-
-  pause(): void {
-    if (!this.gameOver) {
-      this.paused = true
-      log('Game paused')
-    }
-  }
-
-  resume(): void {
-    if (!this.gameOver && this.paused) {
-      this.paused = false
-      log('Game resumed')
     }
   }
 

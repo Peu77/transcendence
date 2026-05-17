@@ -30,7 +30,6 @@ export interface TetrisState {
   lines: number
   level: number
   gameOver: boolean
-  paused: boolean
 }
 
 export const BOARD_ROWS = 20
