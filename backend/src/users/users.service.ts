@@ -1,7 +1,16 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { Theme, User, UserType } from './user.entity'
+import {
+  DEFAULT_GAME_CONTROLS,
+  DEFAULT_TETRIS_HANDLING_SETTINGS,
+  GameControlAction,
+  GameControls,
+  TetrisHandlingSettings,
+  Theme,
+  User,
+  UserType,
+} from './user.entity'
 import { UserInfo } from '../realtime/realtime.events'
 import { GithubValidateReturn } from '../auth/github.strategy'
 import * as fs from 'node:fs/promises'
@@ -26,12 +35,20 @@ export class UsersService {
     const user = this.usersRepo.create({
       userType,
       email: email.toLowerCase(),
-      username,
+      username: username,
       password: passwordHash,
       githubId,
       githubAvatarUrl,
     })
     return await this.usersRepo.save(user)
+  }
+
+  async existsByEmail(email: string): Promise<boolean> {
+    return await this.usersRepo.existsBy({ email: email.toLowerCase() })
+  }
+
+  async existsByUsername(username: string): Promise<boolean> {
+    return await this.usersRepo.existsBy({ username })
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -92,6 +109,60 @@ export class UsersService {
     const newTheme = user.theme === Theme.LIGHT ? Theme.DARK : Theme.LIGHT
     await this.usersRepo.update({ id: userId }, { theme: newTheme })
     return newTheme
+  }
+
+  async updateGameControls(
+    userId: string,
+    controls: Partial<GameControls>,
+  ): Promise<GameControls> {
+    const gameControls = this.normalizeGameControls(controls)
+    await this.usersRepo.update({ id: userId }, { gameControls })
+    return gameControls
+  }
+
+  async updateTetrisHandlingSettings(
+    userId: string,
+    settings: Partial<TetrisHandlingSettings>,
+  ): Promise<TetrisHandlingSettings> {
+    const tetrisHandlingSettings =
+      this.normalizeTetrisHandlingSettings(settings)
+    await this.usersRepo.update({ id: userId }, { tetrisHandlingSettings })
+    return tetrisHandlingSettings
+  }
+
+  normalizeGameControls(controls: Partial<GameControls> | null): GameControls {
+    const normalized = { ...DEFAULT_GAME_CONTROLS }
+
+    for (const action of Object.values(GameControlAction)) {
+      const key = controls?.[action]
+      if (typeof key === 'string' && key.length > 0) {
+        normalized[action] = key
+      }
+    }
+
+    return normalized
+  }
+
+  normalizeTetrisHandlingSettings(
+    settings: Partial<TetrisHandlingSettings> | null,
+  ): TetrisHandlingSettings {
+    const normalized = { ...DEFAULT_TETRIS_HANDLING_SETTINGS }
+    const limits: Record<keyof TetrisHandlingSettings, [number, number]> = {
+      arr: [0, 1000],
+      das: [0, 1000],
+      dcd: [0, 1000],
+      sdf: [0, 1000],
+    }
+
+    for (const key of Object.keys(limits) as (keyof TetrisHandlingSettings)[]) {
+      const value = settings?.[key]
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        const [min, max] = limits[key]
+        normalized[key] = Math.min(Math.max(Math.round(value), min), max)
+      }
+    }
+
+    return normalized
   }
 
   async getPublicProfile(userId: string) {

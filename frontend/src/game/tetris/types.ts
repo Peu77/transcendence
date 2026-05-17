@@ -12,7 +12,13 @@ export enum TetrominoType {
 
 export type Block = [number, number]
 
-export type InputAction = 'left' | 'right' | 'rotate' | 'softDrop' | 'hardDrop'
+export type InputAction =
+  | 'left'
+  | 'right'
+  | 'rotate'
+  | 'softDrop'
+  | 'hardDrop'
+  | 'hold'
 
 export interface TetrisPiece {
   type: TetrominoType
@@ -25,12 +31,14 @@ export interface TetrisState {
   board: (string | 0)[][]
   currentPiece: TetrisPiece
   nextPiece: TetrominoType
+  nextPieces: TetrominoType[]
+  heldPiece: TetrominoType | null
+  canHold: boolean
   ghostRow: number
   score: number
   lines: number
   level: number
   gameOver: boolean
-  paused: boolean
 }
 
 export const BOARD_ROWS = 20

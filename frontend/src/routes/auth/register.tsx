@@ -12,6 +12,12 @@ import {
 import { toast } from 'sonner'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button.tsx'
+import type { AxiosError } from 'axios'
+
+type RegisterConflictResponse = {
+  message?: string
+  fieldAlreadyExists?: 'email' | 'username'
+}
 
 const registerSchema = z
   .object({
@@ -53,11 +59,29 @@ export default function Register() {
       })
       await navigate({ to: '/app' })
     },
-    onError: (err: any) => {
-      const description =
-        err?.response?.data?.error ||
-        err?.message ||
-        'Could not create account.'
+    onError: (err: AxiosError<RegisterConflictResponse>) => {
+      const conflictField = err.response?.data?.fieldAlreadyExists
+
+      if (err.response?.status === 409 && conflictField) {
+        const message =
+          err.response.data.message ?? `${conflictField} already registered`
+
+        form.setFieldMeta(conflictField, (prev) => ({
+          ...prev,
+          isTouched: true,
+          errorMap: {
+            ...prev.errorMap,
+            onSubmit: message,
+          },
+        }))
+
+        toast.error(message, {
+          description: `Please use a different ${conflictField}.`,
+          duration: 4000,
+        })
+        return
+      }
+      const description = 'Could not create account.'
       toast.error('Registration failed', { description, duration: 4000 })
     },
   })

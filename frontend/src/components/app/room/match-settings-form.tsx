@@ -26,7 +26,7 @@ export function MatchSettingsForm({
       }}
       className="flex h-full min-h-0 flex-col"
     >
-      <div className="flex items-center justify-end gap-4 pb-4">
+      <div className="flex items-center justify-end gap-4 pb-4 sticky top-0 z-100 pr-5">
         {isHost && (
           <Button
             type="submit"
@@ -40,7 +40,7 @@ export function MatchSettingsForm({
         )}
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-y-auto pr-2 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-y-auto pr-2 md:grid-cols-2 xl:grid-cols-2">
         <div className="flex flex-col gap-6 rounded-xl border border-border/50 bg-background/40 p-4">
           <h3 className="border-b border-border pb-2 text-lg font-bold">
             Core Gameplay

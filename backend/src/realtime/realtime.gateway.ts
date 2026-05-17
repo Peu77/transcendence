@@ -176,9 +176,50 @@ export class RealtimeGateway
     if (!userId) return { ok: false }
     if (!body?.roomId) return { ok: false }
 
+    if (this.gameSessions.get(body.roomId)?.players.has(userId)) {
+      this.handlePlayerDisconnectFromGame(body.roomId, userId)
+    }
     this.roomService.leaveRoom(body.roomId, userId)
     await client.leave(gameRoom(body.roomId))
     return { ok: true }
+  }
+
+  @SubscribeMessage('room.chat.send')
+  async sendRoomChatMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { roomId: string; content: string },
+  ) {
+    const userId: string | undefined = client.data.userId
+    if (!userId) return { ok: false, error: 'Unauthorized' }
+    if (!body?.roomId) return { ok: false, error: 'Missing roomId' }
+
+    const content = typeof body.content === 'string' ? body.content.trim() : ''
+    if (!content) return { ok: false, error: 'Message is empty' }
+    if (content.length > 500) return { ok: false, error: 'Message is too long' }
+
+    try {
+      const room = this.roomService.getRoom(body.roomId)
+      if (!room.users.some((user) => user.id === userId)) {
+        return { ok: false, error: 'You are not in this room' }
+      }
+
+      const sender = room.users.find((user) => user.id === userId)
+      this.emitToGameRoom(body.roomId, 'room.chat.message', {
+        id: `${Date.now()}-${userId}`,
+        roomId: body.roomId,
+        senderId: userId,
+        senderInfo: {
+          username: sender?.username ?? 'Player',
+          profilePictureId: sender?.profilePictureId ?? null,
+        },
+        content,
+        createdAt: new Date().toISOString(),
+      })
+
+      return { ok: true }
+    } catch (e: any) {
+      return { ok: false, error: e.message }
+    }
   }
 
   @SubscribeMessage('dm.join')
@@ -235,7 +276,7 @@ export class RealtimeGateway
 
       for (const user of room.users) {
         session.players.set(user.id, {
-          game: new TetrisGame(),
+          game: new TetrisGame(room.settings),
           tickTimer: null,
         })
       }
@@ -277,73 +318,16 @@ export class RealtimeGateway
     if (!session) return
 
     const playerGame = session.players.get(userId)
-    if (!playerGame || playerGame.game.gameOver || playerGame.game.paused)
-      return
+    if (!playerGame || playerGame.game.gameOver) return
 
     playerGame.game.processInput(body.action)
+    this.sendGarbageToOpponents(body.roomId, userId, playerGame.game)
     this.emitAllPlayerStates(body.roomId)
 
     // Check if this player's game is over after input (hard drop can cause game over)
     if (playerGame.game.gameOver) {
       this.handlePlayerGameOver(body.roomId, userId)
     }
-  }
-
-  @SubscribeMessage('game.pause')
-  handleGamePause(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() body: { roomId: string },
-  ) {
-    const userId: string | undefined = client.data.userId
-    if (!userId || !body?.roomId) return
-
-    const session = this.gameSessions.get(body.roomId)
-    if (!session) return
-
-    // Pause ALL games in the room
-    for (const [, pg] of session.players) {
-      if (!pg.game.gameOver) {
-        pg.game.pause()
-        if (pg.tickTimer) {
-          clearTimeout(pg.tickTimer)
-          pg.tickTimer = null
-        }
-      }
-    }
-
-    this.logger.log(`Game paused in room ${body.roomId} by user ${userId}`)
-    this.emitToGameRoom(body.roomId, 'game.paused', {
-      roomId: body.roomId,
-      players: this.getAllPlayerStates(body.roomId),
-    })
-  }
-
-  @SubscribeMessage('game.resume')
-  handleGameResume(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() body: { roomId: string },
-  ) {
-    const userId: string | undefined = client.data.userId
-    if (!userId || !body?.roomId) return
-
-    const session = this.gameSessions.get(body.roomId)
-    if (!session) return
-
-    // Resume ALL games in the room
-    for (const [, pg] of session.players) {
-      if (!pg.game.gameOver && pg.game.paused) {
-        pg.game.resume()
-      }
-    }
-
-    this.logger.log(`Game resumed in room ${body.roomId} by user ${userId}`)
-    this.emitToGameRoom(body.roomId, 'game.resumed', {
-      roomId: body.roomId,
-      players: this.getAllPlayerStates(body.roomId),
-    })
-
-    // Restart game loops for non-game-over players
-    this.startAllGameLoops(body.roomId)
   }
 
   /* ---------------------------------------------------------------- */
@@ -377,7 +361,7 @@ export class RealtimeGateway
     if (!session) return
 
     for (const [userId, pg] of session.players) {
-      if (!pg.game.gameOver && !pg.game.paused) {
+      if (!pg.game.gameOver) {
         this.startPlayerGameLoop(roomId, userId, pg)
       }
     }
@@ -394,9 +378,10 @@ export class RealtimeGateway
     }
 
     const tick = () => {
-      if (playerGame.game.paused || playerGame.game.gameOver) return
+      if (playerGame.game.gameOver) return
 
       const running = playerGame.game.tick()
+      this.sendGarbageToOpponents(roomId, userId, playerGame.game)
       this.emitAllPlayerStates(roomId)
 
       if (!running) {
@@ -433,6 +418,23 @@ export class RealtimeGateway
     })
 
     this.checkGameEndCondition(roomId)
+  }
+
+  private sendGarbageToOpponents(
+    roomId: string,
+    attackerUserId: string,
+    attackerGame: TetrisGame,
+  ) {
+    const garbage = attackerGame.collectOutgoingGarbage()
+    if (garbage <= 0) return
+
+    const session = this.gameSessions.get(roomId)
+    if (!session) return
+
+    for (const [targetUserId, target] of session.players) {
+      if (targetUserId === attackerUserId || target.game.gameOver) continue
+      target.game.receiveGarbage(garbage)
+    }
   }
 
   private checkGameEndCondition(roomId: string) {

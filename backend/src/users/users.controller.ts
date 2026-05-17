@@ -19,7 +19,12 @@ import { Response } from 'express'
 import * as speakeasy from 'speakeasy'
 import { UsersService } from './users.service'
 import { AuthGuard, UserId } from '../auth/auth.guard'
-import { ProfilePictureDto, VerifyTwoFaDto } from './dto'
+import {
+  ProfilePictureDto,
+  UpdateGameControlsDto,
+  UpdateTetrisHandlingSettingsDto,
+  VerifyTwoFaDto,
+} from './dto'
 import { v4 as uuid } from 'uuid'
 
 @Controller()
@@ -37,7 +42,36 @@ export class UsersController {
       twoFaEnabled: user.twoFaEnabled,
       username: user.username,
       theme: user.theme,
+      gameControls: this.usersService.normalizeGameControls(user.gameControls),
+      tetrisHandlingSettings: this.usersService.normalizeTetrisHandlingSettings(
+        user.tetrisHandlingSettings,
+      ),
     }
+  }
+
+  @Post('users/gameControls')
+  async updateGameControls(
+    @UserId() userId: string,
+    @Body() body: UpdateGameControlsDto,
+  ) {
+    const gameControls = await this.usersService.updateGameControls(
+      userId,
+      body.controls,
+    )
+    return { gameControls }
+  }
+
+  @Post('users/tetrisHandlingSettings')
+  async updateTetrisHandlingSettings(
+    @UserId() userId: string,
+    @Body() body: UpdateTetrisHandlingSettingsDto,
+  ) {
+    const tetrisHandlingSettings =
+      await this.usersService.updateTetrisHandlingSettings(
+        userId,
+        body.settings,
+      )
+    return { tetrisHandlingSettings }
   }
 
   @Post('users/profilePicture')
