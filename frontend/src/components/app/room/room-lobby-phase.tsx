@@ -132,7 +132,6 @@ export function RoomLobbyPhase({
             </div>
           </Tabs>
         </div>
-
       </section>
 
       <RoomChat roomId={room.id} currentUserId={me?.id} />
