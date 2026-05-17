@@ -13,6 +13,7 @@ export type GameControlAction =
   | 'rotate'
   | 'softDrop'
   | 'hardDrop'
+  | 'hold'
   | 'toggleChat'
 
 export type GameControls = Record<GameControlAction, string>
@@ -30,6 +31,7 @@ export const DEFAULT_GAME_CONTROLS: GameControls = {
   rotate: 'ArrowUp',
   softDrop: 'ArrowDown',
   hardDrop: ' ',
+  hold: 'c',
   toggleChat: 't',
 }
 

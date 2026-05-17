@@ -8,6 +8,12 @@ import {
   type TetrisState,
   TetrominoType,
 } from './tetris.types'
+import {
+  GarbageCancel,
+  type MatchSettings,
+  PieceRandomizer,
+  RotationSystem,
+} from '../../room/types'
 
 const PIECE_TYPES = Object.values(TetrominoType)
 
@@ -24,19 +30,24 @@ const LINE_SCORES: Record<number, number> = {
 }
 
 export class TetrisGame {
+  private readonly settings: MatchSettings
   board: (string | 0)[][]
   currentPiece: TetrisPiece
   nextType: TetrominoType
+  nextTypes: TetrominoType[] = []
+  heldType: TetrominoType | null = null
+  canHold = true
   score = 0
   lines = 0
   level = 1
   gameOver = false
 
-  constructor() {
+  constructor(settings: Partial<MatchSettings> = {}) {
+    this.settings = this.createSettings(settings)
     this.board = this.createEmptyBoard()
-    this.nextType = this.randomType()
-    this.currentPiece = this.spawnPiece(this.randomType())
-    this.nextType = this.randomType()
+    this.refillNextTypes()
+    this.currentPiece = this.spawnPiece(this.takeNextType(true))
+    this.nextType = this.nextTypes[0]
     log(
       `Game created. First piece: ${this.currentPiece.type}, next: ${this.nextType}`,
     )
@@ -100,6 +111,10 @@ export class TetrisGame {
       case 'hardDrop':
         this.hardDrop()
         break
+
+      case 'hold':
+        this.holdPiece()
+        break
     }
   }
 
@@ -108,6 +123,9 @@ export class TetrisGame {
       board: this.board,
       currentPiece: { ...this.currentPiece },
       nextPiece: this.nextType,
+      nextPieces: this.nextTypes.slice(0, this.settings.nextCount),
+      heldPiece: this.heldType,
+      canHold: this.settings.hold && this.canHold,
       ghostRow: this.computeGhostRow(),
       score: this.score,
       lines: this.lines,
@@ -118,6 +136,10 @@ export class TetrisGame {
 
   /** Milliseconds between gravity ticks for the current level. */
   getTickInterval(): number {
+    if (this.settings.gravity >= 20) return 1
+    if (this.settings.gravity > 0 && this.settings.gravity !== 1) {
+      return Math.max(1, Math.round(1000 / this.settings.gravity))
+    }
     // Starts at 800 ms, decreases per level down to a minimum of 100 ms.
     return Math.max(100, 800 - (this.level - 1) * 70)
   }
@@ -127,27 +149,113 @@ export class TetrisGame {
   /* ------------------------------------------------------------------ */
 
   private createEmptyBoard(): (string | 0)[][] {
-    return Array.from({ length: BOARD_ROWS }, () =>
-      Array.from<string | 0>({ length: BOARD_COLS }).fill(0),
+    return Array.from({ length: this.totalRows }, () =>
+      Array.from<string | 0>({ length: this.settings.width }).fill(0),
     )
+  }
+
+  private createSettings(settings: Partial<MatchSettings>): MatchSettings {
+    return {
+      gravity: 1,
+      lockDelayMs: 1000,
+      lockResetLimit: 4,
+      areMs: 0,
+      lineClearDelayMs: 500,
+      rotationSystem: RotationSystem.SRS,
+      hold: true,
+      nextCount: 3,
+      bag: PieceRandomizer.SEVEN_BAG,
+      forbidInitialSZ: false,
+      width: BOARD_COLS,
+      height: BOARD_ROWS,
+      hiddenRows: 0,
+      ...settings,
+      garbage: {
+        enabled: settings.garbage?.enabled ?? true,
+        delayMs: settings.garbage?.delayMs ?? 1000,
+        cancel: settings.garbage?.cancel ?? GarbageCancel.PARTIAL,
+        holeCount: settings.garbage?.holeCount ?? 1,
+        messiness: settings.garbage?.messiness ?? 0.42,
+      },
+      damage: {
+        table: {
+          single: settings.damage?.table?.single ?? 1,
+          double: settings.damage?.table?.double ?? 2,
+          triple: settings.damage?.table?.triple ?? 3,
+          tetris: settings.damage?.table?.tetris ?? 4,
+          tSpinSingle: settings.damage?.table?.tSpinSingle ?? 2,
+          tSpinDouble: settings.damage?.table?.tSpinDouble ?? 4,
+          tSpinTriple: settings.damage?.table?.tSpinTriple ?? 6,
+        },
+        comboMultiplier: settings.damage?.comboMultiplier ?? 1.5,
+        backToBackMultiplier: settings.damage?.backToBackMultiplier ?? 1.5,
+      },
+    }
+  }
+
+  private get totalRows(): number {
+    return this.settings.height + this.settings.hiddenRows
   }
 
   private randomType(): TetrominoType {
     return PIECE_TYPES[Math.floor(Math.random() * PIECE_TYPES.length)]
   }
 
+  private randomBag(): TetrominoType[] {
+    const bag = [...PIECE_TYPES]
+    for (let i = bag.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[bag[i], bag[j]] = [bag[j], bag[i]]
+    }
+    return bag
+  }
+
+  private refillNextTypes(): void {
+    const minimumSize = Math.max(this.settings.nextCount + 1, 1)
+    while (this.nextTypes.length < minimumSize) {
+      this.nextTypes.push(
+        ...(this.settings.bag === PieceRandomizer.SEVEN_BAG
+          ? this.randomBag()
+          : [this.randomType()]),
+      )
+    }
+  }
+
+  private takeNextType(isInitial = false): TetrominoType {
+    this.refillNextTypes()
+    let type = this.nextTypes.shift()!
+    if (
+      isInitial &&
+      this.settings.forbidInitialSZ &&
+      (type === TetrominoType.S || type === TetrominoType.Z)
+    ) {
+      const replacementIndex = this.nextTypes.findIndex(
+        (nextType) =>
+          nextType !== TetrominoType.S && nextType !== TetrominoType.Z,
+      )
+      if (replacementIndex >= 0) {
+        const replacement = this.nextTypes.splice(replacementIndex, 1)[0]
+        this.nextTypes.push(type)
+        type = replacement
+      }
+    }
+    this.refillNextTypes()
+    this.nextType = this.nextTypes[0]
+    return type
+  }
+
   private spawnPiece(type: TetrominoType): TetrisPiece {
     return {
       type,
       row: 0,
-      col: Math.floor(BOARD_COLS / 2) - 1,
+      col: Math.floor(this.settings.width / 2) - 1,
       rotation: 0,
     }
   }
 
   private spawn(): boolean {
-    this.currentPiece = this.spawnPiece(this.nextType)
-    this.nextType = this.randomType()
+    this.currentPiece = this.spawnPiece(this.takeNextType())
+    this.canHold = true
 
     const blocked = this.collides(this.currentPiece)
     if (blocked) {
@@ -178,7 +286,7 @@ export class TetrisGame {
     for (const [br, bc] of blocks) {
       const r = piece.row + br + dRow
       const c = piece.col + bc + dCol
-      if (r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS) return false
+      if (r >= this.totalRows || c < 0 || c >= this.settings.width) return false
       if (r >= 0 && this.board[r][c] !== 0) return false
     }
     return true
@@ -190,7 +298,7 @@ export class TetrisGame {
       const r = piece.row + br
       const c = piece.col + bc
       // Allow blocks above the board (r < 0) -- standard Tetris spawning zone
-      if (r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS) return true
+      if (r >= this.totalRows || c < 0 || c >= this.settings.width) return true
       if (r >= 0 && this.board[r][c] !== 0) return true
     }
     return false
@@ -201,7 +309,7 @@ export class TetrisGame {
     for (const [br, bc] of blocks) {
       const r = this.currentPiece.row + br
       const c = this.currentPiece.col + bc
-      if (r >= 0 && r < BOARD_ROWS && c >= 0 && c < BOARD_COLS) {
+      if (r >= 0 && r < this.totalRows && c >= 0 && c < this.settings.width) {
         this.board[r][c] = this.currentPiece.type
       }
     }
@@ -209,11 +317,11 @@ export class TetrisGame {
 
   private clearLines(): void {
     let cleared = 0
-    for (let r = BOARD_ROWS - 1; r >= 0; r--) {
+    for (let r = this.totalRows - 1; r >= 0; r--) {
       if (this.board[r].every((cell) => cell !== 0)) {
         this.board.splice(r, 1)
         this.board.unshift(
-          Array.from<string | 0>({ length: BOARD_COLS }).fill(0),
+          Array.from<string | 0>({ length: this.settings.width }).fill(0),
         )
         cleared++
         r++
@@ -241,6 +349,24 @@ export class TetrisGame {
     this.clearLines()
     if (!this.spawn()) {
       log('GAME OVER after hard-drop: new piece collides at spawn', {
+        piece: this.currentPiece,
+        topRows: this.board.slice(0, 4),
+      })
+      this.gameOver = true
+    }
+  }
+
+  private holdPiece(): void {
+    if (!this.settings.hold || !this.canHold) return
+
+    const currentType = this.currentPiece.type
+    const nextType = this.heldType ?? this.takeNextType()
+    this.heldType = currentType
+    this.currentPiece = this.spawnPiece(nextType)
+    this.canHold = false
+
+    if (this.collides(this.currentPiece)) {
+      log('GAME OVER after hold: held piece collides at spawn', {
         piece: this.currentPiece,
         topRows: this.board.slice(0, 4),
       })

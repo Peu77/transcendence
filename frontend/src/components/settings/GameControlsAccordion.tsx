@@ -18,6 +18,7 @@ const CONTROL_LABELS: Record<GameControlAction, string> = {
   rotate: 'Rotate',
   softDrop: 'Soft drop',
   hardDrop: 'Hard drop',
+  hold: 'Hold',
   toggleChat: 'Open chat',
 }
 

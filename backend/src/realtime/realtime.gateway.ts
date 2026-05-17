@@ -276,7 +276,7 @@ export class RealtimeGateway
 
       for (const user of room.users) {
         session.players.set(user.id, {
-          game: new TetrisGame(),
+          game: new TetrisGame(room.settings),
           tickTimer: null,
         })
       }
