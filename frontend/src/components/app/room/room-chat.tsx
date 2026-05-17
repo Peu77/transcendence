@@ -101,10 +101,10 @@ export function RoomChat({
                 </div>
                 <div
                   className={cn(
-                    'max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm text-wrap wrap-break-word',
+                    'max-w-[85%] border px-3 py-2 text-sm leading-relaxed shadow-sm text-wrap wrap-break-word clip-pixel-corners-btn',
                     isMine
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-foreground',
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-muted text-foreground',
                   )}
                 >
                   {message.content}

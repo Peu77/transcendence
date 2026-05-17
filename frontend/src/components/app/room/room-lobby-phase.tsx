@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button.tsx'
+import { Loader2 } from 'lucide-react'
 import {
   Tabs,
   TabsContent,
@@ -34,6 +36,7 @@ export function RoomLobbyPhase({
 }: RoomLobbyPhaseProps) {
   const me = userStore.state
   const queryClient = useQueryClient()
+  const [isStarting, setIsStarting] = useState(false)
 
   const updateMatchMutation = useMutation({
     mutationFn: (settings: MatchSettings) =>
@@ -65,8 +68,29 @@ export function RoomLobbyPhase({
 
       <section className="flex min-h-0 flex-col gap-4">
         <div className="rounded-2xl border border-border bg-card/95 px-6 py-5 shadow-lg">
-          <div className="flex gap-2 justify-center ">
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-between">
             <h1 className="text-3xl font-bold xl:text-4xl">Room: {room.id}</h1>
+            {isHost && (
+              <Button
+                type="button"
+                size="lg"
+                disabled={isStarting}
+                className="flex gap-2 min-w-56 bg-green-600 font-bold text-white hover:bg-green-700 disabled:opacity-80"
+                onClick={() => {
+                  setIsStarting(true)
+                  onStartGame()
+                }}
+              >
+                {isStarting ? (
+                  <>
+                    <Loader2 className="animate-spin" />
+                    STARTING…
+                  </>
+                ) : (
+                  'START GAME'
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -109,18 +133,6 @@ export function RoomLobbyPhase({
           </Tabs>
         </div>
 
-        <div className="flex justify-center pb-1">
-          {isHost && (
-            <Button
-              type="button"
-              size="lg"
-              className="min-w-56 bg-green-600 font-bold text-white hover:bg-green-700"
-              onClick={onStartGame}
-            >
-              START GAME
-            </Button>
-          )}
-        </div>
       </section>
 
       <RoomChat roomId={room.id} currentUserId={me?.id} />
