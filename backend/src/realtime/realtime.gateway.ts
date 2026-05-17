@@ -321,6 +321,7 @@ export class RealtimeGateway
     if (!playerGame || playerGame.game.gameOver) return
 
     playerGame.game.processInput(body.action)
+    this.sendGarbageToOpponents(body.roomId, userId, playerGame.game)
     this.emitAllPlayerStates(body.roomId)
 
     // Check if this player's game is over after input (hard drop can cause game over)
@@ -380,6 +381,7 @@ export class RealtimeGateway
       if (playerGame.game.gameOver) return
 
       const running = playerGame.game.tick()
+      this.sendGarbageToOpponents(roomId, userId, playerGame.game)
       this.emitAllPlayerStates(roomId)
 
       if (!running) {
@@ -416,6 +418,23 @@ export class RealtimeGateway
     })
 
     this.checkGameEndCondition(roomId)
+  }
+
+  private sendGarbageToOpponents(
+    roomId: string,
+    attackerUserId: string,
+    attackerGame: TetrisGame,
+  ) {
+    const garbage = attackerGame.collectOutgoingGarbage()
+    if (garbage <= 0) return
+
+    const session = this.gameSessions.get(roomId)
+    if (!session) return
+
+    for (const [targetUserId, target] of session.players) {
+      if (targetUserId === attackerUserId || target.game.gameOver) continue
+      target.game.receiveGarbage(garbage)
+    }
   }
 
   private checkGameEndCondition(roomId: string) {

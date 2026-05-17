@@ -29,6 +29,11 @@ const LINE_SCORES: Record<number, number> = {
   4: 800,
 }
 
+type PendingGarbage = {
+  lines: number
+  applyAt: number
+}
+
 export class TetrisGame {
   private readonly settings: MatchSettings
   board: (string | 0)[][]
@@ -41,6 +46,11 @@ export class TetrisGame {
   lines = 0
   level = 1
   gameOver = false
+  private combo = -1
+  private backToBack = false
+  private outgoingGarbage = 0
+  private pendingGarbage: PendingGarbage[] = []
+  private garbageHoleCol = -1
 
   constructor(settings: Partial<MatchSettings> = {}) {
     this.settings = this.createSettings(settings)
@@ -68,6 +78,8 @@ export class TetrisGame {
       )
       this.lockPiece()
       this.clearLines()
+      this.applyDueGarbage()
+      if (this.gameOver) return false
       if (!this.spawn()) {
         log('GAME OVER: new piece collides at spawn', {
           piece: this.currentPiece,
@@ -116,6 +128,24 @@ export class TetrisGame {
         this.holdPiece()
         break
     }
+  }
+
+  collectOutgoingGarbage(): number {
+    const garbage = this.outgoingGarbage
+    this.outgoingGarbage = 0
+    return garbage
+  }
+
+  receiveGarbage(lines: number): void {
+    if (!this.settings.garbage.enabled || this.gameOver) return
+
+    const amount = Math.max(0, Math.floor(lines))
+    if (amount === 0) return
+
+    this.pendingGarbage.push({
+      lines: amount,
+      applyAt: Date.now() + Math.max(0, this.settings.garbage.delayMs),
+    })
   }
 
   getState(): TetrisState {
@@ -329,10 +359,125 @@ export class TetrisGame {
     }
 
     if (cleared > 0) {
+      this.combo++
       this.lines += cleared
       this.score += (LINE_SCORES[cleared] ?? cleared * 200) * this.level
       this.level = Math.floor(this.lines / LINES_PER_LEVEL) + 1
+      this.outgoingGarbage += this.calculateGarbage(cleared)
+    } else {
+      this.combo = -1
+      this.backToBack = false
     }
+  }
+
+  private calculateGarbage(cleared: number): number {
+    if (!this.settings.garbage.enabled) return 0
+
+    const table = this.settings.damage.table
+    const baseDamage =
+      cleared === 1
+        ? table.single
+        : cleared === 2
+          ? table.double
+          : cleared === 3
+            ? table.triple
+            : table.tetris
+    const isBackToBackClear = cleared === 4
+    const backToBackBonus =
+      isBackToBackClear && this.backToBack
+        ? Math.floor(
+            baseDamage * (this.settings.damage.backToBackMultiplier - 1),
+          )
+        : 0
+    const comboBonus = Math.floor(
+      Math.max(0, this.combo) * this.settings.damage.comboMultiplier,
+    )
+    const damage = baseDamage + backToBackBonus + comboBonus
+
+    this.backToBack = isBackToBackClear
+    return this.cancelPendingGarbage(Math.max(0, Math.floor(damage)))
+  }
+
+  private cancelPendingGarbage(lines: number): number {
+    if (lines === 0 || this.settings.garbage.cancel === GarbageCancel.NONE) {
+      return lines
+    }
+
+    const queued = this.pendingGarbage.reduce(
+      (sum, item) => sum + item.lines,
+      0,
+    )
+    if (queued === 0) return lines
+
+    if (this.settings.garbage.cancel === GarbageCancel.FULL) {
+      this.pendingGarbage = []
+      return Math.max(0, lines - queued)
+    }
+
+    let remainingAttack = lines
+    const remainingQueue: PendingGarbage[] = []
+    for (const item of this.pendingGarbage) {
+      if (remainingAttack >= item.lines) {
+        remainingAttack -= item.lines
+      } else {
+        remainingQueue.push({ ...item, lines: item.lines - remainingAttack })
+        remainingAttack = 0
+      }
+    }
+    this.pendingGarbage = remainingQueue
+    return remainingAttack
+  }
+
+  private applyDueGarbage(): void {
+    if (!this.settings.garbage.enabled || this.pendingGarbage.length === 0) {
+      return
+    }
+
+    const now = Date.now()
+    let lines = 0
+    this.pendingGarbage = this.pendingGarbage.filter((item) => {
+      if (item.applyAt > now) return true
+      lines += item.lines
+      return false
+    })
+
+    for (let i = 0; i < lines; i++) {
+      this.addGarbageLine()
+    }
+  }
+
+  private addGarbageLine(): void {
+    const removedRow = this.board.shift()
+    if (removedRow?.some((cell) => cell !== 0)) {
+      this.gameOver = true
+    }
+
+    const holes = this.pickGarbageHoles()
+    this.board.push(
+      Array.from({ length: this.settings.width }, (_, col): string | 0 =>
+        holes.has(col) ? 0 : 'G',
+      ),
+    )
+  }
+
+  private pickGarbageHoles(): Set<number> {
+    const holeCount = Math.min(
+      Math.max(1, Math.floor(this.settings.garbage.holeCount)),
+      this.settings.width,
+    )
+
+    if (
+      this.garbageHoleCol < 0 ||
+      Math.random() < this.settings.garbage.messiness
+    ) {
+      this.garbageHoleCol = Math.floor(Math.random() * this.settings.width)
+    }
+
+    const holes = new Set<number>([this.garbageHoleCol])
+    while (holes.size < holeCount) {
+      holes.add(Math.floor(Math.random() * this.settings.width))
+    }
+    return holes
   }
 
   private hardDrop(): void {
@@ -347,6 +492,8 @@ export class TetrisGame {
     )
     this.lockPiece()
     this.clearLines()
+    this.applyDueGarbage()
+    if (this.gameOver) return
     if (!this.spawn()) {
       log('GAME OVER after hard-drop: new piece collides at spawn', {
         piece: this.currentPiece,
