@@ -109,8 +109,16 @@ export class TetrisGame {
         }
         break
 
-      case 'rotate':
-        this.tryRotate()
+      case 'rotateCW':
+        this.tryRotate(1)
+        break
+
+      case 'rotateCCW':
+        this.tryRotate(-1)
+        break
+
+      case 'rotate180':
+        this.tryRotate(2)
         break
 
       case 'softDrop':
@@ -521,19 +529,34 @@ export class TetrisGame {
     }
   }
 
-  private tryRotate(): void {
+  private tryRotate(delta: number): boolean {
     const piece = this.currentPiece
-    const nextRotation = (piece.rotation + 1) % 4
-    const test: TetrisPiece = { ...piece, rotation: nextRotation }
+
+    if (Math.abs(delta) === 2) {
+      const before = { row: piece.row, col: piece.col, rotation: piece.rotation }
+      if (!this.tryRotate(1)) return false
+      if (!this.tryRotate(1)) {
+        piece.row = before.row
+        piece.col = before.col
+        piece.rotation = before.rotation
+        return false
+      }
+      return true
+    }
+
+    const from = piece.rotation
+    const to = (from + delta + 4) % 4
+    const test: TetrisPiece = { ...piece, rotation: to }
 
     for (const kick of [0, -1, 1, -2, 2]) {
       test.col = piece.col + kick
       if (!this.collides(test)) {
-        this.currentPiece.rotation = nextRotation
-        this.currentPiece.col = test.col
-        return
+        piece.rotation = to
+        piece.col = test.col
+        return true
       }
     }
+    return false
   }
 
   /** Compute the ghost piece row (where hard-drop would land). */

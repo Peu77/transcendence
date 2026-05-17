@@ -15,7 +15,9 @@ export type Block = [number, number]
 export type InputAction =
   | 'left'
   | 'right'
-  | 'rotate'
+  | 'rotateCW'
+  | 'rotateCCW'
+  | 'rotate180'
   | 'softDrop'
   | 'hardDrop'
   | 'hold'
