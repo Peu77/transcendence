@@ -529,6 +529,35 @@ export class TetrisGame {
     }
   }
 
+  private readonly JLSTZ_KICKS: Record<string, Block[]> = {
+    '0>1': [[0,0],[0,-1],[1,-1],[-2,0],[-2,-1]],
+    '1>2': [[0,0],[0,1],[1,1],[0,-2],[1,-2]],
+    '2>3': [[0,0],[0,1],[-1,1],[2,0],[2,1]],
+    '3>0': [[0,0],[0,-1],[-1,-1],[0,2],[-1,2]],
+    '1>0': [[0,0],[0,1],[-1,1],[2,0],[2,1]],
+    '2>1': [[0,0],[0,-1],[-1,-1],[0,2],[-1,2]],
+    '3>2': [[0,0],[0,-1],[1,-1],[-2,0],[-2,-1]],
+    '0>3': [[0,0],[0,1],[1,1],[0,-2],[1,-2]],
+  }
+
+  private readonly I_KICKS: Record<string, Block[]> = {
+    '0>1': [[0,0],[0,-2],[0,1],[-1,-2],[2,1]],
+    '1>2': [[0,0],[0,-1],[0,2],[-2,-1],[1,2]],
+    '2>3': [[0,0],[0,2],[0,-1],[1,2],[-2,-1]],
+    '3>0': [[0,0],[0,1],[0,-2],[2,1],[-1,-2]],
+    '1>0': [[0,0],[0,2],[0,-1],[1,2],[-2,-1]],
+    '2>1': [[0,0],[0,1],[0,-2],[2,1],[-1,-2]],
+    '3>2': [[0,0],[0,-2],[0,1],[-1,-2],[2,1]],
+    '0>3': [[0,0],[0,-1],[0,2],[-2,-1],[1,2]],
+  }
+
+  private getKickOffsets(type: TetrominoType, from: number, to: number): Block[] {
+    if (type === TetrominoType.O) return [[0, 0]]
+    const key = `${from}>${to}`
+    if (type === TetrominoType.I) return this.I_KICKS[key] ?? [[0, 0]]
+    return this.JLSTZ_KICKS[key] ?? [[0, 0]]
+  }
+
   private tryRotate(delta: number): boolean {
     const piece = this.currentPiece
 
@@ -546,12 +575,13 @@ export class TetrisGame {
 
     const from = piece.rotation
     const to = (from + delta + 4) % 4
-    const test: TetrisPiece = { ...piece, rotation: to }
+    const kicks = this.getKickOffsets(piece.type, from, to)
 
-    for (const kick of [0, -1, 1, -2, 2]) {
-      test.col = piece.col + kick
+    for (const [dRow, dCol] of kicks) {
+      const test: TetrisPiece = { ...piece, rotation: to, row: piece.row + dRow, col: piece.col + dCol }
       if (!this.collides(test)) {
         piece.rotation = to
+        piece.row = test.row
         piece.col = test.col
         return true
       }
