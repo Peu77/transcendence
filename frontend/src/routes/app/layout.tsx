@@ -43,11 +43,13 @@ const AppLayout = () => {
   }
 
   return (
-    <div className="min-h-screen overflow-hidden bg-background">
+    <div className="h-screen min-h-0 flex flex-col overflow-hidden bg-background">
       <RealtimeMount />
       <FriendsOverlay />
       <Navbar />
-      <Outlet />
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <Outlet />
+      </div>
     </div>
   )
 }

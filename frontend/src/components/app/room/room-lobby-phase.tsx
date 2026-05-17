@@ -63,19 +63,21 @@ export function RoomLobbyPhase({
   })
 
   return (
-    <div className="grid h-full min-h-0 gap-4 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
+    <div className="grid h-full min-h-0 overflow-hidden border-border/70 bg-background/95 xl:grid-cols-[360px_minmax(0,1fr)_400px]">
       <RoomPlayersSidebar room={room} currentUserId={me?.id} />
 
-      <section className="flex min-h-0 flex-col gap-4">
-        <div className="rounded-2xl border border-border bg-card/95 px-6 py-5 shadow-lg">
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-between">
-            <h1 className="text-3xl font-bold xl:text-4xl">Room: {room.id}</h1>
+      <section className="flex min-h-0 flex-col border-x border-border/70 px-8 py-9 xl:px-10">
+        <div className="border-b border-border/70 pb-8">
+          <div className="flex flex-wrap items-start justify-center gap-4 sm:justify-between">
+            <h1 className="text-3xl font-bold uppercase tracking-wide xl:text-4xl">
+              Room: {room.id}
+            </h1>
             {isHost && (
               <Button
                 type="button"
                 size="lg"
                 disabled={isStarting}
-                className="flex gap-2 min-w-56 bg-green-600 font-bold text-white hover:bg-green-700 disabled:opacity-80"
+                className="flex min-w-56 gap-2 bg-green-600 font-bold uppercase tracking-wide text-white hover:bg-green-700 disabled:opacity-80"
                 onClick={() => {
                   setIsStarting(true)
                   onStartGame()
@@ -94,22 +96,24 @@ export function RoomLobbyPhase({
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-border bg-card/95 p-6 shadow-lg">
+        <div className="flex min-h-0 flex-1 flex-col pt-8">
           <Tabs defaultValue="match" className="flex min-h-0 flex-1 flex-col">
-            <div className="border-b border-border/70 pb-4">
+            <div className="">
               <div className="flex flex-col gap-2">
-                <h2 className="text-2xl font-bold">Settings</h2>
-                <p className="text-sm text-muted-foreground">
+                <h2 className="text-2xl font-bold uppercase tracking-wide">
+                  Settings
+                </h2>
+                <p className="text-sm uppercase tracking-wide text-muted-foreground">
                   Configure the match and room without leaving the lobby.
                 </p>
               </div>
-              <TabsList className="mt-4 grid w-full max-w-md grid-cols-2">
+              <TabsList className="mt-7 grid h-12 w-full max-w-md grid-cols-2 bg-transparent p-0">
                 <TabsTrigger value="match">Match Settings</TabsTrigger>
                 <TabsTrigger value="room">Room Settings</TabsTrigger>
               </TabsList>
             </div>
 
-            <div className="mt-4 min-h-0 flex-1 overflow-hidden">
+            <div className="mt-8 min-h-0 flex-1 overflow-hidden">
               <TabsContent value="match" className="mt-0 h-full">
                 <MatchSettingsForm
                   room={room}

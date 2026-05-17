@@ -66,25 +66,26 @@ export function RoomChat({
   return (
     <section
       className={cn(
-        'flex min-h-0 flex-col rounded-2xl border border-border bg-card/95 shadow-lg backdrop-blur',
+        'flex min-h-0 flex-col bg-background/80 px-7 py-9',
         className,
       )}
     >
-      <div className="border-b border-border/70 px-4 py-3">
-        <h2 className="text-lg font-bold">Room chat</h2>
-        <p className="text-xs text-muted-foreground">
+      <div className="border-b border-border/70 pb-6">
+        <h2 className="text-2xl font-bold uppercase tracking-wide">Room chat</h2>
+        <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">
           Talk to everyone currently in this room.
         </p>
       </div>
 
       <div
         ref={scrollRef}
-        className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4"
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto py-6"
       >
         {messages.length === 0 ? (
-          <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-border/70 p-4 text-center text-sm text-muted-foreground">
-            No messages yet. Start the room chatter.
-          </div>
+          <pre className="flex flex-col h-full items-center justify-center p-4 text-center text-xl uppercase tracking-wide text-muted-foreground">
+            <p>No messages yet</p>
+            <p>Start chatting!</p>
+          </pre>
         ) : (
           messages.map((message) => {
             const isMine = message.senderId === currentUserId
@@ -117,7 +118,7 @@ export function RoomChat({
 
       <form
         onSubmit={handleSubmit}
-        className="flex gap-2 border-t border-border/70 p-3"
+        className="flex gap-3 border-t border-border/70 pt-5"
       >
         <Input
           ref={inputRef}

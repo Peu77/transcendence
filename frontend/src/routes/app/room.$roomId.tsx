@@ -25,7 +25,7 @@ const RoomPage = () => {
 
   if (error) {
     return (
-      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center overflow-hidden p-6 text-foreground">
+      <div className="flex h-full items-center justify-center overflow-hidden p-6 text-foreground">
         Redirecting to room lobby...
       </div>
     )
@@ -33,14 +33,14 @@ const RoomPage = () => {
 
   if (isLoading || !room) {
     return (
-      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center overflow-hidden p-6 text-foreground">
+      <div className="flex h-full items-center justify-center overflow-hidden p-6 text-foreground">
         Joining room {roomId}...
       </div>
     )
   }
 
   return (
-    <div className="h-[calc(100dvh-4rem)] overflow-hidden p-4 text-foreground md:p-6">
+    <div className="h-full overflow-hidden p-4 text-foreground md:p-6">
       {gamePhase === 'lobby' ? (
         <RoomLobbyPhase
           room={room}
