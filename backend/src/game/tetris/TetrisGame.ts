@@ -51,6 +51,8 @@ export class TetrisGame {
   private outgoingGarbage = 0
   private pendingGarbage: PendingGarbage[] = []
   private garbageHoleCol = -1
+  private lockDelayStart: number | null = null
+  private lockResetCount = 0
 
   constructor(settings: Partial<MatchSettings> = {}) {
     this.settings = this.createSettings(settings)
@@ -72,21 +74,12 @@ export class TetrisGame {
 
     if (this.canMove(this.currentPiece, 1, 0)) {
       this.currentPiece.row += 1
+      this.lockDelayStart = null
     } else {
-      log(
-        `Locking piece ${this.currentPiece.type} at row=${this.currentPiece.row} col=${this.currentPiece.col}`,
-      )
-      this.lockPiece()
-      this.clearLines()
-      this.applyDueGarbage()
-      if (this.gameOver) return false
-      if (!this.spawn()) {
-        log('GAME OVER: new piece collides at spawn', {
-          piece: this.currentPiece,
-          topRows: this.board.slice(0, 4),
-        })
-        this.gameOver = true
-        return false
+      if (this.lockDelayStart === null) {
+        this.lockDelayStart = Date.now()
+      } else if (Date.now() - this.lockDelayStart >= this.settings.lockDelayMs) {
+        if (!this.lockAndSpawn()) return false
       }
     }
     return true
@@ -100,25 +93,27 @@ export class TetrisGame {
       case 'left':
         if (this.canMove(this.currentPiece, 0, -1)) {
           this.currentPiece.col -= 1
+          if (this.tryResetLockDelay()) this.lockAndSpawn()
         }
         break
 
       case 'right':
         if (this.canMove(this.currentPiece, 0, 1)) {
           this.currentPiece.col += 1
+          if (this.tryResetLockDelay()) this.lockAndSpawn()
         }
         break
 
       case 'rotateCW':
-        this.tryRotate(1)
+        if (this.tryRotate(1) && this.tryResetLockDelay()) this.lockAndSpawn()
         break
 
       case 'rotateCCW':
-        this.tryRotate(-1)
+        if (this.tryRotate(-1) && this.tryResetLockDelay()) this.lockAndSpawn()
         break
 
       case 'rotate180':
-        this.tryRotate(2)
+        if (this.tryRotate(2) && this.tryResetLockDelay()) this.lockAndSpawn()
         break
 
       case 'softDrop':
@@ -195,8 +190,8 @@ export class TetrisGame {
   private createSettings(settings: Partial<MatchSettings>): MatchSettings {
     return {
       gravity: 1,
-      lockDelayMs: 1000,
-      lockResetLimit: 4,
+      lockDelayMs: 500,
+      lockResetLimit: 15,
       areMs: 0,
       lineClearDelayMs: 500,
       rotationSystem: RotationSystem.SRS,
@@ -294,6 +289,8 @@ export class TetrisGame {
   private spawn(): boolean {
     this.currentPiece = this.spawnPiece(this.takeNextType())
     this.canHold = true
+    this.lockDelayStart = null
+    this.lockResetCount = 0
 
     const blocked = this.collides(this.currentPiece)
     if (blocked) {
@@ -519,6 +516,8 @@ export class TetrisGame {
     this.heldType = currentType
     this.currentPiece = this.spawnPiece(nextType)
     this.canHold = false
+    this.lockDelayStart = null
+    this.lockResetCount = 0
 
     if (this.collides(this.currentPiece)) {
       log('GAME OVER after hold: held piece collides at spawn', {
@@ -549,6 +548,38 @@ export class TetrisGame {
     '2>1': [[0,0],[0,1],[0,-2],[2,1],[-1,-2]],
     '3>2': [[0,0],[0,-2],[0,1],[-1,-2],[2,1]],
     '0>3': [[0,0],[0,-1],[0,2],[-2,-1],[1,2]],
+  }
+
+  private tryResetLockDelay(): boolean {
+    if (this.lockDelayStart === null) {
+      if (this.canMove(this.currentPiece, 1, 0)) return false
+      this.lockDelayStart = Date.now()
+    }
+    if (this.lockResetCount < this.settings.lockResetLimit) {
+      this.lockDelayStart = Date.now()
+      this.lockResetCount++
+      return this.lockResetCount >= this.settings.lockResetLimit
+    }
+    return true
+  }
+
+  private lockAndSpawn(): boolean {
+    log(
+      `Locking piece ${this.currentPiece.type} at row=${this.currentPiece.row} col=${this.currentPiece.col}`,
+    )
+    this.lockPiece()
+    this.clearLines()
+    this.applyDueGarbage()
+    if (this.gameOver) return false
+    if (!this.spawn()) {
+      log('GAME OVER: new piece collides at spawn', {
+        piece: this.currentPiece,
+        topRows: this.board.slice(0, 4),
+      })
+      this.gameOver = true
+      return false
+    }
+    return true
   }
 
   private getKickOffsets(type: TetrominoType, from: number, to: number): Block[] {
