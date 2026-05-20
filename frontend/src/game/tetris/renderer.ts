@@ -63,6 +63,8 @@ export class TetrisRenderer {
   private boardPixelWidth = 0
   private boardPixelHeight = 0
   private previewSize = 0
+  private holdPreviewSize = 0
+  private nextPreviewSize = 0
   private canvasWidth = 0
   private canvasHeight = 0
 
@@ -124,6 +126,11 @@ export class TetrisRenderer {
     this.boardPixelWidth = cellSize * BOARD_COLS
     this.boardPixelHeight = cellSize * BOARD_ROWS
     this.previewSize = cellSize * 4
+    this.holdPreviewSize = Math.floor(cellSize * 3)
+    this.nextPreviewSize = Math.min(
+      this.holdPreviewSize,
+      Math.floor((this.boardPixelHeight - 10 - 4 * 6) / 5),
+    )
   }
 
   render(state: TetrisState) {
@@ -265,18 +272,27 @@ export class TetrisRenderer {
       type: TetrominoType,
       x: number,
       y: number,
+      cs: number,
       alpha = 1.0,
     ) => {
       const blocks = TETROMINOES[type][0]
       const color = PIECE_COLORS[type]
+      const bcValues = blocks.map(([, c]) => c)
+      const brValues = blocks.map(([r]) => r)
+      const minBc = Math.min(...bcValues)
+      const maxBc = Math.max(...bcValues)
+      const minBr = Math.min(...brValues)
+      const maxBr = Math.max(...brValues)
+      const colOffset = (4 - (maxBc - minBc + 1)) / 2 - minBc
+      const rowOffset = (4 - (maxBr - minBr + 1)) / 2 - minBr
       for (const [br, bc] of blocks) {
-        const px = x + (bc + 1.5) * prevCellSize + GAP * prevCellSize
-        const py = y + (br + 1.5) * prevCellSize + GAP * prevCellSize
+        const px = x + (bc + colOffset) * cs + GAP * cs
+        const py = y + (br + rowOffset) * cs + GAP * cs
         pushQuad(
           px,
           py,
-          prevCellSize * (1 - 2 * GAP),
-          prevCellSize * (1 - 2 * GAP),
+          cs * (1 - 2 * GAP),
+          cs * (1 - 2 * GAP),
           color[0],
           color[1],
           color[2],
@@ -285,12 +301,12 @@ export class TetrisRenderer {
       }
     }
 
-    const renderPreviewPanel = (x: number, y: number) => {
+    const renderPreviewPanel = (x: number, y: number, size: number) => {
       pushQuad(
         x - 5,
         y - 5,
-        this.previewSize + 10,
-        this.previewSize + 10,
+        size + 10,
+        size + 10,
         BG_COLOR[0],
         BG_COLOR[1],
         BG_COLOR[2],
@@ -301,20 +317,24 @@ export class TetrisRenderer {
     const nextPieces = state.nextPieces?.length
       ? state.nextPieces
       : [state.nextPiece]
+    const nextCs = this.nextPreviewSize / 4
     nextPieces.forEach((nextPiece, index) => {
-      const y = previewY + index * (this.previewSize + 10)
-      renderPreviewPanel(previewX, y)
-      renderPiecePreview(nextPiece, previewX, y)
+      const y = previewY + index * (this.nextPreviewSize + 6)
+      renderPreviewPanel(previewX, y, this.nextPreviewSize)
+      renderPiecePreview(nextPiece, previewX, y, nextCs)
     })
 
+    const holdSlotX = boardOffX - this.previewSize - 20
+    const holdPanelX = holdSlotX + (this.previewSize - this.holdPreviewSize) / 2
+    const holdY = previewY
+    const holdCs = this.holdPreviewSize / 4
+    renderPreviewPanel(holdPanelX, holdY, this.holdPreviewSize)
     if (state.heldPiece) {
-      const holdX = boardOffX - this.previewSize - 20
-      const holdY = previewY
-      renderPreviewPanel(holdX, holdY)
       renderPiecePreview(
         state.heldPiece,
-        holdX,
+        holdPanelX,
         holdY,
+        holdCs,
         state.canHold ? 1.0 : 0.45,
       )
     }
@@ -337,6 +357,21 @@ export class TetrisRenderer {
 
     gl.drawArrays(gl.TRIANGLES, 0, positions.length / 2)
     gl.bindVertexArray(null)
+  }
+
+  getLayout() {
+    const boardOffX = (this.canvasWidth - this.boardPixelWidth) / 2
+    const boardOffY = (this.canvasHeight - this.boardPixelHeight) / 2
+    const previewY = boardOffY + 10
+    const holdSlotX = boardOffX - this.previewSize - 20
+    return {
+      holdX: holdSlotX + (this.previewSize - this.holdPreviewSize) / 2,
+      holdY: previewY,
+      holdPanelSize: this.holdPreviewSize,
+      nextX: boardOffX + this.boardPixelWidth + 20,
+      nextY: previewY,
+      nextPanelSize: this.nextPreviewSize,
+    }
   }
 
   destroy() {
