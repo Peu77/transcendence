@@ -1,5 +1,5 @@
 # Modules:
-- Potential points from Modules: 22 / 19 max 
+- Potential points from Modules: 20 / 19 max 
 
 ## Web
 - [x] Use a frontend framework - (1)
@@ -18,7 +18,7 @@
 - None
 
 ## User Management
-- [ ] Standard User Management and Auth --> Update profile info, upload avatar, add friends and see if online, profile page per user - (2) (Theo)
+- [x] Standard User Management and Auth --> Update profile info, upload avatar, add friends and see if online, profile page per user - (2) (Theo)
 - [ ] Game statistics and match history - (1) --> ? 
   - [ ] Track user game statistics (wins, losses, ranking, level, etc.)
   - [ ] Display match history (1v1 games, dates, results, opponents).
@@ -35,17 +35,16 @@
 - None
 
 ## Gaming and User Experience | --> Check requirements
-- [ ] Implement Web based Game (2) 
+- [x] Implement Web based Game (2) 
 - [ ] Multiplayer game (2)
-- [ ] Remote players — Enable two players on separate computers to play the
+- [x] Remote players — Enable two players on separate computers to play the
   same game in real-time
 - [ ] Advanced Chat Features (1)
 - [ ] Game customization options (1)
 - [ ] Gamification system (1)
 
 ## Devops
-- [ ] Monitoring System with Prometheus and Grafana (2)
-- [ ] advances data analytics dashboard (2)
+- [x] Monitoring System with Prometheus and Grafana (2)
 
 ## Data and Analytics
 - None
@@ -60,8 +59,7 @@
 - [ ] Allow custom game configs for rooms
 - [ ] Special Modes (bomb mode for example)
 - [ ] Solo Mode
-- [ ] Quick Play Mode
-- [ ] Versus Mode
+- [ ] Quick Play Mode?
 
 
 
