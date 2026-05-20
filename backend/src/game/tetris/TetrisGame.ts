@@ -196,7 +196,7 @@ export class TetrisGame {
       lineClearDelayMs: 500,
       rotationSystem: RotationSystem.SRS,
       hold: true,
-      nextCount: 3,
+      nextCount: 5,
       bag: PieceRandomizer.SEVEN_BAG,
       forbidInitialSZ: false,
       width: BOARD_COLS,
