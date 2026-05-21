@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { TetrisRenderer } from '@/game/tetris/renderer'
-import type { TetrisState } from '@/game/tetris/types'
+import type { TetrisState } from '@transcendence/shared'
 
 type GameBoardProps = {
   state: TetrisState | null

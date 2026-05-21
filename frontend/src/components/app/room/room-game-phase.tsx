@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button.tsx'
 import type { Room } from '@/api/room.ts'
 import type { GamePlayerResult } from '@/realtime/events'
-import type { TetrisState } from '@/game/tetris/types'
+import type { TetrisState } from '@transcendence/shared'
 import { GameBoard } from './game-board.tsx'
 import { RoomChat } from './room-chat.tsx'
 import type { GamePhase } from './room-game.ts'

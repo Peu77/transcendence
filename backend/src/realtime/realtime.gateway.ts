@@ -21,8 +21,7 @@ import {
 import { RealtimeService } from './realtime.service'
 import { RealtimePresenceService } from './realtime-presence.service'
 import { RoomService } from '../room/room.service'
-import { TetrisGame } from '../game/tetris/TetrisGame'
-import type { InputAction, TetrisState } from '../game/tetris/tetris.types'
+import { TetrisGame, type InputAction, type TetrisState } from '@transcendence/shared'
 
 type SocketAuthUser = { userId: string }
 

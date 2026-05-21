@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { useLiveEvent } from '@/realtime/hooks.ts'
 import { useLiveSocket } from '@/realtime/useRealtimeStore.ts'
 import type { User } from '@/api/user.ts'
-import type { TetrisState, InputAction } from '@/game/tetris/types'
+import type { TetrisState, InputAction } from '@transcendence/shared'
 import type { GamePlayerResult } from '@/realtime/events'
 import {
   buildKeyMap,

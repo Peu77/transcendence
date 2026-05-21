@@ -1,5 +1,5 @@
 import type { DirectMessage, PresenceStatus } from '@/api/friends'
-import type { TetrisState } from '@/game/tetris/types'
+import type { TetrisState } from '@transcendence/shared'
 
 export type UserInfo = {
   username: string

@@ -7,13 +7,13 @@ import {
   type TetrisPiece,
   type TetrisState,
   TetrominoType,
-} from './tetris.types'
+} from './tetris-types'
 import {
   GarbageCancel,
   type MatchSettings,
   PieceRandomizer,
   RotationSystem,
-} from '../../room/types'
+} from './match-settings'
 
 const PIECE_TYPES = Object.values(TetrominoType)
 

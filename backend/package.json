@@ -45,7 +45,8 @@
     "socket.io": "^4.8.3",
     "speakeasy": "^2.0.0",
     "typeorm": "^0.3.28",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "@transcendence/shared": "file:../shared"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",

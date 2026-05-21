@@ -1,11 +1,10 @@
 import {
   BOARD_COLS,
   BOARD_ROWS,
-  PIECE_COLORS,
   TETROMINOES,
   TetrominoType,
   type TetrisState,
-} from './types'
+} from '@transcendence/shared'
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                         */
@@ -16,6 +15,17 @@ const GAP = 0.04
 const BG_COLOR: [number, number, number] = [0.08, 0.08, 0.12]
 
 const GHOST_ALPHA = 0.25
+
+/** Classic Tetris color palette per piece type */
+const PIECE_COLORS: Record<TetrominoType, [number, number, number]> = {
+  [TetrominoType.I]: [0.0, 0.9, 0.9], // cyan
+  [TetrominoType.O]: [0.9, 0.9, 0.0], // yellow
+  [TetrominoType.T]: [0.6, 0.0, 0.8], // purple
+  [TetrominoType.S]: [0.0, 0.9, 0.0], // green
+  [TetrominoType.Z]: [0.9, 0.0, 0.0], // red
+  [TetrominoType.J]: [0.0, 0.0, 0.9], // blue
+  [TetrominoType.L]: [0.9, 0.5, 0.0], // orange
+}
 
 /* ------------------------------------------------------------------ */
 /*  Shaders                                                           */
