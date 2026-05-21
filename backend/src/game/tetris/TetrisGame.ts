@@ -604,6 +604,10 @@ export class TetrisGame {
       return true
     }
 
+    if (piece.type === TetrominoType.S || piece.type === TetrominoType.Z) {
+      piece.rotation = piece.rotation % 2
+    }
+
     const from = piece.rotation
     const to = (from + delta + 4) % 4
     const kicks = this.getKickOffsets(piece.type, from, to)
