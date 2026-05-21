@@ -29,11 +29,13 @@ type SocketAuthUser = { userId: string }
 interface PlayerGame {
   game: TetrisGame
   tickTimer: ReturnType<typeof setTimeout> | null
+  placement: number | null
 }
 
 interface RoomGameSession {
   players: Map<string, PlayerGame> // userId → their game
   roomId: string
+  nextPlacement: number
 }
 
 function parseCookie(cookieHeader: string | undefined): Record<string, string> {
@@ -272,12 +274,14 @@ export class RealtimeGateway
       const session: RoomGameSession = {
         players: new Map(),
         roomId,
+        nextPlacement: room.users.length,
       }
 
       for (const user of room.users) {
         session.players.set(user.id, {
           game: new TetrisGame(room.settings),
           tickTimer: null,
+          placement: null,
         })
       }
 
@@ -408,6 +412,8 @@ export class RealtimeGateway
       pg.tickTimer = null
     }
 
+    pg.placement = session.nextPlacement--
+
     const state = pg.game.getState()
     this.emitToGameRoom(roomId, 'game.player-over', {
       roomId,
@@ -454,6 +460,7 @@ export class RealtimeGateway
     if (shouldEnd) {
       // Mark any remaining active player as game over so results are complete
       for (const p of activePlayers) {
+        p.placement = session.nextPlacement--
         p.game.gameOver = true
         if (p.tickTimer) {
           clearTimeout(p.tickTimer)
@@ -482,6 +489,7 @@ export class RealtimeGateway
         return {
           userId,
           username: user?.username ?? 'Unknown',
+          placement: pg.placement ?? 1,
           score: state.score,
           lines: state.lines,
           level: state.level,
@@ -489,8 +497,12 @@ export class RealtimeGateway
       },
     )
 
-    // Sort by score descending
-    results.sort((a, b) => b.score - a.score)
+    // Sort by placement ascending (1st = winner), score as tiebreaker
+    results.sort((a, b) =>
+      a.placement !== b.placement
+        ? a.placement - b.placement
+        : b.score - a.score,
+    )
 
     this.emitToGameRoom(roomId, 'game.finished', { roomId, results })
     this.roomService.endGame(roomId)
@@ -509,6 +521,7 @@ export class RealtimeGateway
       clearTimeout(pg.tickTimer)
       pg.tickTimer = null
     }
+    pg.placement = session.nextPlacement--
     pg.game.gameOver = true
 
     this.emitToGameRoom(roomId, 'game.player-over', {
