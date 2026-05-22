@@ -6,11 +6,13 @@ import { RealtimePresenceService } from './realtime-presence.service'
 import { UserPresence } from '../friends/entities/user-presence.entity'
 import { Friendship } from '../friends/entities/friendship.entity'
 import { RoomModule } from '../room/room.module'
+import { MatchModule } from '../match/match.module'
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserPresence, Friendship]),
     forwardRef(() => RoomModule),
+    MatchModule,
   ],
   providers: [RealtimeGateway, RealtimeService, RealtimePresenceService],
   exports: [RealtimeService, RealtimePresenceService],

@@ -21,6 +21,7 @@ import {
 import { RealtimeService } from './realtime.service'
 import { RealtimePresenceService } from './realtime-presence.service'
 import { RoomService } from '../room/room.service'
+import { MatchService } from '../match/match.service'
 import { TetrisGame } from '../game/tetris/TetrisGame'
 import type { InputAction, TetrisState } from '../game/tetris/tetris.types'
 
@@ -34,6 +35,7 @@ interface PlayerGame {
 interface RoomGameSession {
   players: Map<string, PlayerGame> // userId → their game
   roomId: string
+  startedAt: number
 }
 
 function parseCookie(cookieHeader: string | undefined): Record<string, string> {
@@ -72,6 +74,7 @@ export class RealtimeGateway
     private readonly realtime: RealtimeService,
     private readonly realtimePresence: RealtimePresenceService,
     private readonly roomService: RoomService,
+    private readonly matchService: MatchService,
   ) {
     this.jwtSecret = configService.getOrThrow<string>('JWT_SECRET')
   }
@@ -272,6 +275,7 @@ export class RealtimeGateway
       const session: RoomGameSession = {
         players: new Map(),
         roomId,
+        startedAt: Date.now(),
       }
 
       for (const user of room.users) {
@@ -489,8 +493,26 @@ export class RealtimeGateway
       },
     )
 
-    // Sort by score descending
     results.sort((a, b) => b.score - a.score)
+
+    this.matchService
+      .createMatch({
+        durationSeconds: Math.max(
+          0,
+          Math.floor((Date.now() - session.startedAt) / 1000),
+        ),
+        results: results.map((result, index) => ({
+          userId: result.userId,
+          score: result.score,
+          lines: result.lines,
+          level: result.level,
+          rank: index + 1,
+        })),
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error)
+        this.logger.error(`Failed to save match ${roomId}: ${message}`)
+      })
 
     this.emitToGameRoom(roomId, 'game.finished', { roomId, results })
     this.roomService.endGame(roomId)
