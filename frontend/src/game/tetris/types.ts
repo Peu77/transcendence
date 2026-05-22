@@ -41,6 +41,8 @@ export interface TetrisState {
   lines: number
   level: number
   gameOver: boolean
+  combo: number
+  b2bChain: number
 }
 
 export const BOARD_ROWS = 20
