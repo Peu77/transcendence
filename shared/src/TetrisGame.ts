@@ -164,6 +164,30 @@ export class TetrisGame {
     }
   }
 
+  /** Overwrite all game state from a server-authoritative snapshot (for client-side reconciliation). */
+  restoreFromState(state: TetrisState, extraNextTypes?: TetrominoType[]): void {
+    this.board = state.board.map(row => [...row])
+    this.currentPiece = { ...state.currentPiece }
+    this.nextType = state.nextPiece
+    this.nextTypes = [...state.nextPieces, ...(extraNextTypes ?? [])]
+    this.heldType = state.heldPiece
+    this.canHold = state.canHold
+    this.score = state.score
+    this.lines = state.lines
+    this.level = state.level
+    this.gameOver = state.gameOver
+    // Private state resets — corrected on next reconciliation
+    this.combo = -1
+    this.backToBack = false
+    this.outgoingGarbage = 0
+    this.pendingGarbage = []
+  }
+
+  /** Extra next pieces beyond the visible preview, for client-side prediction. */
+  getPredictionPieces(count: number): TetrominoType[] {
+    return this.nextTypes.slice(this.settings.nextCount, this.settings.nextCount + count)
+  }
+
   /** Milliseconds between gravity ticks for the current level. */
   getTickInterval(): number {
     if (this.settings.gravity >= 20) return 1

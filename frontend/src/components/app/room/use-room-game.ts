@@ -5,8 +5,9 @@ import { toast } from 'sonner'
 import { useLiveEvent } from '@/realtime/hooks.ts'
 import { useLiveSocket } from '@/realtime/useRealtimeStore.ts'
 import type { User } from '@/api/user.ts'
-import type { TetrisState, InputAction } from '@transcendence/shared'
+import type { TetrisState, InputAction, MatchSettings } from '@transcendence/shared'
 import type { GamePlayerResult } from '@/realtime/events'
+import { usePrediction } from '@/game/tetris/prediction.ts'
 import {
   buildKeyMap,
   normalizeGameControls,
@@ -14,7 +15,11 @@ import {
   type GamePhase,
 } from './room-game.ts'
 
-export function useRoomGame(roomId: string, me: User | null | undefined) {
+export function useRoomGame(
+  roomId: string,
+  me: User | null | undefined,
+  matchSettings?: MatchSettings,
+) {
   const socket = useLiveSocket()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -25,6 +30,10 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
     {},
   )
   const [results, setResults] = useState<GamePlayerResult[] | null>(null)
+  const myUserId = me?.id
+  const prediction = usePrediction(matchSettings)
+  const predictionRef = useRef(prediction)
+  predictionRef.current = prediction
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [escapeHoldProgress, setEscapeHoldProgress] = useState(0)
   const isChatOpenRef = useRef(false)
@@ -59,7 +68,23 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
     ) {
       setPhase('playing')
     }
-    setPlayerStates(data.players)
+
+    // Reconcile local player's predicted state
+    if (myUserId && data.players[myUserId]) {
+      prediction.reconcile(
+        data.players[myUserId],
+        data.lastSeq?.[myUserId] ?? 0,
+        data.predictionPieces?.[myUserId] ?? [],
+      )
+    }
+
+    // Build combined state: predicted for local player, server for opponents
+    const predicted = prediction.predictedState.current.predictedState
+    if (myUserId && predicted) {
+      setPlayerStates({ ...data.players, [myUserId]: predicted })
+    } else {
+      setPlayerStates(data.players)
+    }
   })
 
   useLiveEvent('game.finished', (data) => {
@@ -100,7 +125,8 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
     }
 
     const emitInput = (action: InputAction) => {
-      socket.emit('game.input', { roomId, action })
+      const seq = predictionRef.current.applyInput(action)
+      socket.emit('game.input', { roomId, action, seq })
     }
 
     const cancelEscapeHold = () => {
@@ -264,8 +290,9 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
     setResults(null)
     setCountdown(null)
     setChatOpen(false)
+    prediction.reset()
     queryClient.invalidateQueries({ queryKey: ['room', roomId] })
-  }, [setPhase, setChatOpen, queryClient, roomId])
+  }, [setPhase, setChatOpen, prediction, queryClient, roomId])
 
   return {
     gamePhase,

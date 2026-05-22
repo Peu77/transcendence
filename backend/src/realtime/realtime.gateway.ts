@@ -21,13 +21,14 @@ import {
 import { RealtimeService } from './realtime.service'
 import { RealtimePresenceService } from './realtime-presence.service'
 import { RoomService } from '../room/room.service'
-import { TetrisGame, type InputAction, type TetrisState } from '@transcendence/shared'
+import { TetrisGame, type InputAction, type TetrisState, type TetrominoType } from '@transcendence/shared'
 
 type SocketAuthUser = { userId: string }
 
 interface PlayerGame {
   game: TetrisGame
   tickTimer: ReturnType<typeof setTimeout> | null
+  lastSeq: number
 }
 
 interface RoomGameSession {
@@ -277,6 +278,7 @@ export class RealtimeGateway
         session.players.set(user.id, {
           game: new TetrisGame(room.settings),
           tickTimer: null,
+          lastSeq: 0,
         })
       }
 
@@ -308,7 +310,7 @@ export class RealtimeGateway
   @SubscribeMessage('game.input')
   handleGameInput(
     @ConnectedSocket() client: Socket,
-    @MessageBody() body: { roomId: string; action: InputAction },
+    @MessageBody() body: { roomId: string; action: InputAction; seq?: number },
   ) {
     const userId: string | undefined = client.data.userId
     if (!userId || !body?.roomId || !body?.action) return
@@ -318,6 +320,9 @@ export class RealtimeGateway
 
     const playerGame = session.players.get(userId)
     if (!playerGame || playerGame.game.gameOver) return
+
+    const seq = typeof body.seq === 'number' ? body.seq : 0
+    playerGame.lastSeq = seq
 
     playerGame.game.processInput(body.action)
     this.sendGarbageToOpponents(body.roomId, userId, playerGame.game)
@@ -337,21 +342,25 @@ export class RealtimeGateway
     this.server.to(gameRoom(roomId)).emit(event, data)
   }
 
-  private getAllPlayerStates(roomId: string): Record<string, TetrisState> {
-    const session = this.gameSessions.get(roomId)
-    if (!session) return {}
-
-    const states: Record<string, TetrisState> = {}
-    for (const [userId, pg] of session.players) {
-      states[userId] = pg.game.getState()
-    }
-    return states
-  }
-
   private emitAllPlayerStates(roomId: string) {
+    const session = this.gameSessions.get(roomId)
+    if (!session) return
+
+    const players: Record<string, TetrisState> = {}
+    const lastSeq: Record<string, number> = {}
+    const predictionPieces: Record<string, TetrominoType[]> = {}
+
+    for (const [userId, pg] of session.players) {
+      players[userId] = pg.game.getState()
+      lastSeq[userId] = pg.lastSeq
+      predictionPieces[userId] = pg.game.getPredictionPieces(4)
+    }
+
     this.emitToGameRoom(roomId, 'game.state', {
       roomId,
-      players: this.getAllPlayerStates(roomId),
+      players,
+      lastSeq,
+      predictionPieces,
     })
   }
 
