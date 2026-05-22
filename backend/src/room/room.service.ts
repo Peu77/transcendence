@@ -191,16 +191,20 @@ export class RoomService {
       },
       damage: {
         table: {
-          single: 1,
-          double: 2,
-          triple: 3,
+          single: 0,
+          double: 1,
+          triple: 2,
           tetris: 4,
+          tSpinMiniSingle: 0,
+          tSpinMiniDouble: 1,
           tSpinSingle: 2,
           tSpinDouble: 4,
           tSpinTriple: 6,
+          allClear: 10,
         },
-        comboMultiplier: 1.5,
-        backToBackMultiplier: 1.5,
+        comboTable: [0, 0, 1, 1, 1, 2, 2, 3, 3, 4],
+        backToBackBonus: 1,
+        garbageCap: 8,
       },
     }
   }

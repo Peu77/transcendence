@@ -142,21 +142,31 @@ export type MatchSettings = {
       double: number
       triple: number
       tetris: number
+      tSpinMiniSingle: number
+      tSpinMiniDouble: number
       tSpinSingle: number
       tSpinDouble: number
       tSpinTriple: number
+      allClear: number
     }
 
     /**
-     * Additional damage gained per combo count.
-     * Example: 0.5 adds half a line of garbage per combo.
+     * Garbage bonus added per combo level.
+     * Index = combo count. Last value applies for all higher combos.
+     * Example: [0, 0, 1, 1, 1, 2, 2, 3, 3, 4]
      */
-    comboMultiplier: number
+    comboTable: number[]
 
     /**
-     * Multiplier applied to damage during a Back-to-Back chain.
+     * Flat garbage bonus added when a difficult clear (Tetris or T-Spin)
+     * follows another difficult clear (Back-to-Back).
      */
-    backToBackMultiplier: number
+    backToBackBonus: number
+
+    /**
+     * Maximum lines of garbage that can be sent from a single piece placement.
+     */
+    garbageCap: number
   }
 }
 

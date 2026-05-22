@@ -53,6 +53,8 @@ export class TetrisGame {
   private garbageHoleCol = -1
   private lockDelayStart: number | null = null
   private lockResetCount = 0
+  private lastRotated = false
+  private b2bChain = 0
 
   constructor(settings: Partial<MatchSettings> = {}) {
     this.settings = this.createSettings(settings)
@@ -93,6 +95,7 @@ export class TetrisGame {
       case 'left':
         if (this.canMove(this.currentPiece, 0, -1)) {
           this.currentPiece.col -= 1
+          this.lastRotated = false
           if (this.tryResetLockDelay()) this.lockAndSpawn()
         }
         break
@@ -100,6 +103,7 @@ export class TetrisGame {
       case 'right':
         if (this.canMove(this.currentPiece, 0, 1)) {
           this.currentPiece.col += 1
+          this.lastRotated = false
           if (this.tryResetLockDelay()) this.lockAndSpawn()
         }
         break
@@ -119,6 +123,7 @@ export class TetrisGame {
       case 'softDrop':
         if (this.canMove(this.currentPiece, 1, 0)) {
           this.currentPiece.row += 1
+          this.lastRotated = false
           this.score += 1
         }
         break
@@ -164,6 +169,8 @@ export class TetrisGame {
       lines: this.lines,
       level: this.level,
       gameOver: this.gameOver,
+      combo: this.combo,
+      b2bChain: this.b2bChain,
     }
   }
 
@@ -212,16 +219,20 @@ export class TetrisGame {
       },
       damage: {
         table: {
-          single: settings.damage?.table?.single ?? 1,
-          double: settings.damage?.table?.double ?? 2,
-          triple: settings.damage?.table?.triple ?? 3,
+          single: settings.damage?.table?.single ?? 0,
+          double: settings.damage?.table?.double ?? 1,
+          triple: settings.damage?.table?.triple ?? 2,
           tetris: settings.damage?.table?.tetris ?? 4,
+          tSpinMiniSingle: settings.damage?.table?.tSpinMiniSingle ?? 0,
+          tSpinMiniDouble: settings.damage?.table?.tSpinMiniDouble ?? 1,
           tSpinSingle: settings.damage?.table?.tSpinSingle ?? 2,
           tSpinDouble: settings.damage?.table?.tSpinDouble ?? 4,
           tSpinTriple: settings.damage?.table?.tSpinTriple ?? 6,
+          allClear: settings.damage?.table?.allClear ?? 10,
         },
-        comboMultiplier: settings.damage?.comboMultiplier ?? 1.5,
-        backToBackMultiplier: settings.damage?.backToBackMultiplier ?? 1.5,
+        comboTable: settings.damage?.comboTable ?? [0, 0, 1, 1, 1, 2, 2, 3, 3, 4],
+        backToBackBonus: settings.damage?.backToBackBonus ?? 1,
+        garbageCap: settings.damage?.garbageCap ?? 8,
       },
     }
   }
@@ -291,6 +302,7 @@ export class TetrisGame {
     this.canHold = true
     this.lockDelayStart = null
     this.lockResetCount = 0
+    this.lastRotated = false
 
     const blocked = this.collides(this.currentPiece)
     if (blocked) {
@@ -351,6 +363,8 @@ export class TetrisGame {
   }
 
   private clearLines(): void {
+    const tSpin = this.detectTSpin()
+
     let cleared = 0
     for (let r = this.totalRows - 1; r >= 0; r--) {
       if (this.board[r].every((cell) => cell !== 0)) {
@@ -368,39 +382,87 @@ export class TetrisGame {
       this.lines += cleared
       this.score += (LINE_SCORES[cleared] ?? cleared * 200) * this.level
       this.level = Math.floor(this.lines / LINES_PER_LEVEL) + 1
-      this.outgoingGarbage += this.calculateGarbage(cleared)
+      const isAllClear = this.board.every((row) => row.every((cell) => cell === 0))
+      this.outgoingGarbage += this.calculateGarbage(cleared, tSpin, isAllClear)
     } else {
       this.combo = -1
-      this.backToBack = false
     }
   }
 
-  private calculateGarbage(cleared: number): number {
+  private calculateGarbage(
+    cleared: number,
+    tSpin: 'tspin' | 'mini' | null,
+    isAllClear: boolean,
+  ): number {
     if (!this.settings.garbage.enabled) return 0
 
-    const table = this.settings.damage.table
-    const baseDamage =
-      cleared === 1
-        ? table.single
-        : cleared === 2
-          ? table.double
-          : cleared === 3
-            ? table.triple
-            : table.tetris
-    const isBackToBackClear = cleared === 4
-    const backToBackBonus =
-      isBackToBackClear && this.backToBack
-        ? Math.floor(
-            baseDamage * (this.settings.damage.backToBackMultiplier - 1),
-          )
-        : 0
-    const comboBonus = Math.floor(
-      Math.max(0, this.combo) * this.settings.damage.comboMultiplier,
-    )
-    const damage = baseDamage + backToBackBonus + comboBonus
+    const { table, comboTable, backToBackBonus, garbageCap } = this.settings.damage
 
-    this.backToBack = isBackToBackClear
-    return this.cancelPendingGarbage(Math.max(0, Math.floor(damage)))
+    let baseDamage: number
+    let isHardClear: boolean
+
+    if (tSpin === 'tspin') {
+      baseDamage =
+        cleared === 1 ? table.tSpinSingle
+        : cleared === 2 ? table.tSpinDouble
+        : cleared >= 3 ? table.tSpinTriple
+        : 0
+      isHardClear = true
+    } else if (tSpin === 'mini') {
+      baseDamage = cleared === 1 ? table.tSpinMiniSingle : table.tSpinMiniDouble
+      isHardClear = true
+    } else {
+      baseDamage =
+        cleared === 1 ? table.single
+        : cleared === 2 ? table.double
+        : cleared === 3 ? table.triple
+        : table.tetris
+      isHardClear = cleared === 4
+    }
+
+    const b2bBonus = isHardClear && this.backToBack ? backToBackBonus : 0
+    const comboBonus = comboTable[Math.min(this.combo, comboTable.length - 1)] ?? 0
+    const allClearBonus = isAllClear ? table.allClear : 0
+
+    if (isHardClear) {
+      this.b2bChain++
+    } else {
+      this.b2bChain = 0
+    }
+    this.backToBack = isHardClear
+
+    const raw = baseDamage + b2bBonus + comboBonus + allClearBonus
+    return this.cancelPendingGarbage(Math.min(Math.max(0, raw), garbageCap))
+  }
+
+  private detectTSpin(): 'tspin' | 'mini' | null {
+    if (this.currentPiece.type !== TetrominoType.T) return null
+    if (!this.lastRotated) return null
+
+    const { row, col, rotation } = this.currentPiece
+
+    // 4 diagonal corners relative to T origin: [top-left, top-right, bottom-left, bottom-right]
+    const corners: [number, number][] = [[-1, -1], [-1, 1], [1, -1], [1, 1]]
+    const filled = corners.map(([dr, dc]) => {
+      const r = row + dr
+      const c = col + dc
+      return r < 0 || r >= this.totalRows || c < 0 || c >= this.settings.width || this.board[r][c] !== 0
+    })
+    const filledCount = filled.filter(Boolean).length
+
+    if (filledCount >= 3) return 'tspin'
+
+    // Mini: exactly 2 corners filled and both are on the "front" face (where the spike points)
+    const frontPairs: Record<number, [number, number]> = {
+      0: [0, 1], // spike up → top-left and top-right
+      1: [1, 3], // spike right → top-right and bottom-right
+      2: [2, 3], // spike down → bottom-left and bottom-right
+      3: [0, 2], // spike left → top-left and bottom-left
+    }
+    const [fi, fj] = frontPairs[rotation] ?? [0, 1]
+    if (filledCount === 2 && filled[fi] && filled[fj]) return 'mini'
+
+    return null
   }
 
   private cancelPendingGarbage(lines: number): number {
@@ -518,6 +580,7 @@ export class TetrisGame {
     this.canHold = false
     this.lockDelayStart = null
     this.lockResetCount = 0
+    this.lastRotated = false
 
     if (this.collides(this.currentPiece)) {
       log('GAME OVER after hold: held piece collides at spawn', {
@@ -618,6 +681,7 @@ export class TetrisGame {
         piece.rotation = to
         piece.row = test.row
         piece.col = test.col
+        this.lastRotated = true
         return true
       }
     }
