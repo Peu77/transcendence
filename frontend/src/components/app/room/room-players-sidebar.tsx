@@ -1,9 +1,11 @@
 import { ProfileImage } from '@/components/app/profileImage.tsx'
+import { Button } from '@/components/ui/button.tsx'
 import type { RoomPlayersSidebarProps } from './types.ts'
 
 export function RoomPlayersSidebar({
   room,
   currentUserId,
+  onLeaveRoom,
 }: RoomPlayersSidebarProps) {
   return (
     <aside className="flex h-full min-h-0 flex-col bg-background/80 px-7 pt-4 text-card-foreground">
@@ -47,6 +49,19 @@ export function RoomPlayersSidebar({
           )
         })}
       </ul>
+
+      {onLeaveRoom && (
+        <div className="border-t border-border/70 py-5">
+          <Button
+            type="button"
+            variant="destructive"
+            className="w-full font-bold uppercase tracking-wide"
+            onClick={onLeaveRoom}
+          >
+            Leave Room
+          </Button>
+        </div>
+      )}
     </aside>
   )
 }

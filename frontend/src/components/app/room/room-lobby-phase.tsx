@@ -27,12 +27,14 @@ import { RoomChat } from './room-chat.tsx'
 type RoomLobbyPhaseProps = {
   room: Room
   isHost: boolean
+  onLeaveRoom: () => void
   onStartGame: () => void
 }
 
 export function RoomLobbyPhase({
   room,
   isHost,
+  onLeaveRoom,
   onStartGame,
 }: RoomLobbyPhaseProps) {
   const me = userStore.state
@@ -65,7 +67,11 @@ export function RoomLobbyPhase({
 
   return (
     <div className="grid h-full min-h-0 overflow-hidden border-border/70 bg-background/95 xl:grid-cols-[360px_minmax(0,1fr)_400px]">
-      <RoomPlayersSidebar room={room} currentUserId={me?.id} />
+      <RoomPlayersSidebar
+        room={room}
+        currentUserId={me?.id}
+        onLeaveRoom={onLeaveRoom}
+      />
 
       <section className="flex min-h-0 flex-col border-x border-border/70 px-8  xl:px-10">
         <div className="border-b border-border/70 pb-8">

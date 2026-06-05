@@ -17,6 +17,7 @@ const RoomPage = () => {
     results,
     isChatOpen,
     escapeHoldProgress,
+    handleLeaveRoom,
     handleStartGame,
     handleBackToLobby,
   } = useRoomGame(roomId, me)
@@ -45,6 +46,7 @@ const RoomPage = () => {
         <RoomLobbyPhase
           room={room}
           isHost={isHost}
+          onLeaveRoom={handleLeaveRoom}
           onStartGame={handleStartGame}
         />
       ) : (

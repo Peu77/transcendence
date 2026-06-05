@@ -274,6 +274,7 @@ export function useRoomGame(roomId: string, me: User | null | undefined) {
     results,
     isChatOpen,
     escapeHoldProgress,
+    handleLeaveRoom: quitRoom,
     handleStartGame,
     handleBackToLobby,
   }
