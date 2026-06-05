@@ -19,6 +19,8 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { verifyTwoFaLogin } from '@/api/twofa.ts'
 import { Input } from '@/components/ui/input.tsx'
 import { Label } from '@/components/ui/label.tsx'
+import { useGetUser } from '@/api/user.ts'
+import { userStore } from '@/store/userStore.ts'
 
 const loginSchema = z.object({
   email: z.email('Please enter a valid email'),
@@ -27,8 +29,20 @@ const loginSchema = z.object({
 
 export default function Login() {
   const navigate = useNavigate()
+  const userQuery = useGetUser()
   const [twoFaData, setTwoFaData] = useState<LoginResponse | null>(null)
   const [otpCode, setOtpCode] = useState('')
+
+  useEffect(() => {
+    if (!userQuery.data) return
+
+    userStore.setState(userQuery.data)
+    document.documentElement.classList.toggle(
+      'dark',
+      userQuery.data.theme === 'dark',
+    )
+    navigate({ to: '/app' }).catch(console.error)
+  }, [navigate, userQuery.data])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
