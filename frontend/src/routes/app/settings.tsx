@@ -12,6 +12,7 @@ import {
 import { UserSettingsAccordion } from '@/components/settings/UserSettingsAccordion.tsx'
 import { GameControlsAccordion } from '@/components/settings/GameControlsAccordion.tsx'
 import { TetrisHandlingAccordion } from '@/components/settings/TetrisHandlingAccordion.tsx'
+import { PublicApiSettingsAccordion } from '@/components/settings/PublicApiSettingsAccordion.tsx'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 
 const Settings = () => {
@@ -22,7 +23,7 @@ const Settings = () => {
   if (!user) return null
 
   return (
-    <div className="container mx-auto p-6 flex flex-col h-full min-h-0 max-w-2xl">
+    <div className="container mx-auto p-6 flex flex-col h-full min-h-0 max-w-4xl">
       <div className="flex items-center gap-2 mb-8">
         <Button
           variant="ghost"
@@ -35,7 +36,10 @@ const Settings = () => {
       </div>
 
       <ScrollArea className="min-h-0 flex-1">
-        <Accordion type="multiple" defaultValue={['user-settings']}>
+        <Accordion
+          type="multiple"
+          defaultValue={['user-settings', 'public-api']}
+        >
           <AccordionItem value="user-settings">
             <AccordionTrigger>User settings</AccordionTrigger>
             <AccordionContent>
@@ -46,6 +50,12 @@ const Settings = () => {
               />
             </AccordionContent>
           </AccordionItem>
+          <AccordionItem value="public-api">
+            <AccordionTrigger>Public API</AccordionTrigger>
+            <AccordionContent>
+              <PublicApiSettingsAccordion />
+            </AccordionContent>
+          </AccordionItem>
           <AccordionItem value="game-controls">
             <AccordionTrigger>Game controls</AccordionTrigger>
             <AccordionContent>
@@ -53,7 +63,7 @@ const Settings = () => {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="tetris-handling">
-            <AccordionTrigger>handling</AccordionTrigger>
+            <AccordionTrigger>Handling</AccordionTrigger>
             <AccordionContent>
               <TetrisHandlingAccordion settings={user.tetrisHandlingSettings} />
             </AccordionContent>

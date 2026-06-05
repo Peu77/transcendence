@@ -9,6 +9,7 @@ import { FriendsModule } from './friends/friends.module'
 import { RealtimeModule } from './realtime/realtime.module'
 import { RoomModule } from './room/room.module'
 import { MetricsModule } from './metrics/metrics.module'
+import { PublicApiModule } from './public-api/public-api.module'
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { MetricsModule } from './metrics/metrics.module'
     RealtimeModule,
     RoomModule,
     MetricsModule,
+    PublicApiModule,
   ],
   controllers: [AppController],
   providers: [AppService],
