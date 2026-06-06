@@ -127,6 +127,12 @@ export function useRoomGame(
     const emitInput = (action: InputAction) => {
       const seq = predictionRef.current.applyInput(action)
       socket.emit('game.input', { roomId, action, seq })
+
+      // Immediately render the predicted state so the UI doesn't wait for the server round-trip
+      const predicted = predictionRef.current.predictedState.current.predictedState
+      if (myUserId && predicted) {
+        setPlayerStates((prev) => ({ ...prev, [myUserId]: predicted }))
+      }
     }
 
     const cancelEscapeHold = () => {
