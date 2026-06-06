@@ -22,6 +22,7 @@ import { AppRoute } from '@/routes/app/layout.tsx'
 import { AppIndexRoute } from '@/routes/app/app.tsx'
 import { SettingsRoute } from '@/routes/app/settings.tsx'
 import { MultiplayerRoute } from '@/routes/app/multiplayer.tsx'
+import { SoloRoute } from '@/routes/app/solo.tsx'
 import { RoomLobbyRoute } from '@/routes/app/room.tsx'
 import { RoomRoute } from '@/routes/app/room.$roomId.tsx'
 import { NotFound } from '@/routes/notFound.tsx'
@@ -59,6 +60,7 @@ const routeTree = rootRoute.addChildren([
   AppIndexRoute,
   SettingsRoute,
   MultiplayerRoute,
+  SoloRoute,
   RoomLobbyRoute,
   RoomRoute,
 ])

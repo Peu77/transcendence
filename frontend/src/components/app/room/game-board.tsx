@@ -56,7 +56,7 @@ export function GameBoard({ state, label, large }: GameBoardProps) {
         )}
       </div>
       <div
-        className={`relative ${large ? 'w-full max-w-[640px] aspect-[7/10]' : 'w-full max-w-[300px] aspect-[7/10]'}`}
+        className={`relative ${large ? 'h-full max-h-full aspect-[7/10]' : 'w-full max-w-[300px] aspect-[7/10]'}`}
       >
         <canvas ref={canvasRef} className="h-full w-full" />
         {state?.gameOver && (
