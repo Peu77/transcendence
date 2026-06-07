@@ -62,6 +62,7 @@ export function GameBoard({ state, label, large }: GameBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rendererRef = useRef<TetrisRenderer | null>(null)
   const latestStateRef = useRef<TetrisState | null>(state)
+  latestStateRef.current = state
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -88,7 +89,6 @@ export function GameBoard({ state, label, large }: GameBoardProps) {
   }, [large])
 
   useEffect(() => {
-    latestStateRef.current = state
     if (state && rendererRef.current) {
       rendererRef.current.render(state)
     }
