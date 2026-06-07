@@ -122,7 +122,7 @@ During the development of this project, Artificial Intelligence was utilized str
 
 ## Gaming and User Experience | --> Check requirements
 - [x] Implement Web based Game (2) 
-- [ ] Multiplayer game (2)
+- [x] Multiplayer game (2)
 - [x] Remote players — Enable two players on separate computers to play the
   same game in real-time
 - [ ] Advanced Chat Features (1)
@@ -142,9 +142,9 @@ During the development of this project, Artificial Intelligence was utilized str
 
 # Tetris Features:
 - [ ] T-Spin implementation (remove 4 lines) 
-- [ ] Allow custom game configs for rooms
+- [ ] Allow custom game configs for rooms (needs testing)
 - [ ] Special Modes (bomb mode for example)
-- [ ] Solo Mode
+- [x] Solo Mode (needs enhancing)
 - [ ] Quick Play Mode?
 
 
