@@ -1,54 +1,11 @@
 import { axios } from '@/lib/client.ts'
-
-export enum RotationSystem {
-  SRS = 'SRS',
-}
-
-export enum GarbageCancel {
-  FULL = 'full',
-  PARTIAL = 'partial',
-  NONE = 'none',
-}
-
-export enum PieceRandomizer {
-  SEVEN_BAG = '7-bag',
-}
-
-export type MatchSettings = {
-  gravity: number
-  lockDelayMs: number
-  lockResetLimit: number
-  areMs: number
-  lineClearDelayMs: number
-  rotationSystem: RotationSystem
-  hold: boolean
-  nextCount: number
-  bag: PieceRandomizer
-  forbidInitialSZ: boolean
-  width: number
-  height: number
-  hiddenRows: number
-  garbage: {
-    enabled: boolean
-    delayMs: number
-    cancel: GarbageCancel
-    holeCount: number
-    messiness: number
-  }
-  damage: {
-    table: {
-      single: number
-      double: number
-      triple: number
-      tetris: number
-      tSpinSingle: number
-      tSpinDouble: number
-      tSpinTriple: number
-    }
-    comboMultiplier: number
-    backToBackMultiplier: number
-  }
-}
+import type { MatchSettings } from '@transcendence/shared'
+export {
+  RotationSystem,
+  GarbageCancel,
+  PieceRandomizer,
+  type MatchSettings,
+} from '@transcendence/shared'
 
 export interface RoomUser {
   id: string

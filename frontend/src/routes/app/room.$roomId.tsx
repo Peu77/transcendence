@@ -20,7 +20,7 @@ const RoomPage = () => {
     handleLeaveRoom,
     handleStartGame,
     handleBackToLobby,
-  } = useRoomGame(roomId, me)
+  } = useRoomGame(roomId, me, room?.settings)
 
   const isHost = room?.hostUserId === me?.id
 
