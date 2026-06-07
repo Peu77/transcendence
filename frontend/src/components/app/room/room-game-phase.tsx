@@ -51,18 +51,26 @@ export function RoomGamePhase({
       )}
 
       <div
-        className="flex h-full min-h-0 w-full items-center justify-center gap-10 px-8 py-4 transition-transform duration-75 ease-out"
+        className="flex h-full min-h-0 w-full items-stretch gap-4 px-4 py-4 transition-transform duration-75 ease-out"
         style={{ transform: `scale(${escapeHoldScale})` }}
       >
-        <GameBoard state={myState} label="You" large />
+        {/* Own board — takes most of the space */}
+        <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center">
+          <GameBoard state={myState} label="You" large />
+        </div>
 
-        {opponentEntries.map(([userId, state]) => (
-          <GameBoard
-            key={userId}
-            state={state}
-            label={getUsernameForId(userId)}
-          />
-        ))}
+        {/* Opponents — small grid on the right */}
+        {opponentEntries.length > 0 && (
+          <div className="flex w-48 shrink-0 flex-col gap-3 overflow-y-auto py-2">
+            {opponentEntries.map(([userId, state]) => (
+              <GameBoard
+                key={userId}
+                state={state}
+                label={getUsernameForId(userId)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {gamePhase === 'countdown' && countdown !== null && (
