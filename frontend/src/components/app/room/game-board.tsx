@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { TetrisRenderer } from '@/game/tetris/renderer'
-import { TETROMINOES, type TetrisState, type TetrominoType } from '@transcendence/shared'
+import {
+  TETROMINOES,
+  type TetrisState,
+  type TetrominoType,
+} from '@transcendence/shared'
 
 const PIECE_CSS_COLORS: Record<string, string> = {
   I: 'bg-cyan-400',

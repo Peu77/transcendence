@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { TetrisGame } from '@transcendence/shared'
-import type { TetrisState, InputAction, MatchSettings } from '@transcendence/shared'
+import type {
+  TetrisState,
+  InputAction,
+  MatchSettings,
+} from '@transcendence/shared'
 import { useStore } from '@tanstack/react-store'
 import { userStore } from '@/store/userStore.ts'
 import {

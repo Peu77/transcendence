@@ -19,7 +19,11 @@ type ClientToServerEvents = {
     body: { roomId: string },
     callback: (res: { ok: boolean; error?: string }) => void,
   ) => void
-  'game.input': (body: { roomId: string; action: InputAction; seq?: number }) => void
+  'game.input': (body: {
+    roomId: string
+    action: InputAction
+    seq?: number
+  }) => void
 }
 
 type ServerToClientEvents = LiveEventMap

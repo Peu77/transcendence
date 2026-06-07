@@ -5,7 +5,11 @@ import { toast } from 'sonner'
 import { useLiveEvent } from '@/realtime/hooks.ts'
 import { useLiveSocket } from '@/realtime/useRealtimeStore.ts'
 import type { User } from '@/api/user.ts'
-import type { TetrisState, InputAction, MatchSettings } from '@transcendence/shared'
+import type {
+  TetrisState,
+  InputAction,
+  MatchSettings,
+} from '@transcendence/shared'
 import type { GamePlayerResult } from '@/realtime/events'
 import { usePrediction } from '@/game/tetris/prediction.ts'
 import {
@@ -129,7 +133,8 @@ export function useRoomGame(
       socket.emit('game.input', { roomId, action, ...(seq > 0 ? { seq } : {}) })
 
       // Immediately render the predicted state so the UI doesn't wait for the server round-trip
-      const predicted = predictionRef.current.predictedState.current.predictedState
+      const predicted =
+        predictionRef.current.predictedState.current.predictedState
       if (myUserId && predicted) {
         setPlayerStates((prev) => ({ ...prev, [myUserId]: predicted }))
       }

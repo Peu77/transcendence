@@ -48,8 +48,8 @@ const Solo = () => {
         >
           <GameBoard state={gameState} label="Solo" large />
           <div className="shrink-0 text-sm text-foreground/50">
-            Arrow keys to move &middot; Up to rotate &middot; Space to hard
-            drop &middot; C to hold &middot; HOLD ESC to quit
+            Arrow keys to move &middot; Up to rotate &middot; Space to hard drop
+            &middot; C to hold &middot; HOLD ESC to quit
           </div>
         </div>
       )}
