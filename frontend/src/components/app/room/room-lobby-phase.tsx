@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button.tsx'
-import { Loader2 } from 'lucide-react'
+import { ArrowLeftIcon, Loader2 } from 'lucide-react'
+import { useLiveSocket } from '@/realtime/useRealtimeStore.ts'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import {
   Tabs,
@@ -27,16 +29,20 @@ import { RoomChat } from './room-chat.tsx'
 type RoomLobbyPhaseProps = {
   room: Room
   isHost: boolean
+  onLeaveRoom: () => void
   onStartGame: () => void
 }
 
 export function RoomLobbyPhase({
   room,
   isHost,
+  onLeaveRoom,
   onStartGame,
 }: RoomLobbyPhaseProps) {
   const me = userStore.state
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const socket = useLiveSocket()
   const [isStarting, setIsStarting] = useState(false)
 
   const updateMatchMutation = useMutation({
@@ -65,14 +71,30 @@ export function RoomLobbyPhase({
 
   return (
     <div className="grid h-full min-h-0 overflow-hidden border-border/70 bg-background/95 xl:grid-cols-[360px_minmax(0,1fr)_400px]">
-      <RoomPlayersSidebar room={room} currentUserId={me?.id} />
+      <RoomPlayersSidebar
+        room={room}
+        currentUserId={me?.id}
+        onLeaveRoom={onLeaveRoom}
+      />
 
       <section className="flex min-h-0 flex-col border-x border-border/70 px-8  xl:px-10">
         <div className="border-b border-border/70 pb-8">
           <div className="flex flex-wrap items-start justify-center gap-4 sm:justify-between">
-            <h1 className="text-3xl font-bold uppercase tracking-wide xl:text-4xl">
-              Room: {room.id}
-            </h1>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  socket?.emit('room.leave', { roomId: room.id })
+                  navigate({ to: '/app' })
+                }}
+              >
+                <ArrowLeftIcon />
+              </Button>
+              <h1 className="text-3xl font-bold uppercase tracking-wide xl:text-4xl">
+                Room: {room.id}
+              </h1>
+            </div>
             {isHost && (
               <Button
                 type="button"

@@ -1,7 +1,7 @@
 import { io, type Socket } from 'socket.io-client'
 import { env } from '@/env'
 import type { LiveEventMap } from './events'
-import type { InputAction } from '@/game/tetris/types'
+import type { InputAction } from '@transcendence/shared'
 
 type ClientToServerEvents = {
   'dm.join': (body: { withUserId: string }) => void
@@ -19,7 +19,11 @@ type ClientToServerEvents = {
     body: { roomId: string },
     callback: (res: { ok: boolean; error?: string }) => void,
   ) => void
-  'game.input': (body: { roomId: string; action: InputAction }) => void
+  'game.input': (body: {
+    roomId: string
+    action: InputAction
+    seq?: number
+  }) => void
 }
 
 type ServerToClientEvents = LiveEventMap
