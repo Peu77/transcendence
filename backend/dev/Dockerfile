@@ -24,4 +24,4 @@ COPY backend/ .
 
 EXPOSE 4000
 
-CMD ["sh", "-c", "pnpm install --no-frozen-lockfile && pnpm run start:dev"]
+CMD ["sh", "-c", "pnpm install --no-frozen-lockfile && pnpm exec tsc --project /shared/tsconfig.json && pnpm run start:dev"]
