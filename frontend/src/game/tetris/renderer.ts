@@ -1,11 +1,10 @@
 import {
   BOARD_COLS,
   BOARD_ROWS,
-  PIECE_COLORS,
   TETROMINOES,
   TetrominoType,
   type TetrisState,
-} from './types'
+} from '@transcendence/shared'
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                         */
@@ -16,6 +15,17 @@ const GAP = 0.04
 const BG_COLOR: [number, number, number] = [0.08, 0.08, 0.12]
 
 const GHOST_ALPHA = 0.25
+
+/** Classic Tetris color palette per piece type */
+const PIECE_COLORS: Record<TetrominoType, [number, number, number]> = {
+  [TetrominoType.I]: [0.0, 0.9, 0.9], // cyan
+  [TetrominoType.O]: [0.9, 0.9, 0.0], // yellow
+  [TetrominoType.T]: [0.6, 0.0, 0.8], // purple
+  [TetrominoType.S]: [0.0, 0.9, 0.0], // green
+  [TetrominoType.Z]: [0.9, 0.0, 0.0], // red
+  [TetrominoType.J]: [0.0, 0.0, 0.9], // blue
+  [TetrominoType.L]: [0.9, 0.5, 0.0], // orange
+}
 
 /* ------------------------------------------------------------------ */
 /*  Shaders                                                           */
@@ -67,6 +77,7 @@ export class TetrisRenderer {
   private nextPreviewSize = 0
   private canvasWidth = 0
   private canvasHeight = 0
+  private _compact = false
 
   constructor(private canvas: HTMLCanvasElement) {
     const gl = canvas.getContext('webgl2', { alpha: false, antialias: false })
@@ -108,6 +119,10 @@ export class TetrisRenderer {
   /*  Public API                                                       */
   /* ---------------------------------------------------------------- */
 
+  set compact(value: boolean) {
+    this._compact = value
+  }
+
   resize(width: number, height: number) {
     const dpr = window.devicePixelRatio || 1
     this.canvas.width = width * dpr
@@ -119,18 +134,28 @@ export class TetrisRenderer {
     this.canvasWidth = width
     this.canvasHeight = height
 
-    // Reserve room on both sides: hold panel on the left, next queue on the right.
-    const cellSize = Math.floor(
-      Math.min((width - 40) / (BOARD_COLS + 8), height / BOARD_ROWS),
-    )
-    this.boardPixelWidth = cellSize * BOARD_COLS
-    this.boardPixelHeight = cellSize * BOARD_ROWS
-    this.previewSize = cellSize * 4
-    this.holdPreviewSize = Math.floor(cellSize * 3)
-    this.nextPreviewSize = Math.min(
-      this.holdPreviewSize,
-      Math.floor((this.boardPixelHeight - 10 - 4 * 6) / 5),
-    )
+    if (this._compact) {
+      // Board fills the entire canvas — no side panels.
+      const cellSize = Math.floor(
+        Math.min(width / BOARD_COLS, height / BOARD_ROWS),
+      )
+      this.boardPixelWidth = cellSize * BOARD_COLS
+      this.boardPixelHeight = cellSize * BOARD_ROWS
+      this.previewSize = 0
+    } else {
+      // Reserve room on both sides: hold panel on the left, next queue on the right.
+      const cellSize = Math.floor(
+        Math.min((width - 40) / (BOARD_COLS + 8), height / BOARD_ROWS),
+      )
+      this.boardPixelWidth = cellSize * BOARD_COLS
+      this.boardPixelHeight = cellSize * BOARD_ROWS
+      this.previewSize = cellSize * 4
+      this.holdPreviewSize = Math.floor(cellSize * 3)
+      this.nextPreviewSize = Math.min(
+        this.holdPreviewSize,
+        Math.floor((this.boardPixelHeight - 10 - 4 * 6) / 5),
+      )
+    }
   }
 
   render(state: TetrisState) {
@@ -264,79 +289,80 @@ export class TetrisRenderer {
       )
     }
 
-    const previewX = boardOffX + this.boardPixelWidth + 20
-    const previewY = boardOffY + 10
-    const prevCellSize = this.previewSize / 4
+    if (!this._compact) {
+      const previewX = boardOffX + this.boardPixelWidth + 20
+      const previewY = boardOffY + 10
 
-    const renderPiecePreview = (
-      type: TetrominoType,
-      x: number,
-      y: number,
-      cs: number,
-      alpha = 1.0,
-    ) => {
-      const blocks = TETROMINOES[type][0]
-      const color = PIECE_COLORS[type]
-      const bcValues = blocks.map(([, c]) => c)
-      const brValues = blocks.map(([r]) => r)
-      const minBc = Math.min(...bcValues)
-      const maxBc = Math.max(...bcValues)
-      const minBr = Math.min(...brValues)
-      const maxBr = Math.max(...brValues)
-      const colOffset = (4 - (maxBc - minBc + 1)) / 2 - minBc
-      const rowOffset = (4 - (maxBr - minBr + 1)) / 2 - minBr
-      for (const [br, bc] of blocks) {
-        const px = x + (bc + colOffset) * cs + GAP * cs
-        const py = y + (br + rowOffset) * cs + GAP * cs
+      const renderPiecePreview = (
+        type: TetrominoType,
+        x: number,
+        y: number,
+        cs: number,
+        alpha = 1.0,
+      ) => {
+        const blocks = TETROMINOES[type][0]
+        const color = PIECE_COLORS[type]
+        const bcValues = blocks.map(([, c]) => c)
+        const brValues = blocks.map(([r]) => r)
+        const minBc = Math.min(...bcValues)
+        const maxBc = Math.max(...bcValues)
+        const minBr = Math.min(...brValues)
+        const maxBr = Math.max(...brValues)
+        const colOffset = (4 - (maxBc - minBc + 1)) / 2 - minBc
+        const rowOffset = (4 - (maxBr - minBr + 1)) / 2 - minBr
+        for (const [br, bc] of blocks) {
+          const px = x + (bc + colOffset) * cs + GAP * cs
+          const py = y + (br + rowOffset) * cs + GAP * cs
+          pushQuad(
+            px,
+            py,
+            cs * (1 - 2 * GAP),
+            cs * (1 - 2 * GAP),
+            color[0],
+            color[1],
+            color[2],
+            alpha,
+          )
+        }
+      }
+
+      const renderPreviewPanel = (x: number, y: number, size: number) => {
         pushQuad(
-          px,
-          py,
-          cs * (1 - 2 * GAP),
-          cs * (1 - 2 * GAP),
-          color[0],
-          color[1],
-          color[2],
-          alpha,
+          x - 5,
+          y - 5,
+          size + 10,
+          size + 10,
+          BG_COLOR[0],
+          BG_COLOR[1],
+          BG_COLOR[2],
+          0.8,
         )
       }
-    }
 
-    const renderPreviewPanel = (x: number, y: number, size: number) => {
-      pushQuad(
-        x - 5,
-        y - 5,
-        size + 10,
-        size + 10,
-        BG_COLOR[0],
-        BG_COLOR[1],
-        BG_COLOR[2],
-        0.8,
-      )
-    }
+      const nextPieces = state.nextPieces?.length
+        ? state.nextPieces
+        : [state.nextPiece]
+      const nextCs = this.nextPreviewSize / 4
+      nextPieces.forEach((nextPiece, index) => {
+        const y = previewY + index * (this.nextPreviewSize + 6)
+        renderPreviewPanel(previewX, y, this.nextPreviewSize)
+        renderPiecePreview(nextPiece, previewX, y, nextCs)
+      })
 
-    const nextPieces = state.nextPieces?.length
-      ? state.nextPieces
-      : [state.nextPiece]
-    const nextCs = this.nextPreviewSize / 4
-    nextPieces.forEach((nextPiece, index) => {
-      const y = previewY + index * (this.nextPreviewSize + 6)
-      renderPreviewPanel(previewX, y, this.nextPreviewSize)
-      renderPiecePreview(nextPiece, previewX, y, nextCs)
-    })
-
-    const holdSlotX = boardOffX - this.previewSize - 20
-    const holdPanelX = holdSlotX + (this.previewSize - this.holdPreviewSize) / 2
-    const holdY = previewY
-    const holdCs = this.holdPreviewSize / 4
-    renderPreviewPanel(holdPanelX, holdY, this.holdPreviewSize)
-    if (state.heldPiece) {
-      renderPiecePreview(
-        state.heldPiece,
-        holdPanelX,
-        holdY,
-        holdCs,
-        state.canHold ? 1.0 : 0.45,
-      )
+      const holdSlotX = boardOffX - this.previewSize - 20
+      const holdPanelX = holdSlotX + (this.previewSize - this.holdPreviewSize) / 2
+      const holdY = previewY
+      const holdCs = this.holdPreviewSize / 4
+      renderPreviewPanel(holdPanelX, holdY, this.holdPreviewSize)
+      if (state.heldPiece) {
+        renderPiecePreview(
+          state.heldPiece,
+          holdPanelX,
+          holdY,
+          holdCs,
+          state.canHold ? 1.0 : 0.45,
+        )
+      }
     }
 
     const gl = this.gl

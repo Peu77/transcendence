@@ -4,7 +4,7 @@ import {
   type GameControls,
   type TetrisHandlingSettings,
 } from '@/api/user.ts'
-import type { InputAction } from '@/game/tetris/types'
+import type { InputAction } from '@transcendence/shared'
 
 export type GamePhase = 'lobby' | 'countdown' | 'playing' | 'finished'
 

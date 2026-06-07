@@ -19,4 +19,5 @@ export type RoomSettingsFormProps = RoomFormCommonProps & {
 export type RoomPlayersSidebarProps = {
   room: Room
   currentUserId?: string
+  onLeaveRoom?: () => void
 }

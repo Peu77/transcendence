@@ -14,19 +14,20 @@ services:
     restart: unless-stopped
   backend:
     build:
-      context: ./backend
-      dockerfile: dev/Dockerfile
+      context: .
+      dockerfile: backend/dev/Dockerfile
     env_file:
       - backend/dev/.env.docker
     container_name: transcendence-backend
-    
+
     ports:
       - "4000:4000"
-    
+
     volumes:
       - ./backend:/app
+      - ./shared:/shared
       - /app/node_modules
-    
+
     restart: unless-stopped
 
     depends_on:
@@ -59,21 +60,22 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: dev/Dockerfile
-    
+      context: .
+      dockerfile: frontend/dev/Dockerfile
+
     container_name: transcendence-frontend
-    
+
     ports:
       - "3000:3000"
-    
+
     volumes:
       - ./frontend:/app
+      - ./shared:/shared
       - /app/node_modules
-    
+
     depends_on:
       - backend
-    
+
     restart: unless-stopped
 
 volumes:

@@ -1,5 +1,5 @@
 import type { DirectMessage, PresenceStatus } from '@/api/friends'
-import type { TetrisState } from '@/game/tetris/types'
+import type { TetrisState, TetrominoType } from '@transcendence/shared'
 
 export type UserInfo = {
   username: string
@@ -67,7 +67,12 @@ export type LiveEventMap = {
   'presence.updated': PresenceUpdatedEvent
   'dm.created': DirectMessageCreatedEvent
   'game.countdown': { roomId: string; count: number }
-  'game.state': { roomId: string; players: Record<string, TetrisState> }
+  'game.state': {
+    roomId: string
+    players: Record<string, TetrisState>
+    lastSeq?: Record<string, number>
+    predictionPieces?: Record<string, TetrominoType[]>
+  }
   'game.player-over': {
     roomId: string
     userId: string
