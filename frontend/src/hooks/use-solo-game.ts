@@ -8,17 +8,21 @@ import {
   normalizeHandlingSettings,
 } from '@/components/app/room/room-game.ts'
 
-export type SoloPhase = 'idle' | 'playing' | 'finished'
+export type SoloPhase = 'countdown' | 'playing' | 'finished'
 
 export function useSoloGame() {
   const user = useStore(userStore)
-  const [phase, setPhase] = useState<SoloPhase>('idle')
+  const [phase, setPhase] = useState<SoloPhase>('countdown')
+  const [countdown, setCountdown] = useState<number>(3)
   const [gameState, setGameState] = useState<TetrisState | null>(null)
+
+  const [escapeHoldProgress, setEscapeHoldProgress] = useState(0)
 
   const gameRef = useRef<TetrisGame | null>(null)
   const tickTimerRef = useRef<number | null>(null)
-  const phaseRef = useRef<SoloPhase>('idle')
+  const phaseRef = useRef<SoloPhase>('countdown')
   const lastLevelRef = useRef(1)
+  const countdownTimerRef = useRef<number | null>(null)
 
   const clearTick = useCallback(() => {
     if (tickTimerRef.current !== null) {
@@ -58,30 +62,68 @@ export function useSoloGame() {
     }, game.getTickInterval())
   }, [clearTick, updateState])
 
-  const start = useCallback(() => {
+  const clearCountdown = useCallback(() => {
+    if (countdownTimerRef.current !== null) {
+      window.clearInterval(countdownTimerRef.current)
+      countdownTimerRef.current = null
+    }
+  }, [])
+
+  const startGame = useCallback(() => {
+    clearCountdown()
+    // Game instance already created during countdown
+    if (!gameRef.current) {
+      const game = new TetrisGame({
+        garbage: { enabled: false } as MatchSettings['garbage'],
+      })
+      gameRef.current = game
+      lastLevelRef.current = 1
+      setGameState(game.getState())
+    }
+    phaseRef.current = 'playing'
+    setPhase('playing')
+    startTickLoop()
+  }, [clearCountdown, startTickLoop])
+
+  const startCountdown = useCallback(() => {
     clearTick()
+    clearCountdown()
     const game = new TetrisGame({
       garbage: { enabled: false } as MatchSettings['garbage'],
     })
     gameRef.current = game
     lastLevelRef.current = 1
-    phaseRef.current = 'playing'
-    setPhase('playing')
+    phaseRef.current = 'countdown'
+    setPhase('countdown')
     setGameState(game.getState())
-    startTickLoop()
-  }, [clearTick, startTickLoop])
+    setCountdown(3)
+
+    let count = 3
+    countdownTimerRef.current = window.setInterval(() => {
+      count--
+      if (count <= 0) {
+        clearCountdown()
+        setCountdown(0)
+        startGame()
+      } else {
+        setCountdown(count)
+      }
+    }, 1000)
+  }, [clearTick, clearCountdown, startGame])
 
   const restart = useCallback(() => {
-    start()
-  }, [start])
+    startCountdown()
+  }, [startCountdown])
 
   const quit = useCallback(() => {
     clearTick()
+    clearCountdown()
     gameRef.current = null
-    phaseRef.current = 'idle'
-    setPhase('idle')
+    phaseRef.current = 'countdown'
+    setPhase('countdown')
     setGameState(null)
-  }, [clearTick])
+    setCountdown(3)
+  }, [clearTick, clearCountdown])
 
   // Input handling with DAS/ARR
   useEffect(() => {
@@ -93,6 +135,12 @@ export function useSoloGame() {
     const timers: Partial<
       Record<InputAction, { delay?: number; repeat?: number }>
     > = {}
+    const escapeHoldDuration = 900
+    const escapeHoldAnimationDelay = 180
+    let escapeHoldStart = 0
+    let escapeHoldFrame: number | null = null
+    let escapeHoldTimer: number | null = null
+    let escapeHoldAnimationTimer: number | null = null
 
     const clearActionTimers = (action: InputAction) => {
       const actionTimers = timers[action]
@@ -104,6 +152,45 @@ export function useSoloGame() {
     const clearHorizontalTimers = () => {
       clearActionTimers('left')
       clearActionTimers('right')
+    }
+
+    const cancelEscapeHold = () => {
+      if (escapeHoldFrame !== null) window.cancelAnimationFrame(escapeHoldFrame)
+      if (escapeHoldTimer !== null) window.clearTimeout(escapeHoldTimer)
+      if (escapeHoldAnimationTimer !== null) {
+        window.clearTimeout(escapeHoldAnimationTimer)
+      }
+      escapeHoldFrame = null
+      escapeHoldTimer = null
+      escapeHoldAnimationTimer = null
+      escapeHoldStart = 0
+      setEscapeHoldProgress(0)
+    }
+
+    const tickEscapeHold = () => {
+      if (!escapeHoldStart) return
+      const progress = Math.min(
+        (performance.now() - escapeHoldStart) / escapeHoldDuration,
+        1,
+      )
+      setEscapeHoldProgress(progress)
+      if (progress < 1) {
+        escapeHoldFrame = window.requestAnimationFrame(tickEscapeHold)
+      }
+    }
+
+    const startEscapeHold = () => {
+      if (escapeHoldStart) return
+      escapeHoldStart = performance.now()
+      escapeHoldAnimationTimer = window.setTimeout(() => {
+        escapeHoldAnimationTimer = null
+        if (!escapeHoldStart) return
+        tickEscapeHold()
+      }, escapeHoldAnimationDelay)
+      escapeHoldTimer = window.setTimeout(() => {
+        setEscapeHoldProgress(1)
+        quit()
+      }, escapeHoldDuration)
     }
 
     const emitInput = (action: InputAction) => {
@@ -150,7 +237,7 @@ export function useSoloGame() {
 
       if (e.key === 'Escape') {
         e.preventDefault()
-        if (!e.repeat) quit()
+        if (!e.repeat) startEscapeHold()
         return
       }
 
@@ -173,6 +260,12 @@ export function useSoloGame() {
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        cancelEscapeHold()
+        return
+      }
+
       const action = keyMap[e.key]
       if (!action) return
 
@@ -190,20 +283,24 @@ export function useSoloGame() {
       for (const action of Object.keys(timers) as InputAction[]) {
         clearActionTimers(action)
       }
+      cancelEscapeHold()
     }
   }, [user?.gameControls, user?.tetrisHandlingSettings, quit])
 
-  // Cleanup on unmount
+  // Auto-start countdown on mount
   useEffect(() => {
+    startCountdown()
     return () => {
       clearTick()
+      clearCountdown()
     }
-  }, [clearTick])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     phase,
+    countdown,
     gameState,
-    start,
+    escapeHoldProgress,
     restart,
     quit,
   }

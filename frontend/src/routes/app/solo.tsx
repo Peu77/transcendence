@@ -7,10 +7,12 @@ import { useSoloGame } from '@/hooks/use-solo-game.ts'
 
 const Solo = () => {
   const navigate = useNavigate()
-  const { phase, gameState, start, restart, quit } = useSoloGame()
+  const { phase, countdown, gameState, escapeHoldProgress, restart, quit } =
+    useSoloGame()
+  const escapeHoldScale = 1 - Math.min(escapeHoldProgress, 1) * 0.18
 
   return (
-    <div className="flex h-full flex-col items-center">
+    <div className="flex h-full flex-col items-center overflow-hidden">
       {/* Header */}
       <div className="flex w-full max-w-[90%] shrink-0 items-center gap-2 pt-2">
         <Button
@@ -26,25 +28,28 @@ const Solo = () => {
         <h1 className="text-3xl font-bold">Solo</h1>
       </div>
 
-      {/* Idle state: START button */}
-      {phase === 'idle' && (
-        <div className="flex flex-1 items-center justify-center">
-          <Button
-            onClick={start}
-            className="px-12 py-8 text-3xl font-bold"
-          >
-            START
-          </Button>
+      {/* Countdown state — board visible with overlay */}
+      {phase === 'countdown' && gameState && (
+        <div className="relative flex min-h-0 flex-1 flex-col items-center py-2">
+          <GameBoard state={gameState} label="Solo" large />
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/60">
+            <span className="animate-pulse text-8xl font-bold text-white">
+              {countdown === 0 ? 'GO!' : countdown}
+            </span>
+          </div>
         </div>
       )}
 
       {/* Playing state: game board */}
       {phase === 'playing' && gameState && (
-        <div className="flex min-h-0 flex-1 flex-col items-center gap-2 py-2">
+        <div
+          className="flex min-h-0 flex-1 flex-col items-center gap-2 py-2 transition-transform duration-75 ease-out"
+          style={{ transform: `scale(${escapeHoldScale})` }}
+        >
           <GameBoard state={gameState} label="Solo" large />
           <div className="shrink-0 text-sm text-foreground/50">
             Arrow keys to move &middot; Up to rotate &middot; Space to hard
-            drop &middot; C to hold &middot; ESC to quit
+            drop &middot; C to hold &middot; HOLD ESC to quit
           </div>
         </div>
       )}
