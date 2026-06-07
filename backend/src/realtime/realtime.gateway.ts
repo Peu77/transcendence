@@ -321,8 +321,11 @@ export class RealtimeGateway
     const playerGame = session.players.get(userId)
     if (!playerGame || playerGame.game.gameOver) return
 
-    if (typeof body.seq === 'number') {
-      playerGame.lastSeq = Math.max(playerGame.lastSeq, body.seq)
+    const seq = typeof body.seq === 'number' ? body.seq : undefined
+    if (seq !== undefined) {
+      // Drop stale / out-of-order inputs so server order matches client prediction.
+      if (seq <= playerGame.lastSeq) return
+      playerGame.lastSeq = seq
     }
 
     playerGame.game.processInput(body.action)
