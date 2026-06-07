@@ -26,7 +26,7 @@ export default defineConfig({
   },
   server: {
     fs: {
-      allow: [fileURLToPath(new URL('../shared', import.meta.url))],
+      allow: ['..'],
     },
   },
 })
