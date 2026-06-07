@@ -321,8 +321,9 @@ export class RealtimeGateway
     const playerGame = session.players.get(userId)
     if (!playerGame || playerGame.game.gameOver) return
 
-    const seq = typeof body.seq === 'number' ? body.seq : 0
-    playerGame.lastSeq = seq
+    if (typeof body.seq === 'number') {
+      playerGame.lastSeq = Math.max(playerGame.lastSeq, body.seq)
+    }
 
     playerGame.game.processInput(body.action)
     this.sendGarbageToOpponents(body.roomId, userId, playerGame.game)
