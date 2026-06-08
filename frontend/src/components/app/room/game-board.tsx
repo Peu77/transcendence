@@ -108,20 +108,21 @@ export function GameBoard({ state, label, large }: GameBoardProps) {
     return (
       <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center gap-6">
         {/* Hold piece — left of board */}
-        <div className="flex shrink-0 flex-col items-center gap-3 self-start pt-4">
+        <div className="flex w-[150px] shrink-0 flex-col items-center gap-3 self-start pt-4">
           <span className="text-sm font-bold uppercase tracking-widest text-foreground/60">
             Hold
           </span>
-          <div className="flex min-h-[80px] min-w-[80px] items-center justify-center rounded-lg bg-black/30 p-3">
+          <div
+            className="flex h-[140px] w-full items-center justify-center rounded-lg border border-white/5 p-4"
+            style={{ background: '#14141f' }}
+          >
             {state?.heldPiece ? (
               <PiecePreview
                 type={state.heldPiece}
                 dimmed={!state.canHold}
                 cellSize={30}
               />
-            ) : (
-              <span className="text-sm text-white/20">---</span>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -148,20 +149,21 @@ export function GameBoard({ state, label, large }: GameBoardProps) {
         </div>
 
         {/* Next pieces — right of board */}
-        {nextPieces.length > 0 && (
-          <div className="flex shrink-0 flex-col items-center gap-3 self-start pt-4">
-            <span className="text-sm font-bold uppercase tracking-widest text-foreground/60">
-              Next
-            </span>
-            <div className="flex flex-col items-center gap-2 rounded-lg bg-black/30 p-3">
-              {nextPieces.map((type, i) => (
-                <div key={i} className={i > 0 ? 'opacity-50' : ''}>
-                  <PiecePreview type={type} cellSize={30} />
-                </div>
-              ))}
-            </div>
+        <div className="flex w-[150px] shrink-0 flex-col items-center gap-3 self-start pt-4">
+          <span className="text-sm font-bold uppercase tracking-widest text-foreground/60">
+            Next
+          </span>
+          <div
+            className="flex w-full flex-col items-center gap-2 rounded-lg border border-white/5 p-4"
+            style={{ background: '#14141f' }}
+          >
+            {nextPieces.map((type, i) => (
+              <div key={i} className={i > 0 ? 'opacity-50' : ''}>
+                <PiecePreview type={type} cellSize={30} />
+              </div>
+            ))}
           </div>
-        )}
+        </div>
       </div>
     )
   }
