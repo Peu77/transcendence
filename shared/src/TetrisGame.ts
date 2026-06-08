@@ -2,6 +2,8 @@ import {
   type Block,
   BOARD_COLS,
   BOARD_ROWS,
+  createEmptyGameMetrics,
+  type GameMetrics,
   type InputAction,
   TETROMINOES,
   type TetrisPiece,
@@ -46,6 +48,8 @@ export class TetrisGame {
   lines = 0
   level = 1
   gameOver = false
+  /** Cumulative gameplay counters (pieces placed, line clears, etc.). */
+  metrics: GameMetrics = createEmptyGameMetrics()
   private combo = -1
   private backToBack = false
   private outgoingGarbage = 0
@@ -169,6 +173,7 @@ export class TetrisGame {
       lines: this.lines,
       level: this.level,
       gameOver: this.gameOver,
+      metrics: { ...this.metrics },
     }
   }
 
@@ -184,6 +189,7 @@ export class TetrisGame {
     this.lines = state.lines
     this.level = state.level
     this.gameOver = state.gameOver
+    this.metrics = { ...createEmptyGameMetrics(), ...state.metrics }
     // Private state resets — corrected on next reconciliation
     this.combo = -1
     this.backToBack = false
@@ -367,6 +373,7 @@ export class TetrisGame {
   }
 
   private lockPiece(): void {
+    this.metrics.piecesPlaced++
     const blocks = this.getBlocks(this.currentPiece)
     for (const [br, bc] of blocks) {
       const r = this.currentPiece.row + br
@@ -396,9 +403,31 @@ export class TetrisGame {
       this.score += (LINE_SCORES[cleared] ?? cleared * 200) * this.level
       this.level = Math.floor(this.lines / LINES_PER_LEVEL) + 1
       this.outgoingGarbage += this.calculateGarbage(cleared)
+      this.recordLineClear(cleared)
     } else {
       this.combo = -1
       this.backToBack = false
+    }
+  }
+
+  /** Update line-clear breakdown and combo metrics for a successful clear. */
+  private recordLineClear(cleared: number): void {
+    switch (cleared) {
+      case 1:
+        this.metrics.singles++
+        break
+      case 2:
+        this.metrics.doubles++
+        break
+      case 3:
+        this.metrics.triples++
+        break
+      default:
+        this.metrics.tetrises++
+        break
+    }
+    if (this.combo > this.metrics.maxCombo) {
+      this.metrics.maxCombo = this.combo
     }
   }
 
@@ -543,6 +572,7 @@ export class TetrisGame {
     this.heldType = currentType
     this.currentPiece = this.spawnPiece(nextType)
     this.canHold = false
+    this.metrics.holds++
 
     if (this.collides(this.currentPiece)) {
       log('GAME OVER after hold: held piece collides at spawn', {

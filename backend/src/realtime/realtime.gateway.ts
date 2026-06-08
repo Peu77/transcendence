@@ -31,6 +31,8 @@ import {
   type TetrominoType,
 } from '@transcendence/shared'
 import { MatchResult } from '../users/match-result.entity'
+import { StatsService } from '../stats/stats.service'
+import { AchievementsService } from '../achievements/achievements.service'
 
 type SocketAuthUser = { userId: string }
 
@@ -44,6 +46,7 @@ interface RoomGameSession {
   players: Map<string, PlayerGame> // userId → their game
   roomId: string
   finishing: boolean
+  startedAt: number // epoch ms, used to compute match duration
 }
 
 function parseCookie(cookieHeader: string | undefined): Record<string, string> {
@@ -84,6 +87,8 @@ export class RealtimeGateway
     private readonly roomService: RoomService,
     @InjectRepository(MatchResult)
     private readonly matchResultsRepository: Repository<MatchResult>,
+    private readonly statsService: StatsService,
+    private readonly achievementsService: AchievementsService,
   ) {
     this.jwtSecret = configService.getOrThrow<string>('JWT_SECRET')
   }
@@ -285,6 +290,7 @@ export class RealtimeGateway
         players: new Map(),
         roomId,
         finishing: false,
+        startedAt: Date.now(),
       }
 
       for (const user of room.users) {
@@ -538,9 +544,67 @@ export class RealtimeGateway
       this.logger.error(`Failed to save results for match ${matchId}`, error)
     }
 
+    await this.updateStatsAndAchievements(session, results)
+
     this.emitToGameRoom(roomId, 'game.finished', { roomId, results })
     this.roomService.endGame(roomId)
     this.destroyGameSession(roomId)
+  }
+
+  /**
+   * Aggregate finished-match data into per-user lifetime stats, then re-check
+   * achievements and notify each player of anything newly unlocked.
+   *
+   * `results` is sorted by score descending, so index 0 is the top scorer.
+   * A win/loss is only counted for multiplayer matches (2+ players); solo runs
+   * are recorded as played but neither won nor lost.
+   */
+  private async updateStatsAndAchievements(
+    session: RoomGameSession,
+    results: { userId: string }[],
+  ): Promise<void> {
+    const playerCount = results.length
+    const isMultiplayer = playerCount > 1
+    const playTimeInSeconds = Math.max(
+      0,
+      Math.round((Date.now() - session.startedAt) / 1000),
+    )
+
+    const statInputs = results.map((result, index) => {
+      const state = session.players.get(result.userId)!.game.getState()
+      return {
+        userId: result.userId,
+        won: isMultiplayer && index === 0,
+        lost: isMultiplayer && index !== 0,
+        score: state.score,
+        lines: state.lines,
+        metrics: state.metrics,
+        playTimeInSeconds,
+      }
+    })
+
+    try {
+      await this.statsService.recordMatch(statInputs)
+    } catch (error) {
+      this.logger.error('Failed to record match stats', error)
+      return
+    }
+
+    for (const input of statInputs) {
+      try {
+        const unlocked = await this.achievementsService.evaluate(input.userId)
+        if (unlocked.length > 0) {
+          this.server
+            .to(userRoom(input.userId))
+            .emit('achievements.unlocked', { achievements: unlocked })
+        }
+      } catch (error) {
+        this.logger.error(
+          `Failed to evaluate achievements for user ${input.userId}`,
+          error,
+        )
+      }
+    }
   }
 
   private handlePlayerDisconnectFromGame(roomId: string, userId: string) {

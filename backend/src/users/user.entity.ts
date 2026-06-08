@@ -103,6 +103,11 @@ export class User {
   @Column({ default: 1 })
   level!: number
 
+  // TODO(stats): The aggregate stat columns below are superseded by the
+  // dedicated `user_stats` table (see src/stats/user-stats.entity.ts). They are
+  // currently unused (never read or written anywhere in the codebase) and
+  // should be removed once nothing depends on them. Verified unused as of the
+  // stats-achievements branch; double-check before deleting.
   @Column({ default: 0 })
   matchesPlayed!: number
 

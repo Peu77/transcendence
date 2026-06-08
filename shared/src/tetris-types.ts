@@ -30,6 +30,47 @@ export interface TetrisPiece {
   rotation: number
 }
 
+/**
+ * Cumulative gameplay counters for a single game, tracked by the engine.
+ *
+ * This is intentionally an open-ended "bag of counters". To track a new
+ * gameplay metric (e.g. t-spins, perfect clears, attack sent), add a field
+ * here, increment it in the relevant spot of `TetrisGame`, and it will flow
+ * through `getState()` -> persisted `MatchResult.state` -> aggregated user
+ * stats automatically, without any schema migration.
+ */
+export interface GameMetrics {
+  /** Total pieces locked into the board. */
+  piecesPlaced: number
+  /** Number of 1-line clears. */
+  singles: number
+  /** Number of 2-line clears. */
+  doubles: number
+  /** Number of 3-line clears. */
+  triples: number
+  /** Number of 4-line clears (tetrises). */
+  tetrises: number
+  /** Highest combo chain reached this game. */
+  maxCombo: number
+  /** Number of times the hold slot was used. */
+  holds: number
+  // Future extensions (require detection in the engine first), e.g.:
+  // tSpins: number
+  // perfectClears: number
+}
+
+export function createEmptyGameMetrics(): GameMetrics {
+  return {
+    piecesPlaced: 0,
+    singles: 0,
+    doubles: 0,
+    triples: 0,
+    tetrises: 0,
+    maxCombo: 0,
+    holds: 0,
+  }
+}
+
 export interface TetrisState {
   /** 20 rows x 10 cols.  0 = empty, otherwise a TetrominoType char code */
   board: (string | 0)[][]
@@ -43,6 +84,7 @@ export interface TetrisState {
   lines: number
   level: number
   gameOver: boolean
+  metrics: GameMetrics
 }
 
 export const BOARD_ROWS = 20
