@@ -38,6 +38,14 @@ export interface MatchHistoryItem {
   players: MatchHistoryPlayer[]
 }
 
+export interface GlobalRankingItem {
+  userId: string
+  username: string
+  profilePictureId: string | null
+  score: number
+  matchesPlayed: number
+}
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -255,6 +263,36 @@ export class UsersService {
         players,
       }
     })
+  }
+
+  async getGlobalRanking(): Promise<GlobalRankingItem[]> {
+    const rankings = await this.matchResultsRepo
+      .createQueryBuilder('result')
+      .innerJoin('result.user', 'user')
+      .select('user.id', 'userId')
+      .addSelect('user.username', 'username')
+      .addSelect('user.profilePictureId', 'profilePictureId')
+      .addSelect('SUM(result.score)', 'score')
+      .addSelect('COUNT(result.id)', 'matchesPlayed')
+      .groupBy('user.id')
+      .addGroupBy('user.username')
+      .addGroupBy('user.profilePictureId')
+      .orderBy('SUM(result.score)', 'DESC')
+      .addOrderBy('COUNT(result.id)', 'DESC')
+      .addOrderBy('user.username', 'ASC')
+      .getRawMany<{
+        userId: string
+        username: string
+        profilePictureId: string | null
+        score: string
+        matchesPlayed: string
+      }>()
+
+    return rankings.map((ranking) => ({
+      ...ranking,
+      score: Number(ranking.score),
+      matchesPlayed: Number(ranking.matchesPlayed),
+    }))
   }
 
   async existUserProfilePictureInFs(
