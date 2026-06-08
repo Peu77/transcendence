@@ -1,7 +1,6 @@
 import { createRoute } from '@tanstack/react-router'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { Button } from '@/components/ui/button.tsx'
-import { ArrowLeftIcon } from 'lucide-react'
 import { GameBoard } from '@/components/app/room/game-board.tsx'
 import { useSoloGame } from '@/hooks/use-solo-game.ts'
 
@@ -12,21 +11,9 @@ const Solo = () => {
 
   return (
     <div className="flex h-full flex-col items-center overflow-hidden">
-      {/* Header */}
-      <div className="flex w-full max-w-[90%] shrink-0 items-center gap-2 pt-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={quit}
-        >
-          <ArrowLeftIcon />
-        </Button>
-        <h1 className="text-3xl font-bold">Solo</h1>
-      </div>
-
       {/* Countdown state — board visible with overlay */}
       {phase === 'countdown' && gameState && (
-        <div className="relative flex min-h-0 flex-1 flex-col items-center py-2">
+        <div className="relative flex min-h-0 w-full flex-1 flex-col items-center py-2">
           <GameBoard state={gameState} label="Solo" large />
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/60">
             <span className="animate-pulse text-8xl font-bold text-white">
@@ -39,7 +26,7 @@ const Solo = () => {
       {/* Playing state: game board */}
       {phase === 'playing' && gameState && (
         <div
-          className="flex min-h-0 flex-1 flex-col items-center gap-2 py-2 transition-transform duration-75 ease-out"
+          className="flex min-h-0 w-full flex-1 flex-col items-center gap-2 py-2 transition-transform duration-75 ease-out"
           style={{ transform: `scale(${escapeHoldScale})` }}
         >
           <GameBoard state={gameState} label="Solo" large />
@@ -52,7 +39,7 @@ const Solo = () => {
 
       {/* Finished state: overlay with stats */}
       {phase === 'finished' && gameState && (
-        <div className="relative flex min-h-0 flex-1 flex-col items-center py-2">
+        <div className="relative flex min-h-0 w-full flex-1 flex-col items-center py-2">
           <GameBoard state={gameState} label="Solo" large />
           <div className="absolute inset-0 flex items-center justify-center bg-black/70">
             <div className="flex flex-col items-center gap-6 rounded-lg bg-background/90 p-8">

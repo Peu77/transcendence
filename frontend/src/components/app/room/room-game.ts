@@ -8,6 +8,18 @@ import type { InputAction } from '@transcendence/shared'
 
 export type GamePhase = 'lobby' | 'countdown' | 'playing' | 'finished'
 
+/** Actions the game engine actually understands (everything except chat). */
+const VALID_INPUT_ACTIONS = new Set<InputAction>([
+  'left',
+  'right',
+  'rotate',
+  'rotateCcw',
+  'rotate180',
+  'softDrop',
+  'hardDrop',
+  'hold',
+])
+
 export const buildKeyMap = (
   controls?: GameControls,
 ): Record<string, InputAction> => {
@@ -15,7 +27,7 @@ export const buildKeyMap = (
 
   return Object.entries(normalizedControls).reduce<Record<string, InputAction>>(
     (keyMap, [action, key]) => {
-      if (action === 'toggleChat') return keyMap
+      if (!VALID_INPUT_ACTIONS.has(action as InputAction)) return keyMap
       keyMap[key] = action as InputAction
       return keyMap
     },

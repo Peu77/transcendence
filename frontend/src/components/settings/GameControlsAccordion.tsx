@@ -15,7 +15,9 @@ import * as React from 'react'
 const CONTROL_LABELS: Record<GameControlAction, string> = {
   left: 'Move left',
   right: 'Move right',
-  rotate: 'Rotate',
+  rotate: 'Rotate clockwise',
+  rotateCcw: 'Rotate counterclockwise',
+  rotate180: 'Rotate 180°',
   softDrop: 'Soft drop',
   hardDrop: 'Hard drop',
   hold: 'Hold',

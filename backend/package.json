@@ -6,10 +6,14 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "build:shared": "cd ../shared && pnpm run build",
+    "prebuild": "pnpm run build:shared",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "prestart": "pnpm run build:shared",
     "start": "nest start",
+    "prestart:dev": "pnpm run build:shared",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
@@ -46,7 +50,7 @@
     "speakeasy": "^2.0.0",
     "typeorm": "^0.3.28",
     "uuid": "^13.0.0",
-    "@transcendence/shared": "file:../shared"
+    "@transcendence/shared": "link:../shared"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",

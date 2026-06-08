@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { In, Repository } from 'typeorm'
 import {
   DEFAULT_GAME_CONTROLS,
   DEFAULT_TETRIS_HANDLING_SETTINGS,
@@ -15,11 +15,35 @@ import { UserInfo } from '../realtime/realtime.events'
 import { GithubValidateReturn } from '../auth/github.strategy'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
+import { MatchResult } from './match-result.entity'
+
+export interface MatchHistoryPlayer {
+  userId: string
+  username: string
+  score: number
+  lines: number
+  level: number
+  placement: number
+}
+
+export interface MatchHistoryItem {
+  matchId: string
+  roomId: string
+  playedAt: Date
+  placement: number
+  playerCount: number
+  score: number
+  lines: number
+  level: number
+  players: MatchHistoryPlayer[]
+}
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepo: Repository<User>,
+    @InjectRepository(MatchResult)
+    private readonly matchResultsRepo: Repository<MatchResult>,
   ) {}
 
   static readonly UPLOAD_DIR = 'uploads/'
@@ -182,6 +206,54 @@ export class UsersService {
       username: user.username,
       profilePictureId: user.profilePictureId,
     }
+  }
+
+  async getMatchHistory(userId: string): Promise<MatchHistoryItem[]> {
+    const userResults = await this.matchResultsRepo.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+      take: 50,
+    })
+
+    if (userResults.length === 0) return []
+
+    const allResults = await this.matchResultsRepo.find({
+      where: { matchId: In(userResults.map((result) => result.matchId)) },
+      relations: { user: true },
+    })
+
+    const resultsByMatch = new Map<string, MatchResult[]>()
+    for (const result of allResults) {
+      const matchResults = resultsByMatch.get(result.matchId) ?? []
+      matchResults.push(result)
+      resultsByMatch.set(result.matchId, matchResults)
+    }
+
+    return userResults.map((userResult) => {
+      const players = (resultsByMatch.get(userResult.matchId) ?? [])
+        .sort((a, b) => b.score - a.score || b.lines - a.lines)
+        .map((result, index) => ({
+          userId: result.userId,
+          username: result.user.username,
+          score: result.score,
+          lines: result.lines,
+          level: result.state.level,
+          placement: index + 1,
+        }))
+
+      return {
+        matchId: userResult.matchId,
+        roomId: userResult.roomId,
+        playedAt: userResult.createdAt,
+        placement:
+          players.find((player) => player.userId === userId)?.placement ?? 1,
+        playerCount: players.length,
+        score: userResult.score,
+        lines: userResult.lines,
+        level: userResult.state.level,
+        players,
+      }
+    })
   }
 
   async existUserProfilePictureInFs(

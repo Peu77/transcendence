@@ -1,5 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { TwoFa } from '../auth/twofa.entity'
+import { MatchResult } from './match-result.entity'
 
 export enum UserType {
   EMAIL = 'email',
@@ -14,8 +15,8 @@ export enum Theme {
 export enum GameControlAction {
   LEFT = 'left',
   RIGHT = 'right',
-  ROTATE_CW = 'rotateCW',
-  ROTATE_CCW = 'rotateCCW',
+  ROTATE = 'rotate',
+  ROTATE_CCW = 'rotateCcw',
   ROTATE_180 = 'rotate180',
   SOFT_DROP = 'softDrop',
   HARD_DROP = 'hardDrop',
@@ -35,9 +36,9 @@ export type TetrisHandlingSettings = {
 export const DEFAULT_GAME_CONTROLS: GameControls = {
   [GameControlAction.LEFT]: 'ArrowLeft',
   [GameControlAction.RIGHT]: 'ArrowRight',
-  [GameControlAction.ROTATE_CW]: 'd',
-  [GameControlAction.ROTATE_CCW]: 'a',
-  [GameControlAction.ROTATE_180]: 's',
+  [GameControlAction.ROTATE]: 'ArrowUp',
+  [GameControlAction.ROTATE_CCW]: 'z',
+  [GameControlAction.ROTATE_180]: 'a',
   [GameControlAction.SOFT_DROP]: 'ArrowDown',
   [GameControlAction.HARD_DROP]: ' ',
   [GameControlAction.HOLD]: 'c',
@@ -125,4 +126,7 @@ export class User {
 
   @OneToMany(() => TwoFa, (twofa) => twofa.user)
   twoFaSessions!: TwoFa[]
+
+  @OneToMany(() => MatchResult, (matchResult) => matchResult.user)
+  matchResults!: MatchResult[]
 }

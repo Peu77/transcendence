@@ -10,8 +10,11 @@ import {
 } from '@nestjs/websockets'
 import { ConfigService } from '@nestjs/config'
 import { Logger } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
 import { verify } from 'jsonwebtoken'
+import { randomUUID } from 'node:crypto'
 import type { Server, Socket } from 'socket.io'
+import { Repository } from 'typeorm'
 import {
   REALTIME_NAMESPACE,
   dmRoom,
@@ -27,6 +30,7 @@ import {
   type TetrisState,
   type TetrominoType,
 } from '@transcendence/shared'
+import { MatchResult } from '../users/match-result.entity'
 
 type SocketAuthUser = { userId: string }
 
@@ -39,6 +43,7 @@ interface PlayerGame {
 interface RoomGameSession {
   players: Map<string, PlayerGame> // userId → their game
   roomId: string
+  finishing: boolean
 }
 
 function parseCookie(cookieHeader: string | undefined): Record<string, string> {
@@ -77,6 +82,8 @@ export class RealtimeGateway
     private readonly realtime: RealtimeService,
     private readonly realtimePresence: RealtimePresenceService,
     private readonly roomService: RoomService,
+    @InjectRepository(MatchResult)
+    private readonly matchResultsRepository: Repository<MatchResult>,
   ) {
     this.jwtSecret = configService.getOrThrow<string>('JWT_SECRET')
   }
@@ -277,6 +284,7 @@ export class RealtimeGateway
       const session: RoomGameSession = {
         players: new Map(),
         roomId,
+        finishing: false,
       }
 
       for (const user of room.users) {
@@ -469,6 +477,9 @@ export class RealtimeGateway
       (totalPlayers > 1 && activePlayers.length === 1)
 
     if (shouldEnd) {
+      if (session.finishing) return
+      session.finishing = true
+
       // Mark any remaining active player as game over so results are complete
       for (const p of activePlayers) {
         p.game.gameOver = true
@@ -477,11 +488,11 @@ export class RealtimeGateway
           p.tickTimer = null
         }
       }
-      this.handleAllPlayersGameOver(roomId)
+      void this.handleAllPlayersGameOver(roomId)
     }
   }
 
-  private handleAllPlayersGameOver(roomId: string) {
+  private async handleAllPlayersGameOver(roomId: string) {
     const session = this.gameSessions.get(roomId)
     if (!session) return
 
@@ -508,6 +519,24 @@ export class RealtimeGateway
 
     // Sort by score descending
     results.sort((a, b) => b.score - a.score)
+
+    const matchId = randomUUID()
+    const matchResults = results.map((result) =>
+      this.matchResultsRepository.create({
+        matchId,
+        roomId,
+        userId: result.userId,
+        score: result.score,
+        lines: result.lines,
+        state: session.players.get(result.userId)!.game.getState(),
+      }),
+    )
+
+    try {
+      await this.matchResultsRepository.save(matchResults)
+    } catch (error) {
+      this.logger.error(`Failed to save results for match ${matchId}`, error)
+    }
 
     this.emitToGameRoom(roomId, 'game.finished', { roomId, results })
     this.roomService.endGame(roomId)
