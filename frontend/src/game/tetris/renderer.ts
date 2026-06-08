@@ -129,7 +129,11 @@ export class TetrisRenderer {
   private cols = 10
 
   constructor(private canvas: HTMLCanvasElement) {
-    const gl = canvas.getContext('webgl2', { alpha: true, antialias: false, premultipliedAlpha: false })
+    const gl = canvas.getContext('webgl2', {
+      alpha: true,
+      antialias: false,
+      premultipliedAlpha: false,
+    })
     if (!gl) throw new Error('WebGL2 not supported')
     this.gl = gl
 
@@ -396,16 +400,7 @@ export class TetrisRenderer {
       }
 
       const renderPanel = (x: number, y: number, h: number) => {
-        pushQuad(
-          x,
-          y,
-          panelW,
-          h,
-          BG_COLOR[0],
-          BG_COLOR[1],
-          BG_COLOR[2],
-          0.8,
-        )
+        pushQuad(x, y, panelW, h, BG_COLOR[0], BG_COLOR[1], BG_COLOR[2], 0.8)
       }
 
       // Next pieces — right of board

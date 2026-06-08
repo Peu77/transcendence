@@ -14,11 +14,7 @@ const Solo = () => {
     <div className="flex h-full flex-col items-center overflow-hidden">
       {/* Header */}
       <div className="flex w-full max-w-[90%] shrink-0 items-center gap-2 pt-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={quit}
-        >
+        <Button variant="ghost" size="icon" onClick={quit}>
           <ArrowLeftIcon />
         </Button>
         <h1 className="text-3xl font-bold">Solo</h1>

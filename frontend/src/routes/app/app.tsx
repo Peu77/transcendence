@@ -28,6 +28,14 @@ const Index = () => {
       textColor: 'text-green-50',
     },
     {
+      label: 'history',
+      description: 'Review your recent multiplayer match results.',
+      path: '/app/history',
+      color: 'bg-orange-400',
+      borderColor: 'bg-orange-600',
+      textColor: 'text-orange-50',
+    },
+    {
       label: 'settings',
       description: 'Customize your experience and preferences.',
       path: '/app/settings',
