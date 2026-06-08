@@ -19,6 +19,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@transcendence/shared': fileURLToPath(
+        new URL('../shared/src', import.meta.url),
+      ),
+    },
+  },
+  server: {
+    fs: {
+      allow: ['..'],
     },
   },
 })

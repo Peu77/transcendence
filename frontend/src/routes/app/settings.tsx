@@ -38,7 +38,6 @@ const Settings = () => {
       <ScrollArea className="min-h-0 flex-1">
         <Accordion
           type="multiple"
-          defaultValue={['user-settings', 'public-api']}
         >
           <AccordionItem value="user-settings">
             <AccordionTrigger>User settings</AccordionTrigger>

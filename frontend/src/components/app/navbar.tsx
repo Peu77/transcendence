@@ -8,6 +8,7 @@ import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Theme, toggleTheme, USER_QUERY_KEYS } from '@/api/user.ts'
 import { ProfileDialog } from '@/components/app/profileDialog.tsx'
+import { Link } from '@tanstack/react-router'
 
 export const Navbar = () => {
   const [profileOpen, setProfileOpen] = useState(false)
@@ -33,7 +34,12 @@ export const Navbar = () => {
 
   return (
     <nav className="w-full bg-card flex items-stretch px-2 h-16 justify-between shadow-sm">
-      <div className="text-xl font-bold flex items-center">Transcendence</div>
+      <Link
+        to={userId ? '/app' : '/'}
+        className="text-xl font-bold flex items-center"
+      >
+        Transcendence
+      </Link>
 
       <div className="flex items-stretch mt-1 mb-3">
         <div className="flex items-stretch gap-4">
