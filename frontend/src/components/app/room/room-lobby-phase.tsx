@@ -81,19 +81,9 @@ export function RoomLobbyPhase({
         <div className="border-b border-border/70 pb-8">
           <div className="flex flex-wrap items-start justify-center gap-4 sm:justify-between">
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  socket?.emit('room.leave', { roomId: room.id })
-                  navigate({ to: '/app' })
-                }}
-              >
-                <ArrowLeftIcon />
-              </Button>
-              <h1 className="text-3xl font-bold uppercase tracking-wide xl:text-4xl">
+              <h2 className="text-3xl font-bold uppercase tracking-wide xl:text-4xl">
                 Room: {room.id}
-              </h1>
+              </h2>
             </div>
             {isHost && (
               <Button
