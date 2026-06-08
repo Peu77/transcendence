@@ -22,8 +22,17 @@ export interface MatchHistoryItem {
   players: MatchHistoryPlayer[]
 }
 
+export interface GlobalRankingItem {
+  userId: string
+  username: string
+  profilePictureId: string | null
+  score: number
+  matchesPlayed: number
+}
+
 export const HISTORY_QUERY_KEYS = {
   all: ['match-history'] as const,
+  ranking: ['global-ranking'] as const,
 }
 
 export async function getMatchHistory(): Promise<MatchHistoryItem[]> {
@@ -35,5 +44,17 @@ export function useMatchHistory() {
   return useQuery({
     queryKey: HISTORY_QUERY_KEYS.all,
     queryFn: getMatchHistory,
+  })
+}
+
+export async function getGlobalRanking(): Promise<GlobalRankingItem[]> {
+  const response = await axios.get<GlobalRankingItem[]>('/users/ranking')
+  return response.data
+}
+
+export function useGlobalRanking() {
+  return useQuery({
+    queryKey: HISTORY_QUERY_KEYS.ranking,
+    queryFn: getGlobalRanking,
   })
 }

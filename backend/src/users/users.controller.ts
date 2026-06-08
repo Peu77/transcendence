@@ -54,6 +54,11 @@ export class UsersController {
     return this.usersService.getMatchHistory(userId)
   }
 
+  @Get('users/ranking')
+  async getGlobalRanking() {
+    return this.usersService.getGlobalRanking()
+  }
+
   @Post('users/gameControls')
   async updateGameControls(
     @UserId() userId: string,

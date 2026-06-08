@@ -28,9 +28,9 @@ const Index = () => {
       textColor: 'text-green-50',
     },
     {
-      label: 'history',
-      description: 'Review your recent multiplayer match results.',
-      path: '/app/history',
+      label: 'statistics',
+      description: 'Review match results and the global ranking.',
+      path: '/app/statistics',
       color: 'bg-orange-400',
       borderColor: 'bg-orange-600',
       textColor: 'text-orange-50',
