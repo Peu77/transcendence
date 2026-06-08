@@ -1,6 +1,4 @@
 import {
-  BOARD_COLS,
-  BOARD_ROWS,
   TETROMINOES,
   TetrominoType,
   type TetrisState,
@@ -76,6 +74,8 @@ export class TetrisRenderer {
   private canvasWidth = 0
   private canvasHeight = 0
   private _compact = false
+  private rows = 20
+  private cols = 10
 
   constructor(private canvas: HTMLCanvasElement) {
     const gl = canvas.getContext('webgl2', { alpha: false, antialias: false })
@@ -133,31 +133,37 @@ export class TetrisRenderer {
     this.canvasHeight = height
 
     if (this._compact) {
-      // Board fills the entire canvas — no side panels.
       const cellSize = Math.floor(
-        Math.min(width / BOARD_COLS, height / BOARD_ROWS),
+        Math.min(width / this.cols, height / this.rows),
       )
-      this.boardPixelWidth = cellSize * BOARD_COLS
-      this.boardPixelHeight = cellSize * BOARD_ROWS
+      this.boardPixelWidth = cellSize * this.cols
+      this.boardPixelHeight = cellSize * this.rows
       this.previewSize = 0
     } else {
-      // Reserve room on both sides: hold panel on the left, next queue on the right.
       const cellSize = Math.floor(
-        Math.min((width - 40) / (BOARD_COLS + 8), height / BOARD_ROWS),
+        Math.min((width - 40) / (this.cols + 8), height / this.rows),
       )
-      this.boardPixelWidth = cellSize * BOARD_COLS
-      this.boardPixelHeight = cellSize * BOARD_ROWS
+      this.boardPixelWidth = cellSize * this.cols
+      this.boardPixelHeight = cellSize * this.rows
       this.previewSize = cellSize * 4
     }
   }
 
   render(state: TetrisState) {
+    const rows = state.board.length
+    const cols = state.board[0]?.length ?? 10
+    if (rows !== this.rows || cols !== this.cols) {
+      this.rows = rows
+      this.cols = cols
+      this.resize(this.canvasWidth, this.canvasHeight)
+    }
+
     const positions: number[] = []
     const colors: number[] = []
     const alphas: number[] = []
 
-    const cellW = this.boardPixelWidth / BOARD_COLS
-    const cellH = this.boardPixelHeight / BOARD_ROWS
+    const cellW = this.boardPixelWidth / cols
+    const cellH = this.boardPixelHeight / rows
 
     const boardOffX = (this.canvasWidth - this.boardPixelWidth) / 2
     const boardOffY = (this.canvasHeight - this.boardPixelHeight) / 2
@@ -195,7 +201,7 @@ export class TetrisRenderer {
       1.0,
     )
 
-    for (let row = 0; row <= BOARD_ROWS; row++) {
+    for (let row = 0; row <= rows; row++) {
       pushQuad(
         boardOffX,
         boardOffY + row * cellH,
@@ -207,7 +213,7 @@ export class TetrisRenderer {
         0.5,
       )
     }
-    for (let col = 0; col <= BOARD_COLS; col++) {
+    for (let col = 0; col <= cols; col++) {
       pushQuad(
         boardOffX + col * cellW,
         boardOffY,
@@ -220,8 +226,8 @@ export class TetrisRenderer {
       )
     }
 
-    for (let r = 0; r < BOARD_ROWS; r++) {
-      for (let c = 0; c < BOARD_COLS; c++) {
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
         const cell = state.board[r][c]
         if (cell === 0) continue
         const color = PIECE_COLORS[cell as TetrominoType] ?? [0.5, 0.5, 0.5]
@@ -246,7 +252,7 @@ export class TetrisRenderer {
     for (const [br, bc] of ghostBlocks) {
       const r = state.ghostRow + br
       const c = state.currentPiece.col + bc
-      if (r < 0 || r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS) continue
+      if (r < 0 || r >= rows || c < 0 || c >= cols) continue
       const px = boardOffX + c * cellW + GAP * cellW
       const py = boardOffY + r * cellH + GAP * cellH
       pushQuad(
@@ -267,7 +273,7 @@ export class TetrisRenderer {
     for (const [br, bc] of curBlocks) {
       const r = state.currentPiece.row + br
       const c = state.currentPiece.col + bc
-      if (r < 0 || r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS) continue
+      if (r < 0 || r >= rows || c < 0 || c >= cols) continue
       const px = boardOffX + c * cellW + GAP * cellW
       const py = boardOffY + r * cellH + GAP * cellH
       pushQuad(

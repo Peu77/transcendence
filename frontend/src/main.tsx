@@ -25,6 +25,7 @@ import { MultiplayerRoute } from '@/routes/app/multiplayer.tsx'
 import { SoloRoute } from '@/routes/app/solo.tsx'
 import { RoomLobbyRoute } from '@/routes/app/room.tsx'
 import { RoomRoute } from '@/routes/app/room.$roomId.tsx'
+import { AboutRoute } from '@/routes/app/about.tsx'
 import { NotFound } from '@/routes/notFound.tsx'
 
 export const rootRoute = createRootRoute<unknown>({
@@ -63,6 +64,7 @@ const routeTree = rootRoute.addChildren([
   SoloRoute,
   RoomLobbyRoute,
   RoomRoute,
+  AboutRoute,
 ])
 
 const TanStackQueryProviderContext = getQueryContext()
