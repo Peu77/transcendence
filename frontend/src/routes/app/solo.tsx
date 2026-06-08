@@ -1,7 +1,6 @@
 import { createRoute } from '@tanstack/react-router'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { Button } from '@/components/ui/button.tsx'
-import { ArrowLeftIcon } from 'lucide-react'
 import { GameBoard } from '@/components/app/room/game-board.tsx'
 import { useSoloGame } from '@/hooks/use-solo-game.ts'
 
@@ -12,14 +11,6 @@ const Solo = () => {
 
   return (
     <div className="flex h-full flex-col items-center overflow-hidden">
-      {/* Header */}
-      <div className="flex w-full max-w-[90%] shrink-0 items-center gap-2 pt-2">
-        <Button variant="ghost" size="icon" onClick={quit}>
-          <ArrowLeftIcon />
-        </Button>
-        <h1 className="text-3xl font-bold">Solo</h1>
-      </div>
-
       {/* Countdown state — board visible with overlay */}
       {phase === 'countdown' && gameState && (
         <div className="relative flex min-h-0 w-full flex-1 flex-col items-center py-2">
