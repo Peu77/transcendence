@@ -41,7 +41,9 @@ const RoomPage = () => {
   }
 
   return (
-    <div className="h-full overflow-hidden p-4 text-foreground md:p-6">
+    <div
+      className={`h-full overflow-hidden text-foreground ${gamePhase === 'lobby' ? 'p-4 md:p-6' : ''}`}
+    >
       {gamePhase === 'lobby' ? (
         <RoomLobbyPhase
           room={room}
