@@ -16,6 +16,7 @@ import { GithubValidateReturn } from '../auth/github.strategy'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { MatchResult } from './match-result.entity'
+import { UserStats } from '../stats/user-stats.entity'
 
 export interface MatchHistoryPlayer {
   userId: string
@@ -38,12 +39,22 @@ export interface MatchHistoryItem {
   players: MatchHistoryPlayer[]
 }
 
+export interface GlobalRankingItem {
+  userId: string
+  username: string
+  profilePictureId: string | null
+  score: number
+  matchesPlayed: number
+}
+
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepo: Repository<User>,
     @InjectRepository(MatchResult)
     private readonly matchResultsRepo: Repository<MatchResult>,
+    @InjectRepository(UserStats)
+    private readonly userStatsRepo: Repository<UserStats>,
   ) {}
 
   static readonly UPLOAD_DIR = 'uploads/'
@@ -254,6 +265,36 @@ export class UsersService {
         players,
       }
     })
+  }
+
+  async getGlobalRanking(): Promise<GlobalRankingItem[]> {
+    // Reads from the cached `user_stats` aggregate table (kept up to date as
+    // matches finish) rather than recomputing from raw match_results.
+    const rankings = await this.userStatsRepo
+      .createQueryBuilder('stats')
+      .innerJoin('stats.user', 'user')
+      .select('user.id', 'userId')
+      .addSelect('user.username', 'username')
+      .addSelect('user.profilePictureId', 'profilePictureId')
+      .addSelect('stats.totalScore', 'score')
+      .addSelect('stats.matchesPlayed', 'matchesPlayed')
+      .where('stats.matchesPlayed > 0')
+      .orderBy('stats.totalScore', 'DESC')
+      .addOrderBy('stats.matchesPlayed', 'DESC')
+      .addOrderBy('user.username', 'ASC')
+      .getRawMany<{
+        userId: string
+        username: string
+        profilePictureId: string | null
+        score: string
+        matchesPlayed: number
+      }>()
+
+    return rankings.map((ranking) => ({
+      ...ranking,
+      score: Number(ranking.score),
+      matchesPlayed: Number(ranking.matchesPlayed),
+    }))
   }
 
   async existUserProfilePictureInFs(

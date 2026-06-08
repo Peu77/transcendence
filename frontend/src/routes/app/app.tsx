@@ -28,20 +28,13 @@ const Index = () => {
       textColor: 'text-green-50',
     },
     {
-      label: 'history',
-      description: 'Review your recent multiplayer match results.',
-      path: '/app/history',
+      label: 'stats',
+      description:
+        'Your stats, achievements, match history and the global ranking.',
+      path: '/app/stats',
       color: 'bg-orange-400',
       borderColor: 'bg-orange-600',
       textColor: 'text-orange-50',
-    },
-    {
-      label: 'stats',
-      description: 'Track your lifetime stats and unlock achievements.',
-      path: '/app/stats',
-      color: 'bg-pink-400',
-      borderColor: 'bg-pink-600',
-      textColor: 'text-pink-50',
     },
     {
       label: 'settings',
