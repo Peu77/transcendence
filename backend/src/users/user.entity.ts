@@ -1,5 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { TwoFa } from '../auth/twofa.entity'
+import { MatchResult } from './match-result.entity'
 
 export enum UserType {
   EMAIL = 'email',
@@ -125,4 +126,7 @@ export class User {
 
   @OneToMany(() => TwoFa, (twofa) => twofa.user)
   twoFaSessions!: TwoFa[]
+
+  @OneToMany(() => MatchResult, (matchResult) => matchResult.user)
+  matchResults!: MatchResult[]
 }
