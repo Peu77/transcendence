@@ -1,14 +1,22 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button.tsx'
-import { MoonIcon, SunIcon, UsersIcon } from 'lucide-react'
+import {
+  LogOutIcon,
+  MoonIcon,
+  SunIcon,
+  UserIcon,
+  UsersIcon,
+} from 'lucide-react'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { userStore } from '@/store/userStore.ts'
 import { useStore } from '@tanstack/react-store'
 import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Theme, toggleTheme, USER_QUERY_KEYS } from '@/api/user.ts'
+import { logout, Theme, toggleTheme, USER_QUERY_KEYS } from '@/api/user.ts'
 import { ProfileDialog } from '@/components/app/profileDialog.tsx'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { DropdownMenu } from 'radix-ui'
+import { toast } from 'sonner'
 
 export const Navbar = () => {
   const [profileOpen, setProfileOpen] = useState(false)
@@ -19,12 +27,25 @@ export const Navbar = () => {
   const isDark = theme === 'dark'
 
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const toggleThemeMutation = useMutation({
     mutationFn: toggleTheme,
     onSuccess: async (theme: Theme) => {
       document.documentElement.classList.toggle('dark', theme === Theme.DARK)
       await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.USER })
+    },
+  })
+
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSuccess: () => {
+      userStore.setState(null)
+      queryClient.removeQueries({ queryKey: USER_QUERY_KEYS.USER })
+      navigate({ to: '/' }).catch(console.error)
+    },
+    onError: () => {
+      toast.error('Could not log out. Please try again.')
     },
   })
 
@@ -55,13 +76,40 @@ export const Navbar = () => {
             </Button>
           </div>
 
-          <div
-            className="flex gap-10 px-1 items-center bg-secondary clip-pixel-corners-btn cursor-pointer select-none hover:translate-y-1 active:translate-y-2 transition-all"
-            onClick={() => setProfileOpen(true)}
-          >
-            <p className="ml-2 font-bold text-l">{username}</p>
-            <ProfileImage profilePictureId={profileImageId} />
-          </div>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                className="flex gap-10 px-1 items-center bg-secondary clip-pixel-corners-btn cursor-pointer select-none hover:translate-y-1 active:translate-y-2 transition-all"
+              >
+                <span className="ml-2 font-bold text-l">{username}</span>
+                <ProfileImage profilePictureId={profileImageId} />
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                align="end"
+                sideOffset={8}
+                className="z-50 min-w-40 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+              >
+                <DropdownMenu.Item
+                  className="flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground"
+                  onSelect={() => setProfileOpen(true)}
+                >
+                  <UserIcon className="size-4" />
+                  Profile
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-2 text-sm text-destructive outline-none focus:bg-accent focus:text-destructive"
+                  disabled={logoutMutation.isPending}
+                  onSelect={() => logoutMutation.mutate()}
+                >
+                  <LogOutIcon className="size-4" />
+                  {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
           {userId && (
             <ProfileDialog
               userId={userId}
