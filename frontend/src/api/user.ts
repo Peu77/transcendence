@@ -129,9 +129,9 @@ export type PublicProfile = {
   id: string
   username: string
   profilePictureId: string | null
-  level: number
   createdAt: string
   totalScore: number | null
+  totalLines: number
   rank: number | null
 }
 

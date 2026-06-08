@@ -200,20 +200,24 @@ export class UsersService {
   async getPublicProfile(userId: string) {
     const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
 
-    const matchCount = await this.matchResultsRepo.count({ where: { userId } })
+    const statsResult = await this.matchResultsRepo
+      .createQueryBuilder('result')
+      .select('SUM(result.score)', 'totalScore')
+      .addSelect('SUM(result.lines)', 'totalLines')
+      .addSelect('COUNT(result.id)', 'matchCount')
+      .where('result.userId = :userId', { userId })
+      .getRawOne<{
+        totalScore: string | null
+        totalLines: string | null
+        matchCount: string
+      }>()
 
-    let totalScore: number | null = null
+    const matchCount = Number(statsResult?.matchCount ?? 0)
+    const totalLines = Number(statsResult?.totalLines ?? 0)
+    const totalScore = matchCount > 0 ? Number(statsResult?.totalScore ?? 0) : null
+
     let rank: number | null = null
-
     if (matchCount > 0) {
-      const scoreResult = await this.matchResultsRepo
-        .createQueryBuilder('result')
-        .select('SUM(result.score)', 'totalScore')
-        .where('result.userId = :userId', { userId })
-        .getRawOne<{ totalScore: string }>()
-
-      totalScore = Number(scoreResult?.totalScore ?? 0)
-
       const higherRanked = await this.matchResultsRepo
         .createQueryBuilder('result')
         .select('result.userId')
@@ -228,9 +232,9 @@ export class UsersService {
       id: user.id,
       username: user.username,
       profilePictureId: user.profilePictureId,
-      level: user.level,
       createdAt: user.createdAt,
       totalScore,
+      totalLines,
       rank,
     }
   }
