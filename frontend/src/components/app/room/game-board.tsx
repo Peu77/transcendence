@@ -106,58 +106,62 @@ export function GameBoard({ state, label, large }: GameBoardProps) {
         : []
 
     return (
-      <div className="relative flex min-h-0 min-w-0 flex-1 items-center justify-center">
-        {/* Hold piece — top-left */}
-        {state && (
-          <div className="absolute left-0 top-0 flex flex-col items-center gap-1 p-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">
-              Hold
-            </span>
-            {state.heldPiece ? (
+      <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center gap-6">
+        {/* Hold piece — left of board */}
+        <div className="flex shrink-0 flex-col items-center gap-3 self-start pt-4">
+          <span className="text-sm font-bold uppercase tracking-widest text-foreground/60">
+            Hold
+          </span>
+          <div className="flex min-h-[80px] min-w-[80px] items-center justify-center rounded-lg bg-black/30 p-3">
+            {state?.heldPiece ? (
               <PiecePreview
                 type={state.heldPiece}
                 dimmed={!state.canHold}
-                cellSize={14}
+                cellSize={30}
               />
             ) : (
-              <div className="h-8 w-14" />
+              <span className="text-sm text-white/20">---</span>
             )}
           </div>
-        )}
+        </div>
 
-        {/* Next pieces — top-right */}
+        {/* Board canvas + stats */}
+        <div className="relative flex h-full max-h-full flex-col items-center gap-2">
+          <div className="relative h-full max-h-full aspect-[1/2]">
+            <canvas ref={canvasRef} className="h-full w-full" />
+            {state?.gameOver && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                <span className="text-2xl font-bold text-red-400">GAME OVER</span>
+              </div>
+            )}
+          </div>
+          <div className="flex shrink-0 gap-3 text-sm font-bold tracking-wide text-foreground/80">
+            <span>{label}</span>
+            {state && (
+              <>
+                <span>SCORE {state.score}</span>
+                <span>LINES {state.lines}</span>
+                <span>LVL {state.level}</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Next pieces — right of board */}
         {nextPieces.length > 0 && (
-          <div className="absolute right-0 top-0 flex flex-col items-center gap-2 p-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">
+          <div className="flex shrink-0 flex-col items-center gap-3 self-start pt-4">
+            <span className="text-sm font-bold uppercase tracking-widest text-foreground/60">
               Next
             </span>
-            {nextPieces.map((type, i) => (
-              <PiecePreview key={i} type={type} cellSize={14} />
-            ))}
+            <div className="flex flex-col items-center gap-2 rounded-lg bg-black/30 p-3">
+              {nextPieces.map((type, i) => (
+                <div key={i} className={i > 0 ? 'opacity-50' : ''}>
+                  <PiecePreview type={type} cellSize={30} />
+                </div>
+              ))}
+            </div>
           </div>
         )}
-
-        {/* Stats bar */}
-        <div className="absolute left-0 bottom-0 flex shrink-0 gap-3 p-2 text-sm font-bold tracking-wide text-foreground/80">
-          <span>{label}</span>
-          {state && (
-            <>
-              <span>SCORE {state.score}</span>
-              <span>LINES {state.lines}</span>
-              <span>LVL {state.level}</span>
-            </>
-          )}
-        </div>
-
-        {/* Board canvas */}
-        <div className="relative h-full max-h-full aspect-[1/2]">
-          <canvas ref={canvasRef} className="h-full w-full" />
-          {state?.gameOver && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-              <span className="text-2xl font-bold text-red-400">GAME OVER</span>
-            </div>
-          )}
-        </div>
       </div>
     )
   }
