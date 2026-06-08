@@ -7,44 +7,35 @@ import {
 } from '@/components/ui/dialog.tsx'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { LevelBar } from '@/components/app/levelBar.tsx'
+import { StatCard } from '@/components/app/statCard.tsx'
 import { useGetPublicProfile, timeAgo, type PublicProfile } from '@/api/user.ts'
 import { Spinner } from '@/components/ui/spinner.tsx'
 
-const StatCard = ({ value, label }: { value: string; label: string }) => (
-  <div className="flex flex-col items-center rounded-md bg-muted px-4 py-2">
-    <span className="text-lg font-bold">{value}</span>
-    <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
-  </div>
-)
+const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
+  const level = Math.floor(profile.totalLines / 10) + 1
+  const rank = profile.rank !== null ? `#${profile.rank}` : 'Unranked'
+  const points = profile.totalScore !== null ? profile.totalScore.toLocaleString() : '—'
 
-const ProfileContent = ({ profile }: { profile: PublicProfile }) => (
-  <div className="flex flex-col items-center gap-4">
-    <div className="flex items-center gap-3">
-      <ProfileImage profilePictureId={profile.profilePictureId} />
-      <h2 className="text-2xl font-bold">{profile.username}</h2>
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex items-center gap-3">
+        <ProfileImage profilePictureId={profile.profilePictureId} />
+        <h2 className="text-2xl font-bold">{profile.username}</h2>
+      </div>
+      <div className="flex gap-4">
+        <StatCard value={rank} label="Rank" size="sm" />
+        <StatCard value={points} label="Points" size="sm" />
+        <StatCard value={`${level}`} label="Level" size="sm" />
+      </div>
+      <div className="w-full">
+        <LevelBar totalLines={profile.totalLines} />
+      </div>
+      <span className="text-sm text-muted-foreground">
+        Joined {timeAgo(new Date(profile.createdAt))}
+      </span>
     </div>
-    <div className="flex gap-4">
-      <StatCard
-        value={profile.rank !== null ? `#${profile.rank}` : 'Unranked'}
-        label="Rank"
-      />
-      <StatCard
-        value={profile.totalScore !== null ? profile.totalScore.toLocaleString() : '—'}
-        label="Points"
-      />
-      <StatCard
-        value={String(Math.floor(profile.totalLines / 10) + 1)}
-        label="Level"
-      />
-    </div>
-    <div className="w-full">
-      <LevelBar totalLines={profile.totalLines} />
-    </div>
-    <span className="text-sm text-muted-foreground">
-      Joined {timeAgo(new Date(profile.createdAt))}
-    </span>
-  </div>
-)
+  )
+}
 
 export const ProfileDialog = ({
   userId,

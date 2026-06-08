@@ -3,50 +3,41 @@ import { AppRoute } from '@/routes/app/layout.tsx'
 import { useGetPublicProfile, timeAgo, type PublicProfile } from '@/api/user.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { LevelBar } from '@/components/app/levelBar.tsx'
+import { StatCard } from '@/components/app/statCard.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { ArrowLeftIcon } from 'lucide-react'
 
-const StatCard = ({ value, label }: { value: string; label: string }) => (
-  <div className="flex flex-col items-center gap-1 rounded-md bg-muted px-6 py-3">
-    <span className="text-2xl font-bold">{value}</span>
-    <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
-  </div>
-)
+function ProfileContent({ profile }: { profile: PublicProfile }) {
+  const level = Math.floor(profile.totalLines / 10) + 1
+  const rank = profile.rank !== null ? `#${profile.rank}` : 'Unranked'
+  const points = profile.totalScore !== null ? profile.totalScore.toLocaleString() : '—'
 
-const ProfileContent = ({ profile }: { profile: PublicProfile }) => (
-  <div className="flex flex-col items-center gap-6 pt-8">
-    <div className="w-32 h-32 rounded-full overflow-hidden">
-      <ProfileImage profilePictureId={profile.profilePictureId} />
+  return (
+    <div className="flex flex-col items-center gap-6 pt-8">
+      <div className="w-32 h-32 rounded-full overflow-hidden">
+        <ProfileImage profilePictureId={profile.profilePictureId} />
+      </div>
+      <h2 className="text-4xl font-bold">{profile.username}</h2>
+
+      <div className="flex gap-6">
+        <StatCard value={rank} label="Rank" />
+        <StatCard value={points} label="Points" />
+        <StatCard value={`${level}`} label="Level" />
+      </div>
+
+      <div className="w-full max-w-sm">
+        <LevelBar totalLines={profile.totalLines} />
+      </div>
+
+      <span className="text-sm text-muted-foreground">
+        Joined {timeAgo(new Date(profile.createdAt))}
+      </span>
     </div>
-    <h2 className="text-4xl font-bold">{profile.username}</h2>
+  )
+}
 
-    <div className="flex gap-6">
-      <StatCard
-        value={profile.rank !== null ? `#${profile.rank}` : 'Unranked'}
-        label="Rank"
-      />
-      <StatCard
-        value={profile.totalScore !== null ? profile.totalScore.toLocaleString() : '—'}
-        label="Points"
-      />
-      <StatCard
-        value={String(Math.floor(profile.totalLines / 10) + 1)}
-        label="Level"
-      />
-    </div>
-
-    <div className="w-full max-w-sm">
-      <LevelBar totalLines={profile.totalLines} />
-    </div>
-
-    <span className="text-sm text-muted-foreground">
-      Joined {timeAgo(new Date(profile.createdAt))}
-    </span>
-  </div>
-)
-
-const ProfilePage = () => {
+function ProfilePage() {
   const { userId } = ProfilePageRoute.useParams()
   const { data: profile, isLoading } = useGetPublicProfile(userId, true)
   const router = useRouter()
