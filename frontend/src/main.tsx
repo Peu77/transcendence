@@ -26,6 +26,7 @@ import { SoloRoute } from '@/routes/app/solo.tsx'
 import { RoomLobbyRoute } from '@/routes/app/room.tsx'
 import { RoomRoute } from '@/routes/app/room.$roomId.tsx'
 import { AboutRoute } from '@/routes/app/about.tsx'
+import { ProfilePageRoute } from '@/routes/app/profile.$userId.tsx'
 import { NotFound } from '@/routes/notFound.tsx'
 
 export const rootRoute = createRootRoute<unknown>({
@@ -65,6 +66,7 @@ const routeTree = rootRoute.addChildren([
   RoomLobbyRoute,
   RoomRoute,
   AboutRoute,
+  ProfilePageRoute,
 ])
 
 const TanStackQueryProviderContext = getQueryContext()
