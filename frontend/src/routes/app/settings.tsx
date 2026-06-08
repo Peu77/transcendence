@@ -36,9 +36,7 @@ const Settings = () => {
       </div>
 
       <ScrollArea className="min-h-0 flex-1">
-        <Accordion
-          type="multiple"
-        >
+        <Accordion type="multiple">
           <AccordionItem value="user-settings">
             <AccordionTrigger>User settings</AccordionTrigger>
             <AccordionContent>

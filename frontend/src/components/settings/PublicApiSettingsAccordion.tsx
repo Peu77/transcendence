@@ -29,9 +29,57 @@ const formatDate = (value: string | null) => {
   }).format(new Date(value))
 }
 
+const fallbackCopyToClipboard = (value: string) => {
+  const textarea = document.createElement('textarea')
+  textarea.value = value
+  textarea.setAttribute('readonly', '')
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.select()
+
+  const copied = document.execCommand('copy')
+  textarea.remove()
+
+  if (!copied) {
+    throw new Error('The browser rejected the clipboard operation')
+  }
+}
+
 const copyToClipboard = async (value: string, message: string) => {
-  await navigator.clipboard.writeText(value)
-  toast.success(message)
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      if (navigator.permissions) {
+        try {
+          const permission = await navigator.permissions.query({
+            name: 'clipboard-write' as PermissionName,
+          })
+
+          if (permission.state === 'denied') {
+            throw new Error('Clipboard permission was denied')
+          }
+        } catch (error) {
+          // Some browsers do not expose clipboard-write through Permissions API.
+          if (
+            error instanceof Error &&
+            error.message === 'Clipboard permission was denied'
+          ) {
+            throw error
+          }
+        }
+      }
+
+      await navigator.clipboard.writeText(value)
+    } else {
+      fallbackCopyToClipboard(value)
+    }
+
+    toast.success(message)
+  } catch {
+    toast.error(
+      'Clipboard access was denied. Allow clipboard permission and try again.',
+    )
+  }
 }
 
 export const PublicApiSettingsAccordion = () => {
