@@ -11,6 +11,8 @@ export type GameControlAction =
   | 'left'
   | 'right'
   | 'rotate'
+  | 'rotateCcw'
+  | 'rotate180'
   | 'softDrop'
   | 'hardDrop'
   | 'hold'
@@ -29,6 +31,8 @@ export const DEFAULT_GAME_CONTROLS: GameControls = {
   left: 'ArrowLeft',
   right: 'ArrowRight',
   rotate: 'ArrowUp',
+  rotateCcw: 'z',
+  rotate180: 'a',
   softDrop: 'ArrowDown',
   hardDrop: ' ',
   hold: 'c',

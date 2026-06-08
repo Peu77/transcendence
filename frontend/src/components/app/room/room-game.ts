@@ -13,6 +13,8 @@ const VALID_INPUT_ACTIONS = new Set<InputAction>([
   'left',
   'right',
   'rotate',
+  'rotateCcw',
+  'rotate180',
   'softDrop',
   'hardDrop',
   'hold',
