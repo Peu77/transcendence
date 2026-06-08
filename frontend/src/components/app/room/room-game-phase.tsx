@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Button } from '@/components/ui/button.tsx'
 import type { Room } from '@/api/room.ts'
 import type { GamePlayerResult } from '@/realtime/events'
@@ -5,6 +6,7 @@ import type { TetrisState } from '@transcendence/shared'
 import { GameBoard } from './game-board.tsx'
 import { RoomChat } from './room-chat.tsx'
 import type { GamePhase } from './room-game.ts'
+import { ProfileDialog } from '@/components/app/profileDialog.tsx'
 
 type RoomGamePhaseProps = {
   gamePhase: GamePhase
@@ -29,6 +31,8 @@ export function RoomGamePhase({
   escapeHoldProgress,
   onBackToLobby,
 }: RoomGamePhaseProps) {
+  const [profileUserId, setProfileUserId] = useState<string | null>(null)
+
   const myState = playerStates[myUserId] ?? null
   const opponentEntries = Object.entries(playerStates).filter(
     ([id]) => id !== myUserId,
@@ -41,6 +45,11 @@ export function RoomGamePhase({
 
   return (
     <div className="relative flex h-full min-h-0 items-center justify-center overflow-hidden">
+      <ProfileDialog
+        userId={profileUserId ?? ''}
+        open={profileUserId !== null}
+        onOpenChange={(open) => { if (!open) setProfileUserId(null) }}
+      />
       {isChatOpen && (
         <RoomChat
           roomId={room.id}
@@ -67,6 +76,7 @@ export function RoomGamePhase({
                 key={userId}
                 state={state}
                 label={getUsernameForId(userId)}
+                onLabelClick={() => setProfileUserId(userId)}
               />
             ))}
           </div>
@@ -90,7 +100,12 @@ export function RoomGamePhase({
                 <span className="font-bold text-2xl text-yellow-300">
                   #{i + 1}
                 </span>
-                <span className="font-semibold">{r.username}</span>
+                <button
+                  onClick={() => setProfileUserId(r.userId)}
+                  className="font-semibold hover:opacity-70 transition-opacity cursor-pointer"
+                >
+                  {r.username}
+                </button>
                 <span className="text-white/60">
                   Score: {r.score} | Lines: {r.lines} | Lvl: {r.level}
                 </span>

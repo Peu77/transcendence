@@ -60,9 +60,10 @@ type GameBoardProps = {
   state: TetrisState | null
   label: string
   large?: boolean
+  onLabelClick?: () => void
 }
 
-export function GameBoard({ state, label, large }: GameBoardProps) {
+export function GameBoard({ state, label, large, onLabelClick }: GameBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rendererRef = useRef<TetrisRenderer | null>(null)
   const latestStateRef = useRef<TetrisState | null>(state)
@@ -139,7 +140,10 @@ export function GameBoard({ state, label, large }: GameBoardProps) {
 
         {/* Stats bar */}
         <div className="absolute left-0 bottom-0 flex shrink-0 gap-3 p-2 text-sm font-bold tracking-wide text-foreground/80">
-          <span>{label}</span>
+          <span
+            onClick={onLabelClick}
+            className={onLabelClick ? 'cursor-pointer hover:opacity-70 transition-opacity' : ''}
+          >{label}</span>
           {state && (
             <>
               <span>SCORE {state.score}</span>
@@ -165,7 +169,10 @@ export function GameBoard({ state, label, large }: GameBoardProps) {
   return (
     <div className="flex shrink-0 flex-col items-center gap-1">
       <div className="flex shrink-0 gap-2 text-[10px] font-bold tracking-wide text-foreground/80">
-        <span>{label}</span>
+        <span
+          onClick={onLabelClick}
+          className={onLabelClick ? 'cursor-pointer hover:opacity-70 transition-opacity' : ''}
+        >{label}</span>
         {state && (
           <>
             <span>SCORE {state.score}</span>
