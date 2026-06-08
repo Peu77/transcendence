@@ -30,9 +30,9 @@ export type TetrisHandlingSettings = {
 export const DEFAULT_GAME_CONTROLS: GameControls = {
   left: 'ArrowLeft',
   right: 'ArrowRight',
-  rotateCW: 'd',
-  rotateCCW: 'a',
-  rotate180: 's',
+  rotateCW: 'x',
+  rotateCCW: 'z',
+  rotate180: 'a',
   softDrop: 'ArrowDown',
   hardDrop: ' ',
   hold: 'c',
