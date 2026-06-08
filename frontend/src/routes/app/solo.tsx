@@ -49,7 +49,7 @@ const Solo = () => {
 
   const instructions =
     phase === 'playing' ? (
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm text-foreground/50">
+      <div className="absolute inset-x-0 bottom-4 text-center text-sm text-foreground/50">
         Arrow keys to move &middot; Up to rotate &middot; Space to hard drop
         &middot; C to hold &middot; HOLD ESC to quit
       </div>

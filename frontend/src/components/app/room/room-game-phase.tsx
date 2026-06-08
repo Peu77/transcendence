@@ -93,7 +93,7 @@ export function RoomGamePhase({
 
   const instructions =
     gamePhase === 'playing' ? (
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm tracking-wide text-foreground/50">
+      <div className="absolute inset-x-0 bottom-4 text-center text-sm tracking-wide text-foreground/50">
         ARROWS / WASD to move &middot; SPACE to hard drop &middot; T to chat
         &middot; HOLD ESC to quit
       </div>
