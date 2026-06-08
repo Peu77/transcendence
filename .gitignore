@@ -15,3 +15,4 @@ frontend/src/game/.bjseditor/
 frontend/src/game/.vscode/
 frontend/src/game/public/
 frontend/src/game/node_modules/
+backend/.pnpm-store/
