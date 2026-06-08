@@ -1,4 +1,4 @@
-import { createRoute, useNavigate } from '@tanstack/react-router'
+import { createRoute } from '@tanstack/react-router'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { ArrowLeftIcon } from 'lucide-react'
@@ -6,7 +6,6 @@ import { GameBoard } from '@/components/app/room/game-board.tsx'
 import { useSoloGame } from '@/hooks/use-solo-game.ts'
 
 const Solo = () => {
-  const navigate = useNavigate()
   const { phase, countdown, gameState, escapeHoldProgress, restart, quit } =
     useSoloGame()
   const escapeHoldScale = 1 - Math.min(escapeHoldProgress, 1) * 0.18
@@ -18,10 +17,7 @@ const Solo = () => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => {
-            quit()
-            navigate({ to: '/app' })
-          }}
+          onClick={quit}
         >
           <ArrowLeftIcon />
         </Button>
@@ -72,7 +68,7 @@ const Solo = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => navigate({ to: '/app' })}
+                  onClick={quit}
                   className="h-auto px-8 py-3 text-lg"
                 >
                   MAIN MENU

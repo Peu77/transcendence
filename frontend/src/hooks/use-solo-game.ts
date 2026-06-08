@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { TetrisGame } from '@transcendence/shared'
 import type {
   TetrisState,
@@ -16,6 +17,7 @@ export type SoloPhase = 'countdown' | 'playing' | 'finished'
 
 export function useSoloGame() {
   const user = useStore(userStore)
+  const navigate = useNavigate()
   const [phase, setPhase] = useState<SoloPhase>('countdown')
   const [countdown, setCountdown] = useState<number>(3)
   const [gameState, setGameState] = useState<TetrisState | null>(null)
@@ -123,11 +125,8 @@ export function useSoloGame() {
     clearTick()
     clearCountdown()
     gameRef.current = null
-    phaseRef.current = 'countdown'
-    setPhase('countdown')
-    setGameState(null)
-    setCountdown(3)
-  }, [clearTick, clearCountdown])
+    navigate({ to: '/app' })
+  }, [clearTick, clearCountdown, navigate])
 
   // Input handling with DAS/ARR
   useEffect(() => {
