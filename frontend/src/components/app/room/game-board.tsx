@@ -45,7 +45,7 @@ export function GameBoard({ state, label, large }: GameBoardProps) {
 
   if (large) {
     return (
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center">
+      <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col items-center justify-center">
         <div className="relative min-h-0 flex-1 w-full">
           <canvas ref={canvasRef} className="h-full w-full" />
           {state?.gameOver && (
