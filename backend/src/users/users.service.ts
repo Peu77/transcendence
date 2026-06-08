@@ -235,6 +235,7 @@ export class UsersService {
         .map((result, index) => ({
           userId: result.userId,
           username: result.user.username,
+          profilePictureId: result.user.profilePictureId ?? null,
           score: result.score,
           lines: result.lines,
           level: result.state.level,

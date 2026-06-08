@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMatchHistory, type MatchHistoryItem } from '@/api/history.ts'
 import { Button } from '@/components/ui/button.tsx'
 import {
@@ -12,12 +13,15 @@ import { AppRoute } from '@/routes/app/layout.tsx'
 import { createRoute, useRouter } from '@tanstack/react-router'
 import { format } from 'date-fns'
 import { ArrowLeftIcon, TrophyIcon } from 'lucide-react'
+import { ProfileImage } from '@/components/app/profileImage.tsx'
+import { ProfileDialog } from '@/components/app/profileDialog.tsx'
 
 const placementLabel = (placement: number, playerCount: number) =>
   `${placement} / ${playerCount}`
 
 const MatchCard = ({ match }: { match: MatchHistoryItem }) => {
   const won = match.placement === 1
+  const [profileUserId, setProfileUserId] = useState<string | null>(null)
 
   return (
     <Card className="gap-4 border border-border py-5">
@@ -58,6 +62,11 @@ const MatchCard = ({ match }: { match: MatchHistoryItem }) => {
           <Stat label="Level" value={match.level.toString()} />
         </div>
 
+        <ProfileDialog
+          userId={profileUserId ?? ''}
+          open={profileUserId !== null}
+          onOpenChange={(open) => { if (!open) setProfileUserId(null) }}
+        />
         <div className="overflow-hidden rounded-md border border-border">
           {match.players.map((player) => (
             <div
@@ -67,7 +76,13 @@ const MatchCard = ({ match }: { match: MatchHistoryItem }) => {
               <span className="font-bold text-muted-foreground">
                 #{player.placement}
               </span>
-              <span className="truncate font-semibold">{player.username}</span>
+              <button
+                onClick={() => setProfileUserId(player.userId)}
+                className="flex items-center gap-2 min-w-0 text-left hover:opacity-70 transition-opacity cursor-pointer"
+              >
+                <ProfileImage profilePictureId={player.profilePictureId} className="size-7 shrink-0" />
+                <span className="truncate font-semibold">{player.username}</span>
+              </button>
               <span className="text-sm text-muted-foreground">
                 {player.score.toLocaleString()} pts
               </span>
