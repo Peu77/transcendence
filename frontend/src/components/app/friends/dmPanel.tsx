@@ -165,7 +165,7 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
   useLiveEvent('dm.created', handleDmCreated)
 
   return (
-    <div className="mt-3 p-3  clip-pixel-corners-btn bg-input/20 border">
+    <div className="h-full flex flex-col p-3 bg-input/20">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <ProfileImage profilePictureId={props.friend.profilePictureId} />
@@ -206,7 +206,7 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
         </Button>
       </div>
 
-      <div className="mt-3 max-h-[260px] overflow-auto bg-background/30 border border-sidebar-border/50 clip-pixel-corners-btn p-2 text-sm">
+      <div className="mt-3 flex-1 min-h-0 overflow-auto bg-background/30 border border-sidebar-border/50 clip-pixel-corners-btn p-2 text-sm">
         {messagesContent}
       </div>
 

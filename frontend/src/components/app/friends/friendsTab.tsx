@@ -2,15 +2,19 @@ import { useCallback, useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-import { blockUser, deleteFriend, getFriends, sendFriendRequest } from '@/api/friends.ts'
+import { blockUser, deleteFriend, getFriends, sendFriendRequest, type Friend } from '@/api/friends.ts'
 import { Button } from '@/components/ui/button.tsx'
 import { Input } from '@/components/ui/input.tsx'
 import { FriendRow } from '@/components/app/friends/friendRow.tsx'
-import { DMPanel } from '@/components/app/friends/dmPanel.tsx'
 import type { AxiosError } from 'axios'
 import { useLiveEvent } from '@/realtime/hooks.ts'
 
-export const FriendsTab = (props: { isOpen: boolean }) => {
+export const FriendsTab = (props: {
+  isOpen: boolean
+  activeDmFriend: Friend | null
+  onOpenDM: (friend: Friend) => void
+  onCloseDM: () => void
+}) => {
   const qc = useQueryClient()
 
   const handlePresenceUpdated = useCallback(
@@ -48,8 +52,9 @@ export const FriendsTab = (props: { isOpen: boolean }) => {
   useLiveEvent('friendship.deleted', invalidateFriends)
   useLiveEvent('friend_request.accepted', invalidateFriends)
 
+  const { activeDmFriend, onOpenDM, onCloseDM } = props
+
   const [userIdentifier, setUserIdentifier] = useState('')
-  const [activeDmFriendId, setActiveDmFriendId] = useState<string | null>(null)
 
   const friendsQuery = useQuery({
     queryKey: ['friends'],
@@ -109,14 +114,16 @@ export const FriendsTab = (props: { isOpen: boolean }) => {
 
   const friends = friendsQuery.data ?? []
 
-  const activeDmFriend = activeDmFriendId
-    ? (friends.find((f) => f.id === activeDmFriendId) ?? null)
-    : null
-
-  // If friend list changes (removed etc.), close the DM panel.
+  // If the active DM friend is removed from the list, close the panel.
   useEffect(() => {
-    if (activeDmFriendId && !activeDmFriend) setActiveDmFriendId(null)
-  }, [activeDmFriendId, activeDmFriend])
+    if (
+      activeDmFriend &&
+      !friendsQuery.isLoading &&
+      !friends.find((f) => f.id === activeDmFriend.id)
+    ) {
+      onCloseDM()
+    }
+  }, [friends, friendsQuery.isLoading, activeDmFriend, onCloseDM])
 
   const friendsContent = (() => {
     if (friendsQuery.isLoading) {
@@ -139,7 +146,7 @@ export const FriendsTab = (props: { isOpen: boolean }) => {
           <FriendRow
             key={friend.id}
             friend={friend}
-            onOpenDM={() => setActiveDmFriendId(friend.id)}
+            onOpenDM={() => onOpenDM(friend)}
             onDelete={() => deleteFriendMutation.mutate(friend.id)}
             onBlock={() => blockFriendMutation.mutate(friend.id)}
           />
@@ -168,13 +175,6 @@ export const FriendsTab = (props: { isOpen: boolean }) => {
       </form>
 
       {friendsContent}
-
-      {activeDmFriend && (
-        <DMPanel
-          friend={activeDmFriend}
-          onClose={() => setActiveDmFriendId(null)}
-        />
-      )}
     </div>
   )
 }
