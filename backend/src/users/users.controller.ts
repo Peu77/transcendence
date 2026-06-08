@@ -49,6 +49,11 @@ export class UsersController {
     }
   }
 
+  @Get('users/me/history')
+  async getMatchHistory(@UserId() userId: string) {
+    return this.usersService.getMatchHistory(userId)
+  }
+
   @Post('users/gameControls')
   async updateGameControls(
     @UserId() userId: string,
