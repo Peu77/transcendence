@@ -1,60 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { TetrisRenderer } from '@/game/tetris/renderer'
-import {
-  TETROMINOES,
-  type TetrisState,
-  type TetrominoType,
-} from '@transcendence/shared'
-
-const PIECE_CSS_COLORS: Record<string, string> = {
-  I: 'bg-cyan-400',
-  O: 'bg-yellow-400',
-  T: 'bg-purple-600',
-  S: 'bg-green-500',
-  Z: 'bg-red-500',
-  J: 'bg-blue-600',
-  L: 'bg-orange-500',
-}
-
-function PiecePreview({
-  type,
-  dimmed,
-  cellSize = 10,
-}: {
-  type: TetrominoType
-  dimmed?: boolean
-  cellSize?: number
-}) {
-  const blocks = TETROMINOES[type][0]
-  const minR = Math.min(...blocks.map(([r]) => r))
-  const maxR = Math.max(...blocks.map(([r]) => r))
-  const minC = Math.min(...blocks.map(([, c]) => c))
-  const maxC = Math.max(...blocks.map(([, c]) => c))
-  const rows = maxR - minR + 1
-  const cols = maxC - minC + 1
-
-  return (
-    <div
-      className={`grid gap-px ${dimmed ? 'opacity-40' : ''}`}
-      style={{
-        gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
-        gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
-      }}
-    >
-      {Array.from({ length: rows * cols }, (_, i) => {
-        const r = Math.floor(i / cols) + minR
-        const c = (i % cols) + minC
-        const filled = blocks.some(([br, bc]) => br === r && bc === c)
-        return (
-          <div
-            key={i}
-            className={`rounded-[1px] ${filled ? PIECE_CSS_COLORS[type] : 'bg-transparent'}`}
-          />
-        )
-      })}
-    </div>
-  )
-}
+import { type TetrisState } from '@transcendence/shared'
 
 type GameBoardProps = {
   state: TetrisState | null
@@ -73,7 +19,6 @@ export function GameBoard({ state, label, large }: GameBoardProps) {
     if (!canvas) return
 
     const renderer = new TetrisRenderer(canvas)
-    if (large) renderer.compact = true
     rendererRef.current = renderer
 
     const handleResize = () => {
@@ -90,7 +35,7 @@ export function GameBoard({ state, label, large }: GameBoardProps) {
       renderer.destroy()
       rendererRef.current = null
     }
-  }, [large])
+  }, [])
 
   useEffect(() => {
     if (state && rendererRef.current) {
@@ -99,70 +44,25 @@ export function GameBoard({ state, label, large }: GameBoardProps) {
   }, [state])
 
   if (large) {
-    const nextPieces = state?.nextPieces?.length
-      ? state.nextPieces
-      : state?.nextPiece
-        ? [state.nextPiece]
-        : []
-
     return (
-      <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center gap-6">
-        {/* Hold piece — left of board */}
-        <div className="flex w-[150px] shrink-0 flex-col items-center gap-3 self-start pt-4">
-          <span className="text-sm font-bold uppercase tracking-widest text-foreground/60">
-            Hold
-          </span>
-          <div
-            className="flex h-[140px] w-full items-center justify-center rounded-lg border border-white/5 p-4"
-            style={{ background: '#14141f' }}
-          >
-            {state?.heldPiece ? (
-              <PiecePreview
-                type={state.heldPiece}
-                dimmed={!state.canHold}
-                cellSize={30}
-              />
-            ) : null}
-          </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center justify-center">
+        <div className="relative min-h-0 flex-1 w-full">
+          <canvas ref={canvasRef} className="h-full w-full" />
+          {state?.gameOver && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+              <span className="text-2xl font-bold text-red-400">GAME OVER</span>
+            </div>
+          )}
         </div>
-
-        {/* Board canvas + stats */}
-        <div className="relative flex h-full max-h-full flex-col items-center gap-2">
-          <div className="relative h-full max-h-full aspect-[1/2]">
-            <canvas ref={canvasRef} className="h-full w-full" />
-            {state?.gameOver && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                <span className="text-2xl font-bold text-red-400">GAME OVER</span>
-              </div>
-            )}
-          </div>
-          <div className="flex shrink-0 gap-3 text-sm font-bold tracking-wide text-foreground/80">
-            <span>{label}</span>
-            {state && (
-              <>
-                <span>SCORE {state.score}</span>
-                <span>LINES {state.lines}</span>
-                <span>LVL {state.level}</span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Next pieces — right of board */}
-        <div className="flex w-[150px] shrink-0 flex-col items-center gap-3 self-start pt-4">
-          <span className="text-sm font-bold uppercase tracking-widest text-foreground/60">
-            Next
-          </span>
-          <div
-            className="flex w-full flex-col items-center gap-2 rounded-lg border border-white/5 p-4"
-            style={{ background: '#14141f' }}
-          >
-            {nextPieces.map((type, i) => (
-              <div key={i} className={i > 0 ? 'opacity-50' : ''}>
-                <PiecePreview type={type} cellSize={30} />
-              </div>
-            ))}
-          </div>
+        <div className="flex shrink-0 gap-3 text-sm font-bold tracking-wide text-foreground/80">
+          <span>{label}</span>
+          {state && (
+            <>
+              <span>SCORE {state.score}</span>
+              <span>LINES {state.lines}</span>
+              <span>LVL {state.level}</span>
+            </>
+          )}
         </div>
       </div>
     )
