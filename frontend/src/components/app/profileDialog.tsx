@@ -40,10 +40,25 @@ export const ProfileDialog = ({
                 <ProfileImage profilePictureId={profile.profilePictureId} />
                 <h2 className="text-2xl font-bold">{profile.username}</h2>
               </div>
-              <div className="flex flex-col items-center gap-1 text-muted-foreground text-sm">
-                <span>Level {profile.level}</span>
-                <span>Joined {timeAgo(new Date(profile.createdAt))}</span>
+              <div className="flex gap-4">
+                <div className="flex flex-col items-center rounded-md bg-muted px-4 py-2">
+                  <span className="text-lg font-bold">
+                    {profile.rank !== null ? `#${profile.rank}` : 'Unranked'}
+                  </span>
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground">Rank</span>
+                </div>
+                <div className="flex flex-col items-center rounded-md bg-muted px-4 py-2">
+                  <span className="text-lg font-bold">
+                    {profile.totalScore !== null ? profile.totalScore.toLocaleString() : '—'}
+                  </span>
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground">Points</span>
+                </div>
+                <div className="flex flex-col items-center rounded-md bg-muted px-4 py-2">
+                  <span className="text-lg font-bold">{profile.level}</span>
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground">Level</span>
+                </div>
               </div>
+              <span className="text-sm text-muted-foreground">Joined {timeAgo(new Date(profile.createdAt))}</span>
             </div>
           </>
         )}

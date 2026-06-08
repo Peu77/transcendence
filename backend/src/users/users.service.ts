@@ -199,12 +199,39 @@ export class UsersService {
 
   async getPublicProfile(userId: string) {
     const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
+
+    const matchCount = await this.matchResultsRepo.count({ where: { userId } })
+
+    let totalScore: number | null = null
+    let rank: number | null = null
+
+    if (matchCount > 0) {
+      const scoreResult = await this.matchResultsRepo
+        .createQueryBuilder('result')
+        .select('SUM(result.score)', 'totalScore')
+        .where('result.userId = :userId', { userId })
+        .getRawOne<{ totalScore: string }>()
+
+      totalScore = Number(scoreResult?.totalScore ?? 0)
+
+      const higherRanked = await this.matchResultsRepo
+        .createQueryBuilder('result')
+        .select('result.userId')
+        .groupBy('result.userId')
+        .having('SUM(result.score) > :totalScore', { totalScore })
+        .getRawMany()
+
+      rank = higherRanked.length + 1
+    }
+
     return {
       id: user.id,
       username: user.username,
       profilePictureId: user.profilePictureId,
       level: user.level,
       createdAt: user.createdAt,
+      totalScore,
+      rank,
     }
   }
 

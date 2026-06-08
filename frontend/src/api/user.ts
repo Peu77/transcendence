@@ -131,6 +131,8 @@ export type PublicProfile = {
   profilePictureId: string | null
   level: number
   createdAt: string
+  totalScore: number | null
+  rank: number | null
 }
 
 export async function getPublicProfile(userId: string) {
