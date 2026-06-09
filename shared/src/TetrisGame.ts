@@ -624,6 +624,11 @@ export class TetrisGame {
     '2>1': [[0,0],[0,-1],[-1,-1],[2,0],[2,-1]],
     '3>2': [[0,0],[0,-1],[1,-1],[-2,0],[-2,-1]],
     '0>3': [[0,0],[0,1],[-1,1],[2,0],[2,1]],
+    // 180° entries — not part of SRS spec; custom extension for rotate180 input
+    '0>2': [[0,0],[0,1],[0,-1],[-1,0],[1,0]],
+    '1>3': [[0,0],[0,1],[0,-1],[-1,0],[1,0]],
+    '2>0': [[0,0],[0,1],[0,-1],[-1,0],[1,0]],
+    '3>1': [[0,0],[0,1],[0,-1],[-1,0],[1,0]],
   }
 
   private readonly I_KICKS: Record<string, Block[]> = {
@@ -635,6 +640,13 @@ export class TetrisGame {
     '2>1': [[0,0],[0,1],[0,-2],[2,1],[-1,-2]],
     '3>2': [[0,0],[0,-2],[0,1],[1,-2],[-2,1]],
     '0>3': [[0,0],[0,-1],[0,2],[-2,-1],[1,2]],
+    // 180° entries — not part of SRS spec; custom extension for rotate180 input
+    // 0↔2 are offset by 1 row relative to each other, so kicks compensate for
+    // that offset first to keep blocks visually stationary during the rotation.
+    '0>2': [[-1,0],[-1,1],[-1,-1],[0,0],[1,0]],
+    '1>3': [[0,0],[0,1],[0,-1],[-1,0],[1,0]],
+    '2>0': [[1,0],[1,1],[1,-1],[0,0],[-1,0]],
+    '3>1': [[0,0],[0,1],[0,-1],[-1,0],[1,0]],
   }
 
   private tryResetLockDelay(): boolean {
@@ -679,19 +691,7 @@ export class TetrisGame {
   private tryRotate(delta: number): boolean {
     const piece = this.currentPiece
 
-    if (Math.abs(delta) === 2) {
-      const before = { row: piece.row, col: piece.col, rotation: piece.rotation }
-      if (!this.tryRotate(1)) return false
-      if (!this.tryRotate(1)) {
-        piece.row = before.row
-        piece.col = before.col
-        piece.rotation = before.rotation
-        return false
-      }
-      return true
-    }
-
-    if (piece.type === TetrominoType.S || piece.type === TetrominoType.Z) {
+    if (Math.abs(delta) === 1 && (piece.type === TetrominoType.S || piece.type === TetrominoType.Z)) {
       piece.rotation = piece.rotation % 2
     }
 
