@@ -20,6 +20,13 @@ import { UserType } from '../users/user.entity'
 import { GithubValidateReturn } from './github.strategy'
 import { ConfigService } from '@nestjs/config'
 
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'strict' as const,
+  path: '/',
+}
+
 @Controller('auth')
 export class AuthController {
   private readonly frontendSuccessLoginUrl: string
@@ -64,7 +71,7 @@ export class AuthController {
     )
 
     const token = this.authService.createUserToken(createdUser.id)
-    res.cookie('token', token, { httpOnly: true, path: '/' })
+    res.cookie('token', token, COOKIE_OPTIONS)
     res.status(HttpStatus.CREATED).send({})
   }
 
@@ -86,7 +93,7 @@ export class AuthController {
 
     if (!user.twoFaEnabled) {
       const token = this.authService.createUserToken(user.id)
-      res.cookie('token', token, { httpOnly: true, path: '/' })
+      res.cookie('token', token, COOKIE_OPTIONS)
       return res.send({})
     }
 
@@ -121,7 +128,7 @@ export class AuthController {
     }
 
     const token = this.authService.createUserToken(user.id)
-    res.cookie('token', token, { httpOnly: true, path: '/' })
+    res.cookie('token', token, COOKIE_OPTIONS)
     return res.redirect(this.frontendSuccessLoginUrl)
   }
 
@@ -136,14 +143,14 @@ export class AuthController {
     if (!valid) throw new BadRequestException('Invalid 2FA token')
 
     const token = this.authService.createUserToken(dto.userId)
-    res.cookie('token', token, { httpOnly: true, path: '/' })
+    res.cookie('token', token, COOKIE_OPTIONS)
     return res.send({ token })
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('token', { path: '/' })
+    res.clearCookie('token', COOKIE_OPTIONS)
     return {}
   }
 }
