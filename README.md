@@ -105,11 +105,11 @@ During the development of this project, Artificial Intelligence was utilized str
 
 ## User Management
 - [x] Standard User Management and Auth --> Update profile info, upload avatar, add friends and see if online, profile page per user - (2) (Theo)
-- [ ] Game statistics and match history - (1) --> ? 
-  - [ ] Track user game statistics (wins, losses, ranking, level, etc.)
-  - [ ] Display match history (1v1 games, dates, results, opponents).
+- [x] Game statistics and match history - (1) --> ? 
+  - [x] Track user game statistics (wins, losses, ranking, level, etc.)
+  - [] Display match history (1v1 games, dates, results, opponents).
   - [ ] Show achievements and progression.
-  - [ ] Leaderboard integration.
+  - [x] Leaderboard integration.
 - [x] Implement OAuth 2.0 (1)
 - [ ] Users have a profile page displaying their information. (Theo)
 - [x] Implement a complete 2FA (Two-Factor Authentication) system for the users

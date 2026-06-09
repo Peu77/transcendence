@@ -27,7 +27,7 @@ import { RoomLobbyRoute } from '@/routes/app/room.tsx'
 import { RoomRoute } from '@/routes/app/room.$roomId.tsx'
 import { AboutRoute } from '@/routes/app/about.tsx'
 import { NotFound } from '@/routes/notFound.tsx'
-import { HistoryRoute } from '@/routes/app/history.tsx'
+import { StatisticsRoute } from '@/routes/app/statistics.tsx'
 
 export const rootRoute = createRootRoute<unknown>({
   component: () => (
@@ -66,7 +66,7 @@ const routeTree = rootRoute.addChildren([
   RoomLobbyRoute,
   RoomRoute,
   AboutRoute,
-  HistoryRoute,
+  StatisticsRoute,
 ])
 
 const TanStackQueryProviderContext = getQueryContext()
