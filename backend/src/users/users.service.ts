@@ -56,6 +56,10 @@ export class UsersService {
 
   static readonly UPLOAD_DIR = 'uploads/'
 
+  normalizeUsername(username: string): string {
+    return username.toLowerCase()
+  }
+
   async createUser(
     userType: UserType,
     email: string,
@@ -67,7 +71,7 @@ export class UsersService {
     const user = this.usersRepo.create({
       userType,
       email: email.toLowerCase(),
-      username: username,
+      username: this.normalizeUsername(username),
       password: passwordHash,
       githubId,
       githubAvatarUrl,
@@ -80,7 +84,9 @@ export class UsersService {
   }
 
   async existsByUsername(username: string): Promise<boolean> {
-    return await this.usersRepo.existsBy({ username })
+    return await this.usersRepo.existsBy({
+      username: this.normalizeUsername(username),
+    })
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -199,12 +205,43 @@ export class UsersService {
 
   async getPublicProfile(userId: string) {
     const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
+
+    const statsResult = await this.matchResultsRepo
+      .createQueryBuilder('result')
+      .select('SUM(result.score)', 'totalScore')
+      .addSelect('SUM(result.lines)', 'totalLines')
+      .addSelect('COUNT(result.id)', 'matchCount')
+      .where('result.userId = :userId', { userId })
+      .getRawOne<{
+        totalScore: string | null
+        totalLines: string | null
+        matchCount: string
+      }>()
+
+    const matchCount = Number(statsResult?.matchCount ?? 0)
+    const totalLines = Number(statsResult?.totalLines ?? 0)
+    const totalScore = matchCount > 0 ? Number(statsResult?.totalScore ?? 0) : null
+
+    let rank: number | null = null
+    if (matchCount > 0) {
+      const higherRanked = await this.matchResultsRepo
+        .createQueryBuilder('result')
+        .select('result.userId')
+        .groupBy('result.userId')
+        .having('SUM(result.score) > :totalScore', { totalScore })
+        .getRawMany()
+
+      rank = higherRanked.length + 1
+    }
+
     return {
       id: user.id,
       username: user.username,
       profilePictureId: user.profilePictureId,
-      level: user.level,
       createdAt: user.createdAt,
+      totalScore,
+      totalLines,
+      rank,
     }
   }
 
@@ -243,6 +280,7 @@ export class UsersService {
         .map((result, index) => ({
           userId: result.userId,
           username: result.user.username,
+          profilePictureId: result.user.profilePictureId ?? null,
           score: result.score,
           lines: result.lines,
           level: result.state.level,

@@ -111,7 +111,7 @@ During the development of this project, Artificial Intelligence was utilized str
   - [ ] Show achievements and progression.
   - [x] Leaderboard integration.
 - [x] Implement OAuth 2.0 (1)
-- [ ] Users have a profile page displaying their information. (Theo)
+- [x] Users have a profile page displaying their information. (Theo)
 - [x] Implement a complete 2FA (Two-Factor Authentication) system for the users
 
 ## Artificial Intelligence

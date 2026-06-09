@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 export interface MatchHistoryPlayer {
   userId: string
   username: string
+  profilePictureId: string | null
   score: number
   lines: number
   level: number

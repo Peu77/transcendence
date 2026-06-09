@@ -1,14 +1,23 @@
+import { useState } from 'react'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import type { RoomPlayersSidebarProps } from './types.ts'
+import { ProfileDialog } from '@/components/app/profileDialog.tsx'
 
 export function RoomPlayersSidebar({
   room,
   currentUserId,
   onLeaveRoom,
 }: RoomPlayersSidebarProps) {
+  const [profileUserId, setProfileUserId] = useState<string | null>(null)
+
   return (
     <aside className="flex h-full min-h-0 flex-col bg-background/80 px-7 pt-4 text-card-foreground">
+      <ProfileDialog
+        userId={profileUserId ?? ''}
+        open={profileUserId !== null}
+        onOpenChange={(open) => { if (!open) setProfileUserId(null) }}
+      />
       <div className="border-b border-border/70 pb-6">
         <h2 className="text-2xl font-bold uppercase tracking-wide">
           Players ({room.users.length})
@@ -23,7 +32,8 @@ export function RoomPlayersSidebar({
           return (
             <li
               key={user.id}
-              className="flex items-center gap-3 rounded-md border border-border/60 bg-card/60 p-3 shadow-sm"
+              onClick={() => setProfileUserId(user.id)}
+              className="flex items-center gap-3 rounded-md border border-border/60 bg-card/60 p-3 shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
             >
               <ProfileImage profilePictureId={user.profilePictureId} />
 

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   type GlobalRankingItem,
   type MatchHistoryItem,
@@ -5,6 +6,7 @@ import {
   useMatchHistory,
 } from '@/api/history.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
+import { ProfileDialog } from '@/components/app/profileDialog.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import {
   Card,
@@ -45,6 +47,7 @@ const Stat = ({ label, value }: { label: string; value: string }) => (
 
 const MatchCard = ({ match }: { match: MatchHistoryItem }) => {
   const won = match.placement === 1
+  const [profileUserId, setProfileUserId] = useState<string | null>(null)
 
   return (
     <Card className="gap-4 border border-border py-5">
@@ -85,6 +88,11 @@ const MatchCard = ({ match }: { match: MatchHistoryItem }) => {
           <Stat label="Level" value={match.level.toString()} />
         </div>
 
+        <ProfileDialog
+          userId={profileUserId ?? ''}
+          open={profileUserId !== null}
+          onOpenChange={(open) => { if (!open) setProfileUserId(null) }}
+        />
         <div className="overflow-hidden rounded-md border border-border">
           {match.players.map((player) => (
             <div
@@ -94,7 +102,13 @@ const MatchCard = ({ match }: { match: MatchHistoryItem }) => {
               <span className="font-bold text-muted-foreground">
                 #{player.placement}
               </span>
-              <span className="truncate font-semibold">{player.username}</span>
+              <button
+                onClick={() => setProfileUserId(player.userId)}
+                className="flex items-center gap-2 min-w-0 text-left hover:opacity-70 transition-opacity cursor-pointer"
+              >
+                <ProfileImage profilePictureId={player.profilePictureId} className="size-7 shrink-0" />
+                <span className="truncate font-semibold">{player.username}</span>
+              </button>
               <span className="text-sm text-muted-foreground">
                 {player.score.toLocaleString()} pts
               </span>
@@ -159,9 +173,11 @@ const rankClassName = (rank: number) => {
 const RankingRow = ({
   player,
   rank,
+  onPlayerClick,
 }: {
   player: GlobalRankingItem
   rank: number
+  onPlayerClick: () => void
 }) => (
   <div className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-4 py-3 last:border-b-0">
     <div
@@ -169,7 +185,10 @@ const RankingRow = ({
     >
       {rank <= 3 ? <MedalIcon className="size-5" /> : rank}
     </div>
-    <div className="flex min-w-0 items-center gap-3">
+    <button
+      onClick={onPlayerClick}
+      className="flex min-w-0 items-center gap-3 text-left hover:opacity-70 transition-opacity cursor-pointer"
+    >
       <ProfileImage
         profilePictureId={player.profilePictureId}
         className="size-10 shrink-0"
@@ -181,7 +200,7 @@ const RankingRow = ({
           {player.matchesPlayed === 1 ? 'match' : 'matches'}
         </p>
       </div>
-    </div>
+    </button>
     <div className="text-right">
       <p className="text-lg font-bold">{player.score.toLocaleString()}</p>
       <p className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -193,6 +212,7 @@ const RankingRow = ({
 
 const GlobalRanking = () => {
   const rankingQuery = useGlobalRanking()
+  const [profileUserId, setProfileUserId] = useState<string | null>(null)
 
   if (rankingQuery.isPending) return <LoadingState />
 
@@ -218,13 +238,25 @@ const GlobalRanking = () => {
   }
 
   return (
-    <ScrollArea className="h-full">
-      <Card className="gap-0 overflow-hidden border border-border py-0">
-        {rankingQuery.data.map((player, index) => (
-          <RankingRow key={player.userId} player={player} rank={index + 1} />
-        ))}
-      </Card>
-    </ScrollArea>
+    <>
+      <ProfileDialog
+        userId={profileUserId ?? ''}
+        open={profileUserId !== null}
+        onOpenChange={(open) => { if (!open) setProfileUserId(null) }}
+      />
+      <ScrollArea className="h-full">
+        <Card className="gap-0 overflow-hidden border border-border py-0">
+          {rankingQuery.data.map((player, index) => (
+            <RankingRow
+              key={player.userId}
+              player={player}
+              rank={index + 1}
+              onPlayerClick={() => setProfileUserId(player.userId)}
+            />
+          ))}
+        </Card>
+      </ScrollArea>
+    </>
   )
 }
 

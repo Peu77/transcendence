@@ -40,9 +40,10 @@ export class AuthController {
   @Post('register')
   async register(@Body() dto: RegisterDto, @Res() res: Response) {
     const email = dto.email.toLowerCase()
+    const username = this.usersService.normalizeUsername(dto.username)
     const passwordHash = await bcrypt.hash(dto.password, 10)
 
-    if (await this.usersService.existsByUsername(dto.username))
+    if (await this.usersService.existsByUsername(username))
       return res.status(HttpStatus.CONFLICT).send({
         message: 'Username already registered',
         fieldAlreadyExists: 'username',
@@ -57,7 +58,7 @@ export class AuthController {
     const createdUser = await this.usersService.createUser(
       UserType.EMAIL,
       email,
-      dto.username,
+      username,
       passwordHash,
       null,
       null,
