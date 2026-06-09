@@ -1,15 +1,19 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { User, UserType } from './user.entity'
+import { Theme, User, UserType } from './user.entity'
 import { UserInfo } from '../realtime/realtime.events'
 import { GithubValidateReturn } from '../auth/github.strategy'
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepo: Repository<User>,
   ) {}
+
+  static readonly UPLOAD_DIR = 'uploads/'
 
   async createUser(
     userType: UserType,
@@ -83,11 +87,43 @@ export class UsersService {
     )
   }
 
+  async toggleTheme(userId: string): Promise<Theme> {
+    const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
+    const newTheme = user.theme === Theme.LIGHT ? Theme.DARK : Theme.LIGHT
+    await this.usersRepo.update({ id: userId }, { theme: newTheme })
+    return newTheme
+  }
+
+  async getPublicProfile(userId: string) {
+    const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
+    return {
+      id: user.id,
+      username: user.username,
+      profilePictureId: user.profilePictureId,
+      level: user.level,
+      createdAt: user.createdAt,
+    }
+  }
+
   async getUserInfo(userId: string): Promise<UserInfo> {
     const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
     return {
       username: user.username,
       profilePictureId: user.profilePictureId,
+    }
+  }
+
+  async existUserProfilePictureInFs(
+    profilePictureId: string,
+  ): Promise<boolean> {
+    try {
+      console.log('Checking if profile picture exists:', profilePictureId)
+      console.log('Upload directory:', UsersService.UPLOAD_DIR)
+      await fs.access(path.join(UsersService.UPLOAD_DIR, profilePictureId))
+      return true
+    } catch (e) {
+      console.log('Profile picture does not exist:', e)
+      return false
     }
   }
 }

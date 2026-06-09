@@ -5,17 +5,30 @@ import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { userStore } from '@/store/userStore.ts'
 import { useStore } from '@tanstack/react-store'
 import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Theme, toggleTheme, USER_QUERY_KEYS } from '@/api/user.ts'
+import { ProfileDialog } from '@/components/app/profileDialog.tsx'
 
 export const Navbar = () => {
-  const [isDark, setIsDark] = useState(() =>
-    document.documentElement.classList.contains('dark'),
-  )
+  const [profileOpen, setProfileOpen] = useState(false)
   const profileImageId = useStore(userStore, (state) => state?.profilePictureId)
   const username = useStore(userStore, (state) => state?.username)
+  const userId = useStore(userStore, (state) => state?.id)
+  const theme = useStore(userStore, (state) => state?.theme)
+  const isDark = theme === 'dark'
+
+  const queryClient = useQueryClient()
+
+  const toggleThemeMutation = useMutation({
+    mutationFn: toggleTheme,
+    onSuccess: async (theme: Theme) => {
+      document.documentElement.classList.toggle('dark', theme === Theme.DARK)
+      await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.USER })
+    },
+  })
 
   const toggleDarkMode = () => {
-    document.documentElement.classList.toggle('dark')
-    setIsDark(document.documentElement.classList.contains('dark'))
+    toggleThemeMutation.mutate()
   }
 
   return (
@@ -36,10 +49,20 @@ export const Navbar = () => {
             </Button>
           </div>
 
-          <div className="flex gap-10 px-1 items-center bg-secondary clip-pixel-corners-btn cursor-pointer select-none hover:translate-y-1 active:translate-y-2 transition-all">
+          <div
+            className="flex gap-10 px-1 items-center bg-secondary clip-pixel-corners-btn cursor-pointer select-none hover:translate-y-1 active:translate-y-2 transition-all"
+            onClick={() => setProfileOpen(true)}
+          >
             <p className="ml-2 font-bold text-l">{username}</p>
             <ProfileImage profilePictureId={profileImageId} />
           </div>
+          {userId && (
+            <ProfileDialog
+              userId={userId}
+              open={profileOpen}
+              onOpenChange={setProfileOpen}
+            />
+          )}
         </div>
       </div>
     </nav>

@@ -20,8 +20,7 @@ import * as speakeasy from 'speakeasy'
 import { UsersService } from './users.service'
 import { AuthGuard, UserId } from '../auth/auth.guard'
 import { ProfilePictureDto, VerifyTwoFaDto } from './dto'
-
-const UPLOAD_DIR = 'uploads/'
+import { v4 as uuid } from 'uuid'
 
 @Controller()
 @UseGuards(AuthGuard)
@@ -37,6 +36,7 @@ export class UsersController {
       profilePictureId: user.profilePictureId,
       twoFaEnabled: user.twoFaEnabled,
       username: user.username,
+      theme: user.theme,
     }
   }
 
@@ -45,8 +45,8 @@ export class UsersController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: async (_req, _file, cb) => {
-          await fs.mkdir(UPLOAD_DIR, { recursive: true })
-          cb(null, UPLOAD_DIR)
+          await fs.mkdir(UsersService.UPLOAD_DIR, { recursive: true })
+          cb(null, UsersService.UPLOAD_DIR)
         },
       }),
       fileFilter: (_req, file, cb) => {
@@ -71,14 +71,23 @@ export class UsersController {
     }
     const user = await this.usersService.getUserByid(userId)
 
-    if (user.profilePictureId) {
-      await fs.unlink(path.join(UPLOAD_DIR, user.profilePictureId))
+    if (
+      user.profilePictureId &&
+      (await this.usersService.existUserProfilePictureInFs(
+        user.profilePictureId,
+      ))
+    ) {
+      await fs.unlink(path.join(UsersService.UPLOAD_DIR, user.profilePictureId))
     }
 
-    await this.usersService.updateProfilePictureId(user.id, file.filename)
+    const newFileId = uuid()
+    await fs.rename(file.path, path.join(UsersService.UPLOAD_DIR, newFileId))
+    console.log(`Profile picture uploaded with ID: ${newFileId}`)
+
+    await this.usersService.updateProfilePictureId(user.id, newFileId)
     return {
       message: 'Profile picture uploaded successfully',
-      profilePictureId: file.filename,
+      profilePictureId: newFileId,
     }
   }
 
@@ -87,7 +96,7 @@ export class UsersController {
     @Param() params: ProfilePictureDto,
     @Res() res: Response,
   ) {
-    const filepath = path.join(UPLOAD_DIR, params.id)
+    const filepath = path.join(UsersService.UPLOAD_DIR, params.id)
     try {
       await fs.access(filepath)
     } catch {
@@ -97,6 +106,17 @@ export class UsersController {
     res.setHeader('Cache-Control', 'public, max-age=600')
     const stream = createReadStream(filepath)
     stream.pipe(res)
+  }
+
+  @Get('users/profile/:id')
+  async getPublicProfile(@Param('id') id: string) {
+    return this.usersService.getPublicProfile(id)
+  }
+
+  @Post('users/toggleTheme')
+  async toggleTheme(@UserId() userId: string) {
+    const theme = await this.usersService.toggleTheme(userId)
+    return { theme }
   }
 
   @Post('users/2fa/generate')

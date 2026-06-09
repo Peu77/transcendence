@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { Button } from '@/components/ui/button.tsx'
 import { Input } from '@/components/ui/input.tsx'
 import { Label } from '@/components/ui/label.tsx'
+import { ErrorMessages } from '../formComponents'
 
 interface TwoFaSetupProps {
   twoFaData: { otpauthUrl: string; base32: string }
@@ -64,11 +65,7 @@ export const TwoFaSetup = ({
                 placeholder="123456"
                 maxLength={6}
               />
-              {field.state.meta.errors ? (
-                <em className="text-destructive text-xs not-italic">
-                  {field.state.meta.errors.join(', ')}
-                </em>
-              ) : null}
+              <ErrorMessages errors={field.state.meta.errors} />
             </div>
           )}
         </form.Field>

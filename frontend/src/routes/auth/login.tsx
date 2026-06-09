@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button.tsx'
 import { FieldSeparator } from '@/components/ui/field.tsx'
 import { GithubIcon } from 'lucide-react'
 import { env } from '@/env.ts'
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { verifyTwoFaLogin } from '@/api/twofa.ts'
 import { Input } from '@/components/ui/input.tsx'
 import { Label } from '@/components/ui/label.tsx'
@@ -29,6 +29,23 @@ export default function Login() {
   const navigate = useNavigate()
   const [twoFaData, setTwoFaData] = useState<LoginResponse | null>(null)
   const [otpCode, setOtpCode] = useState('')
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const userId = params.get('userId')
+    const twoFaSessionId = params.get('twoFaSessionId')
+
+    if (userId && twoFaSessionId) {
+      setTwoFaData({
+        requires2FA: true,
+        twoFaSession: { twoFaSessionId },
+        userId,
+      })
+      toast.info('Two-factor authentication required for GitHub login')
+      // Clear the query parameters without refreshing the page
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
 
   const form = useAppForm({
     validators: { onChange: loginSchema },

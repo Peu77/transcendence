@@ -1,6 +1,5 @@
 import { Spinner } from '@/components/ui/spinner.tsx'
-import { getUser } from '@/api/user.ts'
-import { useQuery } from '@tanstack/react-query'
+import { useGetUser } from '@/api/user.ts'
 import { createRoute, Outlet, useNavigate } from '@tanstack/react-router'
 import { rootRoute } from '@/main.tsx'
 import { useEffect } from 'react'
@@ -12,13 +11,16 @@ import { RealtimeMount } from '@/realtime'
 import { useMyPresence } from '@/presence/useMyPresence'
 
 const AppLayout = () => {
-  const userQuery = useQuery({
-    queryKey: ['user'],
-    queryFn: getUser,
-  })
+  const userQuery = useGetUser()
 
   useEffect(() => {
-    if (userQuery.data) userStore.setState(userQuery.data)
+    if (userQuery.data) {
+      userStore.setState(userQuery.data)
+      document.documentElement.classList.toggle(
+        'dark',
+        userQuery.data.theme === 'dark',
+      )
+    }
   }, [userQuery.data])
 
   useMyPresence({ enabled: !!userQuery.data, idleMs: 60_000 })
