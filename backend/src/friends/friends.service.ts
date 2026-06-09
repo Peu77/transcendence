@@ -48,11 +48,12 @@ export class FriendsService {
     fromUserId: string,
     toUserIdentifier: string,
   ): Promise<FriendRequest> {
+    const normalizedUsername =
+      this.userService.normalizeUsername(toUserIdentifier)
     const toUser = await this.usersRepo.findOneOrFail({
-      where: [
-        isUUID(toUserIdentifier) ? { id: toUserIdentifier } : {},
-        { username: toUserIdentifier },
-      ],
+      where: isUUID(toUserIdentifier)
+        ? { id: toUserIdentifier }
+        : { username: normalizedUsername },
     })
 
     if (fromUserId === toUser.id)

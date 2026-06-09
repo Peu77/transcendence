@@ -56,6 +56,10 @@ export class UsersService {
 
   static readonly UPLOAD_DIR = 'uploads/'
 
+  normalizeUsername(username: string): string {
+    return username.toLowerCase()
+  }
+
   async createUser(
     userType: UserType,
     email: string,
@@ -67,7 +71,7 @@ export class UsersService {
     const user = this.usersRepo.create({
       userType,
       email: email.toLowerCase(),
-      username: username,
+      username: this.normalizeUsername(username),
       password: passwordHash,
       githubId,
       githubAvatarUrl,
@@ -80,7 +84,9 @@ export class UsersService {
   }
 
   async existsByUsername(username: string): Promise<boolean> {
-    return await this.usersRepo.existsBy({ username })
+    return await this.usersRepo.existsBy({
+      username: this.normalizeUsername(username),
+    })
   }
 
   async findByEmail(email: string): Promise<User | null> {
