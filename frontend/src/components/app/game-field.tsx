@@ -37,7 +37,7 @@ export function GameField({
         className="flex h-full min-h-0 w-full items-stretch gap-4 px-4 py-4 transition-transform duration-75 ease-out"
         style={{ transform: `scale(${escapeHoldScale})` }}
       >
-        <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center">
+        <div className="flex min-h-0 min-w-0 flex-1 items-stretch justify-center">
           <GameBoard state={state} label={label} large />
         </div>
 

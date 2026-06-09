@@ -1,7 +1,7 @@
 import {
+  type TetrisState,
   TETROMINOES,
   TetrominoType,
-  type TetrisState,
 } from '@transcendence/shared'
 
 /* ------------------------------------------------------------------ */
@@ -202,10 +202,11 @@ export class TetrisRenderer {
     // Total width = sidePanel + gap + board + gap + sidePanel
     //             = 4*PS*cs + SIDE_GAP + cols*cs + SIDE_GAP + 4*PS*cs
     //             = cs * (cols + 8*PS) + 2*SIDE_GAP
+    const VERTICAL_PAD = 8
     const cs = Math.floor(
       Math.min(
         (width - 2 * SIDE_GAP) / (this.cols + 8 * PREVIEW_SCALE),
-        height / this.rows,
+        (height - 2 * VERTICAL_PAD) / this.rows,
       ),
     )
     this.prevCellSize = Math.floor(cs * PREVIEW_SCALE)
