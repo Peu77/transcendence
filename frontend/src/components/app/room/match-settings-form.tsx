@@ -243,6 +243,16 @@ export function MatchSettingsForm({
               />
             )}
           </form.AppField>
+          <form.AppField name="damage.garbageCap">
+            {(field) => (
+              <field.Slider
+                label="Garbage Cap"
+                min={1}
+                max={20}
+                disabled={!isHost}
+              />
+            )}
+          </form.AppField>
         </div>
 
         <div className="flex flex-col gap-6 rounded-xl border border-border/50 bg-background/40 p-4 md:col-span-2 xl:col-span-2">
@@ -290,6 +300,26 @@ export function MatchSettingsForm({
                 />
               )}
             </form.AppField>
+            <form.AppField name="damage.table.tSpinMiniSingle">
+              {(field) => (
+                <field.Slider
+                  label="T-Spin Mini Single"
+                  min={0}
+                  max={10}
+                  disabled={!isHost}
+                />
+              )}
+            </form.AppField>
+            <form.AppField name="damage.table.tSpinMiniDouble">
+              {(field) => (
+                <field.Slider
+                  label="T-Spin Mini Double"
+                  min={0}
+                  max={10}
+                  disabled={!isHost}
+                />
+              )}
+            </form.AppField>
             <form.AppField name="damage.table.tSpinSingle">
               {(field) => (
                 <field.Slider
@@ -320,24 +350,22 @@ export function MatchSettingsForm({
                 />
               )}
             </form.AppField>
-            <form.AppField name="damage.comboMultiplier">
+            <form.AppField name="damage.table.allClear">
               {(field) => (
                 <field.Slider
-                  label="Combo Multiplier"
+                  label="All Clear"
                   min={0}
-                  max={5}
-                  step={0.1}
+                  max={20}
                   disabled={!isHost}
                 />
               )}
             </form.AppField>
-            <form.AppField name="damage.backToBackMultiplier">
+            <form.AppField name="damage.backToBackBonus">
               {(field) => (
                 <field.Slider
-                  label="B2B Multiplier"
-                  min={1}
+                  label="B2B Bonus"
+                  min={0}
                   max={5}
-                  step={0.1}
                   disabled={!isHost}
                 />
               )}
