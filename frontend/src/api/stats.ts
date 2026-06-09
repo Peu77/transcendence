@@ -24,6 +24,7 @@ export interface Achievement {
   category: string
   icon: string
   goal: number
+  unit: 'count' | 'minutes'
   progress: number
   unlocked: boolean
   unlockedAt: string | null

@@ -17,6 +17,7 @@ export interface AchievementProgress {
   category: string
   icon: string
   goal: number
+  unit: 'count' | 'minutes'
   progress: number
   unlocked: boolean
   unlockedAt: Date | null
@@ -108,6 +109,7 @@ export class AchievementsService {
       category: achievement.category,
       icon: achievement.icon,
       goal: achievement.goal,
+      unit: achievement.unit ?? 'count',
       progress: Math.min(rawProgress, achievement.goal),
       unlocked: unlockedAt !== undefined || rawProgress >= achievement.goal,
       unlockedAt: unlockedAt ?? null,

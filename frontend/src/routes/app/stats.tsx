@@ -107,6 +107,11 @@ const Overview = () => {
 
 /* --------------------------- Achievements tab --------------------------- */
 
+const formatAchievementValue = (value: number, unit: Achievement['unit']) =>
+  unit === 'minutes'
+    ? `${Math.floor(value / 60).toLocaleString()}m`
+    : value.toLocaleString()
+
 const AchievementCard = ({ achievement }: { achievement: Achievement }) => {
   const percent = achievement.goal
     ? Math.min(100, Math.round((achievement.progress / achievement.goal) * 100))
@@ -136,8 +141,8 @@ const AchievementCard = ({ achievement }: { achievement: Achievement }) => {
           <div className="flex items-center justify-between gap-2">
             <span className="truncate font-semibold">{achievement.name}</span>
             <span className="shrink-0 text-xs text-muted-foreground">
-              {achievement.progress.toLocaleString()} /{' '}
-              {achievement.goal.toLocaleString()}
+              {formatAchievementValue(achievement.progress, achievement.unit)} /{' '}
+              {formatAchievementValue(achievement.goal, achievement.unit)}
             </span>
           </div>
           <p className="mb-2 truncate text-sm text-muted-foreground">

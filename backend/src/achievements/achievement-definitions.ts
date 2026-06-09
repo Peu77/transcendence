@@ -9,12 +9,7 @@ export type AchievementCategory =
 /**
  * A single achievement definition.
  *
- * Achievements are data-driven: an achievement is "unlocked" once
- * `progress(stats) >= goal`. To add a new achievement, append an entry to
- * `ACHIEVEMENTS` below — no other code changes are required. Because progress
- * reads from the aggregated `UserStatsView` (which includes the open-ended
- * `metrics` bag), new gameplay metrics (e.g. t-spins) become usable here as
- * soon as the engine tracks them.
+ * To add a new achievement, append an entry to `ACHIEVEMENTS` below.
  */
 export interface AchievementDefinition {
   id: string
@@ -25,6 +20,7 @@ export interface AchievementDefinition {
   icon: string
   /** Value of `progress` at which the achievement unlocks. */
   goal: number
+  unit?: 'count' | 'minutes'
   /** Current progress toward `goal` for the given user stats. */
   progress: (stats: UserStatsView) => number
 }
@@ -103,6 +99,33 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     progress: (s) => s.highestScore,
   },
   {
+    id: 'score_hunter',
+    name: 'Score Hunter',
+    description: 'Reach a score of 50,000 in a single match.',
+    category: 'skill',
+    icon: '🌟',
+    goal: 50000,
+    progress: (s) => s.highestScore,
+  },
+  {
+    id: 'score_master',
+    name: 'Score Master',
+    description: 'Reach a score of 100,000 in a single match.',
+    category: 'skill',
+    icon: '💫',
+    goal: 100000,
+    progress: (s) => s.highestScore,
+  },
+  {
+    id: 'score_legend',
+    name: 'Score Legend',
+    description: 'Reach a score of 250,000 in a single match.',
+    category: 'skill',
+    icon: '🏆',
+    goal: 250000,
+    progress: (s) => s.highestScore,
+  },
+  {
     id: 'combo_starter',
     name: 'Combo Starter',
     description: 'Reach a 5-chain combo.',
@@ -118,6 +141,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     category: 'dedication',
     icon: '⏱️',
     goal: 3600,
+    unit: 'minutes',
     progress: (s) => s.playTimeInSeconds,
   },
 ]

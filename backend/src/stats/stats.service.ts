@@ -31,8 +31,7 @@ export class StatsService {
 
   /**
    * Apply the results of a finished match to each player's aggregate stats.
-   * A user only ever plays one game at a time, so per-user read-modify-write
-   * is safe without locking.
+   * Only for multiplayer matches.
    */
   async recordMatch(inputs: MatchStatInput[]): Promise<void> {
     for (const input of inputs) {
