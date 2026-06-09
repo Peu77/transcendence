@@ -93,10 +93,10 @@ During the development of this project, Artificial Intelligence was utilized str
 - [x] Allow users to interact with other users (2)
   - [x] A basic chat system
   - [x] A friend system
-  - [x] A profile system (Theo)
+  - [ ] A profile system (Theo)
 - [x] Realtime feature using WebSockets - (2)
 - [x] User interaction - Basic Chat, friend system, profile system - (2)
-- [x] Public API (at least 5 endpoints) - (2) (blocked by achievements)
+- [ ] Public API (at least 5 endpoints) - (2) (blocked by achievements)
 - [x] ORM - (1)
 
 
@@ -105,9 +105,9 @@ During the development of this project, Artificial Intelligence was utilized str
 
 ## User Management
 - [x] Standard User Management and Auth --> Update profile info, upload avatar, add friends and see if online, profile page per user - (2) (Theo)
-- [ ] Game statistics and match history - (1) --> ? 
+- [x] Game statistics and match history - (1) --> ? 
   - [x] Track user game statistics (wins, losses, ranking, level, etc.)
-  - [x] Display match history (1v1 games, dates, results, opponents).
+  - [] Display match history (1v1 games, dates, results, opponents).
   - [ ] Show achievements and progression.
   - [x] Leaderboard integration.
 - [x] Implement OAuth 2.0 (1)

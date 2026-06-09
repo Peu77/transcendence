@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
   IsNumber,
@@ -61,6 +62,16 @@ export class DamageTableDto {
 
   @IsNumber()
   @Min(0)
+  @Max(5)
+  tSpinMiniSingle!: number
+
+  @IsNumber()
+  @Min(0)
+  @Max(10)
+  tSpinMiniDouble!: number
+
+  @IsNumber()
+  @Min(0)
   @Max(10)
   tSpinSingle!: number
 
@@ -73,6 +84,11 @@ export class DamageTableDto {
   @Min(0)
   @Max(20)
   tSpinTriple!: number
+
+  @IsNumber()
+  @Min(0)
+  @Max(20)
+  allClear!: number
 }
 
 export class DamageSettingsDto {
@@ -81,15 +97,19 @@ export class DamageSettingsDto {
   @Type(() => DamageTableDto)
   table!: DamageTableDto
 
+  @IsArray()
+  @IsNumber({}, { each: true })
+  comboTable!: number[]
+
   @IsNumber()
   @Min(0)
-  @Max(5)
-  comboMultiplier!: number
+  @Max(10)
+  backToBackBonus!: number
 
   @IsNumber()
   @Min(1)
-  @Max(5)
-  backToBackMultiplier!: number
+  @Max(20)
+  garbageCap!: number
 }
 
 export class UpdateMatchSettingsDto {
