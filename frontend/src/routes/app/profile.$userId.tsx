@@ -4,6 +4,7 @@ import { useGetPublicProfile, timeAgo, type PublicProfile } from '@/api/user.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { LevelBar } from '@/components/app/levelBar.tsx'
 import { StatCard } from '@/components/app/statCard.tsx'
+import { AddFriendButton } from '@/components/app/addFriendButton.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { ArrowLeftIcon } from 'lucide-react'
@@ -56,7 +57,12 @@ function ProfilePage() {
           <Spinner className="size-8" />
         </div>
       ) : (
-        <ProfileContent profile={profile} />
+        <>
+          <ProfileContent profile={profile} />
+          <div className="flex justify-center mt-6">
+            <AddFriendButton userId={userId} />
+          </div>
+        </>
       )}
     </div>
   )

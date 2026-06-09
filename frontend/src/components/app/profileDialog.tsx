@@ -9,6 +9,7 @@ import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { LevelBar } from '@/components/app/levelBar.tsx'
 import { StatCard } from '@/components/app/statCard.tsx'
 import { useGetPublicProfile, timeAgo, type PublicProfile } from '@/api/user.ts'
+import { AddFriendButton } from '@/components/app/addFriendButton.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 
 const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
@@ -62,7 +63,12 @@ export const ProfileDialog = ({
             <Spinner className="size-8" />
           </div>
         ) : (
-          <ProfileContent profile={profile} />
+          <>
+            <ProfileContent profile={profile} />
+            <div className="flex justify-center mt-2">
+              <AddFriendButton userId={userId} />
+            </div>
+          </>
         )}
       </DialogContent>
     </Dialog>
