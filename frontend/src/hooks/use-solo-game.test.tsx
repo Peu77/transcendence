@@ -124,6 +124,8 @@ describe('useSoloGame', () => {
     act(() => {
       result.current.updateSettings({
         gravity: 2.5,
+        gincrease: 0,
+        gmargin: 0,
         hold: false,
         lineClearDelayMs: 0,
         lockDelayMs: 150,
@@ -151,6 +153,8 @@ describe('useSoloGame', () => {
     act(() => {
       result.current.updateSettings({
         gravity: 1,
+        gincrease: 0,
+        gmargin: 0,
         hold: true,
         lineClearDelayMs: 500,
         lockDelayMs: 500,
