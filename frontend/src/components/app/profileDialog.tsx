@@ -10,8 +10,8 @@ import { LevelBar } from '@/components/app/levelBar.tsx'
 import { StatCard } from '@/components/app/statCard.tsx'
 import { useGetPublicProfile, timeAgo, type PublicProfile } from '@/api/user.ts'
 import { AddFriendButton } from '@/components/app/addFriendButton.tsx'
+import { FriendshipRing } from '@/components/app/friendshipRing.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
-import { SwordsIcon } from 'lucide-react'
 
 const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
   const level = Math.floor(profile.totalLines / 10) + 1
@@ -33,12 +33,7 @@ const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
         <LevelBar totalLines={profile.totalLines} />
       </div>
       {profile.sharedMatchCount > 0 && (
-        <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <SwordsIcon className="size-4" />
-          {profile.sharedMatchCount === 1
-            ? '1 game played together'
-            : `${profile.sharedMatchCount} games played together`}
-        </span>
+        <FriendshipRing sharedMatchCount={profile.sharedMatchCount} />
       )}
       <span className="text-sm text-muted-foreground">
         Joined {timeAgo(new Date(profile.createdAt))}
