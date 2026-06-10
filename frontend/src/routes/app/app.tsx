@@ -36,6 +36,14 @@ const Index = () => {
       textColor: 'text-orange-50',
     },
     {
+      label: 'achievements',
+      description: 'Track your milestones and unlock rewards.',
+      path: '/app/achievements',
+      color: 'bg-violet-400',
+      borderColor: 'bg-violet-600',
+      textColor: 'text-violet-50',
+    },
+    {
       label: 'settings',
       description: 'Customize your experience and preferences.',
       path: '/app/settings',

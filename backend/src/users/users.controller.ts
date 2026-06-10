@@ -152,6 +152,11 @@ export class UsersController {
     stream.pipe(res)
   }
 
+  @Get('users/achievements')
+  async getAchievements(@UserId() userId: string) {
+    return this.usersService.getUserAchievements(userId)
+  }
+
   @Get('users/profile/:id')
   async getPublicProfile(
     @Param('id') id: string,

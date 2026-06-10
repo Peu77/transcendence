@@ -27,7 +27,7 @@ export function AddFriendButton({
   if (blockedByThem) {
     return (
       <Button variant="outline" disabled>
-        <BanIcon className="size-4" />
+        <BanIcon className="size-4 mr-2" />
         This person doesn&apos;t like you
       </Button>
     )
@@ -46,7 +46,7 @@ export function AddFriendButton({
         onClick={() => cancelRequest.mutate(outgoing.id)}
         disabled={cancelRequest.isPending}
       >
-        <ClockIcon className="size-4" />
+        <ClockIcon className="size-4 mr-2" />
         {cancelRequest.isPending ? 'Cancelling…' : 'Request Sent'}
       </Button>
     )
@@ -57,7 +57,7 @@ export function AddFriendButton({
       onClick={() => sendRequest.mutate({ userIdentifier: userId })}
       disabled={sendRequest.isPending}
     >
-      <UserPlusIcon className="size-4" />
+      <UserPlusIcon className="size-4 mr-2" />
       {sendRequest.isPending ? 'Sending…' : 'Add Friend'}
     </Button>
   )
