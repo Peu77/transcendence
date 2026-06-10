@@ -86,12 +86,20 @@ export const RequestsTab = (props: { isOpen: boolean }) => {
   })
 
   const blockMutation = useMutation({
-    mutationFn: async ({ requestId, fromUserId }: { requestId: string; fromUserId: string }) => {
+    mutationFn: async ({
+      requestId,
+      fromUserId,
+    }: {
+      requestId: string
+      fromUserId: string
+    }) => {
       await denyFriendRequest(requestId)
       await blockUser(fromUserId)
     },
     onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['friends', 'requests', 'incoming'] })
+      await qc.invalidateQueries({
+        queryKey: ['friends', 'requests', 'incoming'],
+      })
       toast.success('User blocked')
     },
     onError: (e: any) =>
@@ -148,7 +156,12 @@ export const RequestsTab = (props: { isOpen: boolean }) => {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => blockMutation.mutate({ requestId: r.id, fromUserId: r.fromUser.id })}
+                  onClick={() =>
+                    blockMutation.mutate({
+                      requestId: r.id,
+                      fromUserId: r.fromUser.id,
+                    })
+                  }
                 >
                   Block
                 </Button>

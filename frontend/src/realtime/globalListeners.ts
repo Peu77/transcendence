@@ -25,11 +25,15 @@ export function useGlobalListeners() {
   // Keep AddFriendButton in sync when the other person accepts or denies your request
   useLiveEvent('friend_request.accepted', async () => {
     await qc.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.FRIENDS })
-    await qc.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS })
+    await qc.invalidateQueries({
+      queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS,
+    })
   })
 
   useLiveEvent('friend_request.denied', async () => {
-    await qc.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS })
+    await qc.invalidateQueries({
+      queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS,
+    })
   })
 
   useLiveEvent('friendship.deleted', async () => {
