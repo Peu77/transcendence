@@ -15,6 +15,7 @@ import {
 import { Friendship } from './entities/friendship.entity'
 import { DirectMessage } from './entities/direct-message.entity'
 import { PresenceStatus, UserPresence } from './entities/user-presence.entity'
+import { UserBlock } from './entities/user-block.entity'
 import { isUUID } from 'class-validator'
 import { RealtimeService } from '../realtime/realtime.service'
 import { UsersService } from '../users/users.service'
@@ -31,6 +32,8 @@ export class FriendsService {
     private readonly messagesRepo: Repository<DirectMessage>,
     @InjectRepository(UserPresence)
     private readonly presenceRepo: Repository<UserPresence>,
+    @InjectRepository(UserBlock)
+    private readonly userBlocksRepo: Repository<UserBlock>,
     private readonly realtime: RealtimeService,
     private readonly userService: UsersService,
   ) {}
@@ -60,17 +63,16 @@ export class FriendsService {
       throw new BadRequestException('Cannot friend yourself')
     await this.assertUserExists(toUser.id)
 
+    const isBlocked = await this.userBlocksRepo.exists({
+      where: { blockerId: toUser.id, blockedId: fromUserId },
+    })
+    if (isBlocked) throw new ForbiddenException('User has blocked you')
+
     const { low, high } = this.canonicalPair(fromUserId, toUser.id)
     const alreadyFriends = await this.friendshipsRepo.exists({
       where: { userLowId: low, userHighId: high },
     })
     if (alreadyFriends) throw new ConflictException('Already friends')
-
-    const alreadySendRequest = await this.friendRequestsRepo.exists({
-      where: { fromUserId, toUserId: toUser.id },
-    })
-    if (alreadySendRequest)
-      throw new ConflictException('Friend request already sent')
 
     const existing = await this.friendRequestsRepo.findOne({
       where: [
@@ -181,8 +183,7 @@ export class FriendsService {
       throw new BadRequestException('Friend request is not pending')
     if (req.toUserId !== userId) throw new ForbiddenException('Not allowed')
 
-    req.status = FriendRequestStatus.DENIED
-    await this.friendRequestsRepo.save(req)
+    await this.friendRequestsRepo.delete({ id: requestId })
 
     const resolvedAt = new Date().toISOString()
     this.realtime.emitFriendRequestDenied(req.fromUserId, {
@@ -197,6 +198,30 @@ export class FriendsService {
       toUserId: req.toUserId,
       resolvedAt,
     })
+  }
+
+  async blockUser(blockerId: string, blockedId: string): Promise<void> {
+    if (blockerId === blockedId)
+      throw new BadRequestException('Cannot block yourself')
+    await this.assertUserExists(blockedId)
+
+    // Delete any pending request from the person being blocked to the blocker
+    await this.friendRequestsRepo.delete({
+      fromUserId: blockedId,
+      toUserId: blockerId,
+      status: FriendRequestStatus.PENDING,
+    })
+
+    const existing = await this.userBlocksRepo.findOne({
+      where: { blockerId, blockedId },
+    })
+    if (existing) return
+
+    await this.userBlocksRepo.save(
+      this.userBlocksRepo.create({ blockerId, blockedId }),
+    )
+
+    this.realtime.emitUserBlocked(blockedId, { blockerId })
   }
 
   async cancelRequest(

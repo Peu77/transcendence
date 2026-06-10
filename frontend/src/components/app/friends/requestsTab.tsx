@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   acceptFriendRequest,
+  blockUser,
   cancelFriendRequest,
   denyFriendRequest,
   getIncomingFriendRequests,
@@ -84,6 +85,19 @@ export const RequestsTab = (props: { isOpen: boolean }) => {
       toast.error(e?.response?.data?.message ?? 'Failed to deny request'),
   })
 
+  const blockMutation = useMutation({
+    mutationFn: async ({ requestId, fromUserId }: { requestId: string; fromUserId: string }) => {
+      await denyFriendRequest(requestId)
+      await blockUser(fromUserId)
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['friends', 'requests', 'incoming'] })
+      toast.success('User blocked')
+    },
+    onError: (e: any) =>
+      toast.error(e?.response?.data?.message ?? 'Failed to block user'),
+  })
+
   const cancelMutation = useMutation({
     mutationFn: (requestId: string) => cancelFriendRequest(requestId),
     onSuccess: async () => {
@@ -130,6 +144,13 @@ export const RequestsTab = (props: { isOpen: boolean }) => {
                   onClick={() => denyMutation.mutate(r.id)}
                 >
                   Deny
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => blockMutation.mutate({ requestId: r.id, fromUserId: r.fromUser.id })}
+                >
+                  Block
                 </Button>
               </>
             }

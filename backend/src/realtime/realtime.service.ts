@@ -7,6 +7,7 @@ import {
   FriendRequestResolvedEvent,
   FriendshipDeletedEvent,
   PresenceUpdatedEvent,
+  UserBlockedEvent,
 } from './realtime.events'
 
 @Injectable()
@@ -69,6 +70,15 @@ export class RealtimeService {
     for (const id of friendIds) {
       this.server.to(userRoom(id)).emit('presence.updated', payload)
     }
+  }
+
+  emitUserBlocked(blockedUserId: string, payload: UserBlockedEvent) {
+    this.emitToUser(blockedUserId, 'user.blocked', payload)
+  }
+
+  emitRoomsUpdated() {
+    if (!this.server) return
+    this.server.emit('rooms.updated', {})
   }
 
   emitDirectMessageCreated(
