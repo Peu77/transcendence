@@ -1,0 +1,53 @@
+# Stage 1: Build
+FROM node:24-alpine AS builder
+
+WORKDIR /
+
+ENV CI=true
+
+RUN corepack enable
+RUN corepack prepare pnpm@10.33.0 --activate
+
+# Copy and build the shared package first
+COPY shared /shared
+WORKDIR /shared
+RUN pnpm install
+RUN pnpm run build
+
+# Set up the backend
+WORKDIR /app
+
+COPY backend/package.json backend/pnpm-lock.yaml ./
+
+RUN pnpm install
+
+COPY backend/ .
+
+RUN pnpm run build
+
+# Stage 2: Production runtime
+FROM node:24-alpine
+
+WORKDIR /
+
+ENV CI=true
+ENV NODE_ENV=production
+
+RUN corepack enable
+RUN corepack prepare pnpm@10.33.0 --activate
+
+# Copy built shared package
+COPY --from=builder /shared /shared
+
+# Set up production app
+WORKDIR /app
+
+COPY backend/package.json backend/pnpm-lock.yaml ./
+
+RUN pnpm install --prod
+
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 4000
+
+CMD ["node", "dist/main"]
