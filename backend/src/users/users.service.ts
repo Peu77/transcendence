@@ -17,6 +17,7 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { MatchResult } from './match-result.entity'
 import { UserBlock } from '../friends/entities/user-block.entity'
+import { Friendship } from '../friends/entities/friendship.entity'
 
 export interface MatchHistoryPlayer {
   userId: string
@@ -55,6 +56,8 @@ export class UsersService {
     private readonly matchResultsRepo: Repository<MatchResult>,
     @InjectRepository(UserBlock)
     private readonly userBlocksRepo: Repository<UserBlock>,
+    @InjectRepository(Friendship)
+    private readonly friendshipsRepo: Repository<Friendship>,
   ) {}
 
   static readonly UPLOAD_DIR = 'uploads/'
@@ -403,6 +406,142 @@ export class UsersService {
       score: Number(ranking.score),
       matchesPlayed: Number(ranking.matchesPlayed),
     }))
+  }
+
+  async getUserAchievements(userId: string) {
+    const [matchCount, scoreResult, linesResult, winCount, friendCount] =
+      await Promise.all([
+        this.matchResultsRepo.count({ where: { userId } }),
+        this.matchResultsRepo
+          .createQueryBuilder('r')
+          .select('SUM(r.score)', 'total')
+          .where('r.userId = :userId', { userId })
+          .getRawOne<{ total: string | null }>(),
+        this.matchResultsRepo
+          .createQueryBuilder('r')
+          .select('SUM(r.lines)', 'total')
+          .where('r.userId = :userId', { userId })
+          .getRawOne<{ total: string | null }>(),
+        this.matchResultsRepo
+          .createQueryBuilder('r1')
+          .where('r1.userId = :userId', { userId })
+          .andWhere((qb) => {
+            const sub = qb
+              .subQuery()
+              .select('MAX(r2.score)')
+              .from(MatchResult, 'r2')
+              .where('r2.matchId = r1.matchId')
+              .getQuery()
+            return `r1.score = ${sub}`
+          })
+          .getCount(),
+        this.friendshipsRepo
+          .createQueryBuilder('f')
+          .where('f.userLowId = :userId OR f.userHighId = :userId', { userId })
+          .getCount(),
+      ])
+
+    const matches = matchCount
+    const score = Number(scoreResult?.total ?? 0)
+    const lines = Number(linesResult?.total ?? 0)
+    const wins = winCount
+    const friends = friendCount
+
+    return {
+      stats: { matches, score, lines, wins, friends },
+      achievements: [
+        {
+          id: 'first_match',
+          label: 'First Match',
+          description: 'Play your first match',
+          unlocked: matches >= 1,
+        },
+        {
+          id: 'matches_10',
+          label: 'Getting Started',
+          description: 'Play 10 matches',
+          unlocked: matches >= 10,
+        },
+        {
+          id: 'matches_50',
+          label: 'Dedicated Player',
+          description: 'Play 50 matches',
+          unlocked: matches >= 50,
+        },
+        {
+          id: 'matches_100',
+          label: 'Centurion',
+          description: 'Play 100 matches',
+          unlocked: matches >= 100,
+        },
+        {
+          id: 'score_1k',
+          label: 'Point Collector',
+          description: 'Score 1,000 total points',
+          unlocked: score >= 1000,
+        },
+        {
+          id: 'score_10k',
+          label: 'High Scorer',
+          description: 'Score 10,000 total points',
+          unlocked: score >= 10000,
+        },
+        {
+          id: 'score_100k',
+          label: 'Legend',
+          description: 'Score 100,000 total points',
+          unlocked: score >= 100000,
+        },
+        {
+          id: 'lines_100',
+          label: 'Line Clearer',
+          description: 'Clear 100 total lines',
+          unlocked: lines >= 100,
+        },
+        {
+          id: 'lines_500',
+          label: 'Wrecking Ball',
+          description: 'Clear 500 total lines',
+          unlocked: lines >= 500,
+        },
+        {
+          id: 'lines_1000',
+          label: 'Line Destroyer',
+          description: 'Clear 1,000 total lines',
+          unlocked: lines >= 1000,
+        },
+        {
+          id: 'first_win',
+          label: 'Winner',
+          description: 'Win your first match',
+          unlocked: wins >= 1,
+        },
+        {
+          id: 'wins_10',
+          label: 'Seasoned Victor',
+          description: 'Win 10 matches',
+          unlocked: wins >= 10,
+        },
+        {
+          id: 'wins_50',
+          label: 'Champion',
+          description: 'Win 50 matches',
+          unlocked: wins >= 50,
+        },
+        {
+          id: 'first_friend',
+          label: 'Social Butterfly',
+          description: 'Make your first friend',
+          unlocked: friends >= 1,
+        },
+        {
+          id: 'friends_5',
+          label: 'Popular',
+          description: 'Have 5 friends',
+          unlocked: friends >= 5,
+        },
+      ],
+    }
   }
 
   async existUserProfilePictureInFs(
