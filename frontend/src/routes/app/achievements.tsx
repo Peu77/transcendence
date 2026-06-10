@@ -13,11 +13,13 @@ import { Spinner } from '@/components/ui/spinner.tsx'
 import {
   ArrowLeftIcon,
   CheckIcon,
+  CrownIcon,
   GamepadIcon,
   LayersIcon,
   LockIcon,
   MedalIcon,
   StarIcon,
+  TrendingUpIcon,
   TrophyIcon,
   UsersIcon,
 } from 'lucide-react'
@@ -25,7 +27,11 @@ import type { LucideIcon } from 'lucide-react'
 
 type Stats = AchievementsResponse['stats']
 
-type Tier = { id: string; threshold: number }
+type Tier = {
+  id: string
+  threshold: number
+  dynamicThreshold?: keyof Stats
+}
 
 type CategoryDef = {
   id: string
@@ -35,9 +41,12 @@ type CategoryDef = {
   unit: string
   formatStat: (v: number) => string
   tiers: Tier[]
+  invertProgress?: boolean
+  progressLabel?: (statValue: number, threshold: number) => string
 }
 
 const fmt = (v: number) => v.toLocaleString()
+const fmtRank = (v: number) => (v === 0 ? 'Unranked' : `#${v}`)
 
 const CATEGORIES: CategoryDef[] = [
   {
@@ -94,6 +103,36 @@ const CATEGORIES: CategoryDef[] = [
     ],
   },
   {
+    id: 'level',
+    label: 'Level',
+    statKey: 'level',
+    Icon: TrendingUpIcon,
+    unit: 'level',
+    formatStat: (v) => `Lv. ${v}`,
+    tiers: [
+      { id: 'level_5', threshold: 5 },
+      { id: 'level_10', threshold: 10 },
+      { id: 'level_25', threshold: 25 },
+      { id: 'level_50', threshold: 50 },
+    ],
+  },
+  {
+    id: 'rank',
+    label: 'Rank',
+    statKey: 'rank',
+    Icon: CrownIcon,
+    unit: 'rank',
+    formatStat: fmtRank,
+    invertProgress: true,
+    progressLabel: (v, t) =>
+      v === 0 ? 'Play a match to get ranked' : `Currently ${fmtRank(v)} — need top ${t}`,
+    tiers: [
+      { id: 'rank_top10', threshold: 10 },
+      { id: 'rank_top3', threshold: 3 },
+      { id: 'rank_1', threshold: 1 },
+    ],
+  },
+  {
     id: 'social',
     label: 'Social',
     statKey: 'friends',
@@ -115,10 +154,19 @@ const CATEGORIES: CategoryDef[] = [
     tiers: [
       { id: 'collector_1', threshold: 1 },
       { id: 'collector_5', threshold: 5 },
-      { id: 'collector_all', threshold: 15 },
+      { id: 'collector_all', threshold: 0, dynamicThreshold: 'totalBaseAchievements' },
     ],
   },
 ]
+
+function resolveThreshold(tier: Tier, stats: Stats): number {
+  return tier.dynamicThreshold ? stats[tier.dynamicThreshold] : tier.threshold
+}
+
+function calcProgress(statValue: number, threshold: number, invert?: boolean): number {
+  if (invert) return threshold === 0 || statValue === 0 ? 0 : Math.min(threshold / statValue, 1)
+  return threshold === 0 ? 1 : Math.min(statValue / threshold, 1)
+}
 
 function CategoryDetailDialog({
   category,
@@ -134,7 +182,7 @@ function CategoryDetailDialog({
   const { achievements, stats } = data
   const unlockedIds = new Set(achievements.filter((a) => a.unlocked).map((a) => a.id))
   const statValue = stats[category.statKey]
-  const { Icon, formatStat } = category
+  const { Icon, formatStat, invertProgress, progressLabel } = category
 
   const currentTierIndex = category.tiers.findIndex((t) => !unlockedIds.has(t.id))
 
@@ -152,11 +200,12 @@ function CategoryDetailDialog({
 
         <div className="flex flex-col gap-3 pt-1">
           {category.tiers.map((tier, index) => {
+            const threshold = resolveThreshold(tier, stats)
             const achievement = achievements.find((a) => a.id === tier.id)
             const unlocked = unlockedIds.has(tier.id)
             const isCurrent = index === currentTierIndex
             const progress = isCurrent
-              ? Math.min(statValue / tier.threshold, 1)
+              ? calcProgress(statValue, threshold, invertProgress)
               : unlocked
                 ? 1
                 : 0
@@ -171,9 +220,7 @@ function CategoryDetailDialog({
                 <div className="flex items-start gap-3">
                   <div
                     className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                      unlocked
-                        ? 'bg-violet-500/20'
-                        : 'bg-muted'
+                      unlocked ? 'bg-violet-500/20' : 'bg-muted'
                     }`}
                   >
                     {unlocked ? (
@@ -206,8 +253,9 @@ function CategoryDetailDialog({
                           />
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {formatStat(Math.min(statValue, tier.threshold))} /{' '}
-                          {formatStat(tier.threshold)} {category.unit}
+                          {progressLabel
+                            ? progressLabel(statValue, threshold)
+                            : `${formatStat(invertProgress ? statValue : Math.min(statValue, threshold))} / ${formatStat(threshold)} ${category.unit}`}
                         </div>
                       </div>
                     )}
@@ -236,9 +284,10 @@ function CategoryCard({
   const completedCount = category.tiers.filter((t) => unlockedIds.has(t.id)).length
   const currentTier = category.tiers.find((t) => !unlockedIds.has(t.id))
   const statValue = stats[category.statKey]
-  const { Icon, formatStat } = category
+  const { Icon, formatStat, invertProgress, progressLabel } = category
 
-  const progress = currentTier ? Math.min(statValue / currentTier.threshold, 1) : 1
+  const currentThreshold = currentTier ? resolveThreshold(currentTier, stats) : 0
+  const progress = currentTier ? calcProgress(statValue, currentThreshold, invertProgress) : 1
   const currentAchievement = currentTier
     ? achievements.find((a) => a.id === currentTier.id)
     : null
@@ -276,8 +325,9 @@ function CategoryCard({
               />
             </div>
             <div className="text-xs text-muted-foreground">
-              {formatStat(Math.min(statValue, currentTier!.threshold))} /{' '}
-              {formatStat(currentTier!.threshold)} {category.unit}
+              {progressLabel
+                ? progressLabel(statValue, currentThreshold)
+                : `${formatStat(invertProgress ? statValue : Math.min(statValue, currentThreshold))} / ${formatStat(currentThreshold)} ${category.unit}`}
             </div>
           </div>
         </>

@@ -409,7 +409,7 @@ export class UsersService {
   }
 
   async getUserAchievements(userId: string) {
-    const [matchCount, scoreResult, linesResult, winCount, friendCount] =
+    const [matchCount, scoreResult, linesResult, winCount, friendCount, higherRankedUsers] =
       await Promise.all([
         this.matchResultsRepo.count({ where: { userId } }),
         this.matchResultsRepo
@@ -439,6 +439,20 @@ export class UsersService {
           .createQueryBuilder('f')
           .where('f.userLowId = :userId OR f.userHighId = :userId', { userId })
           .getCount(),
+        // Count users with strictly higher total score to derive rank
+        (() => {
+          const myScoreSub = this.matchResultsRepo
+            .createQueryBuilder('r2')
+            .select('COALESCE(SUM(r2.score), 0)', 'myScore')
+            .where('r2.userId = :userId', { userId })
+          return this.matchResultsRepo
+            .createQueryBuilder('r')
+            .select('r.userId', 'userId')
+            .groupBy('r.userId')
+            .having(`SUM(r.score) > (${myScoreSub.getQuery()})`)
+            .setParameters(myScoreSub.getParameters())
+            .getRawMany<{ userId: string }>()
+        })(),
       ])
 
     const matches = matchCount
@@ -446,6 +460,8 @@ export class UsersService {
     const lines = Number(linesResult?.total ?? 0)
     const wins = winCount
     const friends = friendCount
+    const rank = matches > 0 ? higherRankedUsers.length + 1 : 0
+    const level = Math.floor(lines / 10) + 1
 
     const baseAchievements = [
         {
@@ -538,6 +554,48 @@ export class UsersService {
           description: 'Have 5 friends',
           unlocked: friends >= 5,
         },
+        {
+          id: 'level_5',
+          label: 'Getting Warmed Up',
+          description: 'Reach level 5',
+          unlocked: level >= 5,
+        },
+        {
+          id: 'level_10',
+          label: 'Seasoned',
+          description: 'Reach level 10',
+          unlocked: level >= 10,
+        },
+        {
+          id: 'level_25',
+          label: 'Veteran',
+          description: 'Reach level 25',
+          unlocked: level >= 25,
+        },
+        {
+          id: 'level_50',
+          label: 'Elite',
+          description: 'Reach level 50',
+          unlocked: level >= 50,
+        },
+        {
+          id: 'rank_top10',
+          label: 'Rising Star',
+          description: 'Reach top 10 on the leaderboard',
+          unlocked: rank > 0 && rank <= 10,
+        },
+        {
+          id: 'rank_top3',
+          label: 'Podium Finish',
+          description: 'Reach top 3 on the leaderboard',
+          unlocked: rank > 0 && rank <= 3,
+        },
+        {
+          id: 'rank_1',
+          label: 'King of the Board',
+          description: 'Reach #1 on the leaderboard',
+          unlocked: rank === 1,
+        },
     ]
 
     const baseUnlocked = baseAchievements.filter((a) => a.unlocked).length
@@ -564,7 +622,7 @@ export class UsersService {
     ]
 
     return {
-      stats: { matches, score, lines, wins, friends, baseUnlocked },
+      stats: { matches, score, lines, wins, friends, rank, level, baseUnlocked, totalBaseAchievements: baseAchievements.length },
       achievements: [...baseAchievements, ...metaAchievements],
     }
   }
