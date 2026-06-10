@@ -16,6 +16,7 @@ import { GithubValidateReturn } from '../auth/github.strategy'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { MatchResult } from './match-result.entity'
+import { UserBlock } from '../friends/entities/user-block.entity'
 
 export interface MatchHistoryPlayer {
   userId: string
@@ -52,6 +53,8 @@ export class UsersService {
     @InjectRepository(User) private readonly usersRepo: Repository<User>,
     @InjectRepository(MatchResult)
     private readonly matchResultsRepo: Repository<MatchResult>,
+    @InjectRepository(UserBlock)
+    private readonly userBlocksRepo: Repository<UserBlock>,
   ) {}
 
   static readonly UPLOAD_DIR = 'uploads/'
@@ -197,7 +200,7 @@ export class UsersService {
     return normalized
   }
 
-  async getPublicProfile(userId: string) {
+  async getPublicProfile(userId: string, requesterId: string) {
     const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
 
     const statsResult = await this.matchResultsRepo
@@ -228,6 +231,10 @@ export class UsersService {
       rank = higherRanked.length + 1
     }
 
+    const blockedByThem = userId !== requesterId
+      ? await this.userBlocksRepo.exists({ where: { blockerId: userId, blockedId: requesterId } })
+      : false
+
     return {
       id: user.id,
       username: user.username,
@@ -236,6 +243,7 @@ export class UsersService {
       totalScore,
       totalLines,
       rank,
+      blockedByThem,
     }
   }
 

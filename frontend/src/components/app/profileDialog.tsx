@@ -66,7 +66,7 @@ export const ProfileDialog = ({
           <>
             <ProfileContent profile={profile} />
             <div className="flex justify-center mt-2">
-              <AddFriendButton userId={userId} />
+              <AddFriendButton userId={userId} blockedByThem={profile.blockedByThem} />
             </div>
           </>
         )}

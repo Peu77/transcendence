@@ -41,6 +41,20 @@ export function useCancelFriendRequest() {
   })
 }
 
+export async function blockUser(blockedId: string): Promise<void> {
+  await axios.post(`/friends/block/${blockedId}`)
+}
+
+export function useBlockUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: blockUser,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.INCOMING_REQUESTS })
+    },
+  })
+}
+
 export type PresenceStatus = 'online' | 'offline' | 'away'
 
 export type FriendRequestUser = {

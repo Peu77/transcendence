@@ -7,9 +7,15 @@ import {
 } from '@/api/friends.ts'
 import { userStore } from '@/store/userStore.ts'
 import { useStore } from '@tanstack/react-store'
-import { UserPlusIcon, ClockIcon } from 'lucide-react'
+import { UserPlusIcon, ClockIcon, BanIcon } from 'lucide-react'
 
-export function AddFriendButton({ userId }: { userId: string }) {
+export function AddFriendButton({
+  userId,
+  blockedByThem = false,
+}: {
+  userId: string
+  blockedByThem?: boolean
+}) {
   const currentUserId = useStore(userStore, (state) => state?.id)
   const friendsQuery = useGetFriends()
   const outgoingQuery = useGetOutgoingFriendRequests()
@@ -17,6 +23,15 @@ export function AddFriendButton({ userId }: { userId: string }) {
   const cancelRequest = useCancelFriendRequest()
 
   if (currentUserId === userId) return null
+
+  if (blockedByThem) {
+    return (
+      <Button variant="outline" disabled>
+        <BanIcon className="size-4" />
+        This person doesn&apos;t like you
+      </Button>
+    )
+  }
 
   const isFriend = friendsQuery.data?.some((f) => f.id === userId) ?? false
   const outgoing = outgoingQuery.data?.find((r) => r.toUser.id === userId)
