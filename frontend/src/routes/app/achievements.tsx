@@ -1,13 +1,21 @@
+import { useState } from 'react'
 import { createRoute, useRouter } from '@tanstack/react-router'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { useGetAchievements, type AchievementsResponse } from '@/api/achievements.ts'
 import { Button } from '@/components/ui/button.tsx'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 import {
   ArrowLeftIcon,
   CheckIcon,
   GamepadIcon,
   LayersIcon,
+  LockIcon,
   StarIcon,
   TrophyIcon,
   UsersIcon,
@@ -98,12 +106,116 @@ const CATEGORIES: CategoryDef[] = [
   },
 ]
 
-function CategoryCard({
+function CategoryDetailDialog({
   category,
   data,
+  open,
+  onOpenChange,
 }: {
   category: CategoryDef
   data: AchievementsResponse
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const { achievements, stats } = data
+  const unlockedIds = new Set(achievements.filter((a) => a.unlocked).map((a) => a.id))
+  const statValue = stats[category.statKey]
+  const { Icon, formatStat } = category
+
+  const currentTierIndex = category.tiers.findIndex((t) => !unlockedIds.has(t.id))
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/20">
+              <Icon className="h-4 w-4 text-violet-400" />
+            </div>
+            {category.label}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-3 pt-1">
+          {category.tiers.map((tier, index) => {
+            const achievement = achievements.find((a) => a.id === tier.id)
+            const unlocked = unlockedIds.has(tier.id)
+            const isCurrent = index === currentTierIndex
+            const progress = isCurrent
+              ? Math.min(statValue / tier.threshold, 1)
+              : unlocked
+                ? 1
+                : 0
+
+            return (
+              <div
+                key={tier.id}
+                className={`rounded-lg border p-4 transition-opacity ${
+                  unlocked || isCurrent ? 'opacity-100' : 'opacity-40'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                      unlocked
+                        ? 'bg-violet-500/20'
+                        : 'bg-muted'
+                    }`}
+                  >
+                    {unlocked ? (
+                      <CheckIcon className="h-4 w-4 text-violet-400" />
+                    ) : (
+                      <LockIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-sm">
+                        {achievement?.label ?? tier.id}
+                      </span>
+                      {unlocked && (
+                        <span className="shrink-0 text-xs font-medium text-violet-400 uppercase tracking-wide">
+                          Unlocked
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {achievement?.description}
+                    </div>
+
+                    {isCurrent && (
+                      <div className="mt-3 flex flex-col gap-1">
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-violet-500 transition-all"
+                            style={{ width: `${progress * 100}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatStat(Math.min(statValue, tier.threshold))} /{' '}
+                          {formatStat(tier.threshold)} {category.unit}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function CategoryCard({
+  category,
+  data,
+  onClick,
+}: {
+  category: CategoryDef
+  data: AchievementsResponse
+  onClick: () => void
 }) {
   const { achievements, stats } = data
   const unlockedIds = new Set(achievements.filter((a) => a.unlocked).map((a) => a.id))
@@ -118,7 +230,10 @@ function CategoryCard({
     : null
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border bg-card p-5">
+    <button
+      onClick={onClick}
+      className="flex flex-col gap-4 rounded-xl border bg-card p-5 text-left transition-colors hover:bg-accent cursor-pointer"
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/20">
@@ -158,13 +273,14 @@ function CategoryCard({
           <span>All achievements unlocked!</span>
         </div>
       )}
-    </div>
+    </button>
   )
 }
 
 function AchievementsPage() {
   const router = useRouter()
   const { data, isLoading } = useGetAchievements()
+  const [openCategory, setOpenCategory] = useState<string | null>(null)
 
   const unlockedCount = data?.achievements.filter((a) => a.unlocked).length ?? 0
   const totalCount = data?.achievements.length ?? 0
@@ -204,9 +320,24 @@ function AchievementsPage() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {CATEGORIES.map((category) => (
-              <CategoryCard key={category.id} category={category} data={data} />
+              <CategoryCard
+                key={category.id}
+                category={category}
+                data={data}
+                onClick={() => setOpenCategory(category.id)}
+              />
             ))}
           </div>
+
+          {CATEGORIES.map((category) => (
+            <CategoryDetailDialog
+              key={category.id}
+              category={category}
+              data={data}
+              open={openCategory === category.id}
+              onOpenChange={(open) => setOpenCategory(open ? category.id : null)}
+            />
+          ))}
         </>
       )}
     </div>
