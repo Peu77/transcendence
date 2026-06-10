@@ -19,6 +19,12 @@ RUN bun install
 
 COPY frontend/ .
 
+# Vite inlines VITE_* vars at build time — accept them as build args from Railway
+ARG VITE_BACKEND_URL
+ARG VITE_BACKEND_GITHUB_OAUTH_URL
+ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
+ENV VITE_BACKEND_GITHUB_OAUTH_URL=$VITE_BACKEND_GITHUB_OAUTH_URL
+
 RUN bun run build
 
 # Stage 2: Serve with nginx
