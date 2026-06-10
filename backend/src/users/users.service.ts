@@ -447,9 +447,7 @@ export class UsersService {
     const wins = winCount
     const friends = friendCount
 
-    return {
-      stats: { matches, score, lines, wins, friends },
-      achievements: [
+    const baseAchievements = [
         {
           id: 'first_match',
           label: 'First Match',
@@ -540,7 +538,34 @@ export class UsersService {
           description: 'Have 5 friends',
           unlocked: friends >= 5,
         },
-      ],
+    ]
+
+    const baseUnlocked = baseAchievements.filter((a) => a.unlocked).length
+
+    const metaAchievements = [
+      {
+        id: 'collector_1',
+        label: 'First Step',
+        description: 'Unlock your first achievement',
+        unlocked: baseUnlocked >= 1,
+      },
+      {
+        id: 'collector_5',
+        label: 'Collector',
+        description: 'Unlock 5 achievements',
+        unlocked: baseUnlocked >= 5,
+      },
+      {
+        id: 'collector_all',
+        label: 'Completionist',
+        description: 'Unlock all achievements',
+        unlocked: baseUnlocked >= baseAchievements.length,
+      },
+    ]
+
+    return {
+      stats: { matches, score, lines, wins, friends, baseUnlocked },
+      achievements: [...baseAchievements, ...metaAchievements],
     }
   }
 

@@ -16,6 +16,7 @@ import {
   GamepadIcon,
   LayersIcon,
   LockIcon,
+  MedalIcon,
   StarIcon,
   TrophyIcon,
   UsersIcon,
@@ -102,6 +103,19 @@ const CATEGORIES: CategoryDef[] = [
     tiers: [
       { id: 'first_friend', threshold: 1 },
       { id: 'friends_5', threshold: 5 },
+    ],
+  },
+  {
+    id: 'collection',
+    label: 'Collection',
+    statKey: 'baseUnlocked',
+    Icon: MedalIcon,
+    unit: 'achievements',
+    formatStat: fmt,
+    tiers: [
+      { id: 'collector_1', threshold: 1 },
+      { id: 'collector_5', threshold: 5 },
+      { id: 'collector_all', threshold: 15 },
     ],
   },
 ]

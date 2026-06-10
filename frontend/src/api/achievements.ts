@@ -15,6 +15,7 @@ export type AchievementsResponse = {
     lines: number
     wins: number
     friends: number
+    baseUnlocked: number
   }
   achievements: Achievement[]
 }
