@@ -78,6 +78,7 @@ export class TetrisGame {
     if (this.canMove(this.currentPiece, 1, 0)) {
       this.currentPiece.row += 1
       this.lockDelayStart = null
+      this.lockResetCount = 0
     } else {
       if (this.lockDelayStart === null) {
         this.lockDelayStart = Date.now()
@@ -676,6 +677,11 @@ export class TetrisGame {
   }
 
   private lockAndSpawn(): boolean {
+    if (this.canMove(this.currentPiece, 1, 0)) {
+      this.lockDelayStart = null
+      this.lockResetCount = 0
+      return true
+    }
     log(
       `Locking piece ${this.currentPiece.type} at row=${this.currentPiece.row} col=${this.currentPiece.col}`,
     )
