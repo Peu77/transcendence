@@ -200,7 +200,7 @@ export class TetrisGame {
     return this.nextTypes.slice(this.settings.nextCount, this.settings.nextCount + count)
   }
 
-  /** Milliseconds between gravity ticks for the current level. */
+  /** Milliseconds between gravity ticks for the current level or custom override. */
   getTickInterval(): number {
     const g = this.getEffectiveGravity()
     if (g >= 20) return 1

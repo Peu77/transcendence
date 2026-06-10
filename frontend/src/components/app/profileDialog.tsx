@@ -14,7 +14,8 @@ import { Spinner } from '@/components/ui/spinner.tsx'
 const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
   const level = Math.floor(profile.totalLines / 10) + 1
   const rank = profile.rank !== null ? `#${profile.rank}` : 'Unranked'
-  const points = profile.totalScore !== null ? profile.totalScore.toLocaleString() : '—'
+  const points =
+    profile.totalScore !== null ? profile.totalScore.toLocaleString() : '—'
 
   return (
     <div className="flex flex-col items-center gap-4">

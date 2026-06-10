@@ -16,7 +16,9 @@ export function RoomPlayersSidebar({
       <ProfileDialog
         userId={profileUserId ?? ''}
         open={profileUserId !== null}
-        onOpenChange={(open) => { if (!open) setProfileUserId(null) }}
+        onOpenChange={(open) => {
+          if (!open) setProfileUserId(null)
+        }}
       />
       <div className="border-b border-border/70 pb-6">
         <h2 className="text-2xl font-bold uppercase tracking-wide">
