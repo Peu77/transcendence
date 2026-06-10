@@ -11,7 +11,8 @@ import { ArrowLeftIcon } from 'lucide-react'
 function ProfileContent({ profile }: { profile: PublicProfile }) {
   const level = Math.floor(profile.totalLines / 10) + 1
   const rank = profile.rank !== null ? `#${profile.rank}` : 'Unranked'
-  const points = profile.totalScore !== null ? profile.totalScore.toLocaleString() : '—'
+  const points =
+    profile.totalScore !== null ? profile.totalScore.toLocaleString() : '—'
 
   return (
     <div className="flex flex-col items-center gap-6 pt-8">
@@ -45,7 +46,11 @@ function ProfilePage() {
   return (
     <div className="container mx-auto p-6 flex flex-col h-full max-w-4xl">
       <div className="flex items-center gap-2 mb-8">
-        <Button variant="ghost" size="icon" onClick={() => router.history.back()}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.history.back()}
+        >
           <ArrowLeftIcon />
         </Button>
         <h1 className="text-3xl font-bold">Profile</h1>

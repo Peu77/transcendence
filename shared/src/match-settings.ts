@@ -15,8 +15,8 @@ export enum PieceRandomizer {
 export type MatchSettings = {
   /**
    * Automatic downward fall speed of pieces.
-   * Measured in G (cells per frame).
-   * 1 = standard gravity, 20 = instant fall.
+   * `1` keeps the standard level-based speed curve.
+   * Any other positive value is treated as a direct rows-per-second override.
    */
   gravity: number
 

@@ -91,7 +91,9 @@ const MatchCard = ({ match }: { match: MatchHistoryItem }) => {
         <ProfileDialog
           userId={profileUserId ?? ''}
           open={profileUserId !== null}
-          onOpenChange={(open) => { if (!open) setProfileUserId(null) }}
+          onOpenChange={(open) => {
+            if (!open) setProfileUserId(null)
+          }}
         />
         <div className="overflow-hidden rounded-md border border-border">
           {match.players.map((player) => (
@@ -106,8 +108,13 @@ const MatchCard = ({ match }: { match: MatchHistoryItem }) => {
                 onClick={() => setProfileUserId(player.userId)}
                 className="flex items-center gap-2 min-w-0 text-left hover:opacity-70 transition-opacity cursor-pointer"
               >
-                <ProfileImage profilePictureId={player.profilePictureId} className="size-7 shrink-0" />
-                <span className="truncate font-semibold">{player.username}</span>
+                <ProfileImage
+                  profilePictureId={player.profilePictureId}
+                  className="size-7 shrink-0"
+                />
+                <span className="truncate font-semibold">
+                  {player.username}
+                </span>
               </button>
               <span className="text-sm text-muted-foreground">
                 {player.score.toLocaleString()} pts
@@ -242,7 +249,9 @@ const GlobalRanking = () => {
       <ProfileDialog
         userId={profileUserId ?? ''}
         open={profileUserId !== null}
-        onOpenChange={(open) => { if (!open) setProfileUserId(null) }}
+        onOpenChange={(open) => {
+          if (!open) setProfileUserId(null)
+        }}
       />
       <ScrollArea className="h-full">
         <Card className="gap-0 overflow-hidden border border-border py-0">

@@ -1,0 +1,53 @@
+import { GarbageCancel, type MatchSettings } from '@transcendence/shared'
+
+export type SoloMatchSettings = Pick<
+  MatchSettings,
+  | 'gravity'
+  | 'lockDelayMs'
+  | 'lineClearDelayMs'
+  | 'hold'
+  | 'nextCount'
+  | 'forbidInitialSZ'
+> & {
+  blowbackPercent: number
+}
+
+export const DEFAULT_SOLO_MATCH_SETTINGS: SoloMatchSettings = {
+  gravity: 1,
+  lockDelayMs: 500,
+  lineClearDelayMs: 500,
+  hold: true,
+  nextCount: 5,
+  forbidInitialSZ: false,
+  blowbackPercent: 0,
+}
+
+export const createSoloMatchSettings = (
+  settings: SoloMatchSettings,
+): Partial<MatchSettings> => {
+  const { blowbackPercent, ...gameSettings } = settings
+  void blowbackPercent
+
+  return {
+    ...gameSettings,
+    garbage: {
+      enabled: true,
+      delayMs: 0,
+      cancel: GarbageCancel.NONE,
+      holeCount: 1,
+      messiness: 0.42,
+    },
+  }
+}
+
+export const areSoloMatchSettingsEqual = (
+  left: SoloMatchSettings,
+  right: SoloMatchSettings,
+) =>
+  left.gravity === right.gravity &&
+  left.lockDelayMs === right.lockDelayMs &&
+  left.lineClearDelayMs === right.lineClearDelayMs &&
+  left.hold === right.hold &&
+  left.nextCount === right.nextCount &&
+  left.forbidInitialSZ === right.forbidInitialSZ &&
+  left.blowbackPercent === right.blowbackPercent

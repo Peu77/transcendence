@@ -9,7 +9,12 @@ type GameBoardProps = {
   onLabelClick?: () => void
 }
 
-export function GameBoard({ state, label, large, onLabelClick }: GameBoardProps) {
+export function GameBoard({
+  state,
+  label,
+  large,
+  onLabelClick,
+}: GameBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rendererRef = useRef<TetrisRenderer | null>(null)
   const latestStateRef = useRef<TetrisState | null>(state)
@@ -58,8 +63,14 @@ export function GameBoard({ state, label, large, onLabelClick }: GameBoardProps)
         <div className="flex shrink-0 gap-3 text-sm font-bold tracking-wide text-foreground/80">
           <span
             onClick={onLabelClick}
-            className={onLabelClick ? 'cursor-pointer hover:opacity-70 transition-opacity' : ''}
-          >{label}</span>
+            className={
+              onLabelClick
+                ? 'cursor-pointer hover:opacity-70 transition-opacity'
+                : ''
+            }
+          >
+            {label}
+          </span>
           {state && (
             <>
               <span>SCORE {state.score}</span>
@@ -77,8 +88,14 @@ export function GameBoard({ state, label, large, onLabelClick }: GameBoardProps)
       <div className="flex shrink-0 gap-2 text-[10px] font-bold tracking-wide text-foreground/80">
         <span
           onClick={onLabelClick}
-          className={onLabelClick ? 'cursor-pointer hover:opacity-70 transition-opacity' : ''}
-        >{label}</span>
+          className={
+            onLabelClick
+              ? 'cursor-pointer hover:opacity-70 transition-opacity'
+              : ''
+          }
+        >
+          {label}
+        </span>
         {state && (
           <>
             <span>SCORE {state.score}</span>

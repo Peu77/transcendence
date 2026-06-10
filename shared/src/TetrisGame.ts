@@ -198,11 +198,10 @@ export class TetrisGame {
     return this.nextTypes.slice(this.settings.nextCount, this.settings.nextCount + count)
   }
 
-  /** Milliseconds between gravity ticks for the current level. */
+  /** Milliseconds between gravity ticks for the current level or custom override. */
   getTickInterval(): number {
-    if (this.settings.gravity >= 20) return 1
     if (this.settings.gravity > 0 && this.settings.gravity !== 1) {
-      return Math.max(1, Math.round(1000 / this.settings.gravity))
+      return Math.max(16, Math.round(1000 / this.settings.gravity))
     }
     // Starts at 800 ms, decreases per level down to a minimum of 100 ms.
     return Math.max(100, 800 - (this.level - 1) * 70)

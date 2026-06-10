@@ -1,12 +1,21 @@
 import { createRoute } from '@tanstack/react-router'
-import { AppRoute } from '@/routes/app/layout.tsx'
-import { Button } from '@/components/ui/button.tsx'
 import { GameField } from '@/components/app/game-field.tsx'
+import { SoloSettingsPanel } from '@/components/app/solo-settings-panel.tsx'
+import { Button } from '@/components/ui/button.tsx'
 import { useSoloGame } from '@/hooks/use-solo-game.ts'
+import { AppRoute } from '@/routes/app/layout.tsx'
 
 const Solo = () => {
-  const { phase, countdown, gameState, escapeHoldProgress, restart, quit } =
-    useSoloGame()
+  const {
+    phase,
+    countdown,
+    gameState,
+    escapeHoldProgress,
+    restart,
+    quit,
+    settings,
+    updateSettings,
+  } = useSoloGame()
 
   const overlay = (() => {
     if (phase === 'countdown') {
@@ -50,10 +59,18 @@ const Solo = () => {
   const instructions =
     phase === 'playing' ? (
       <div className="absolute inset-x-0 bottom-4 text-center text-sm text-foreground/50">
-        Arrow keys to move &middot; Up to rotate &middot; Space to hard drop
-        &middot; C to hold &middot; HOLD ESC to quit
+        Use your Tetris keybinds &middot; R to reset &middot; Hover the right
+        card for live settings &middot; HOLD ESC to quit
       </div>
     ) : null
+
+  const floatingContent = (
+    <SoloSettingsPanel
+      settings={settings}
+      onChange={updateSettings}
+      onRestart={restart}
+    />
+  )
 
   return (
     <GameField
@@ -62,6 +79,7 @@ const Solo = () => {
       escapeHoldProgress={escapeHoldProgress}
       overlay={overlay}
       instructions={instructions}
+      floatingContent={floatingContent}
     />
   )
 }

@@ -220,7 +220,8 @@ export class UsersService {
 
     const matchCount = Number(statsResult?.matchCount ?? 0)
     const totalLines = Number(statsResult?.totalLines ?? 0)
-    const totalScore = matchCount > 0 ? Number(statsResult?.totalScore ?? 0) : null
+    const totalScore =
+      matchCount > 0 ? Number(statsResult?.totalScore ?? 0) : null
 
     let rank: number | null = null
     if (matchCount > 0) {
