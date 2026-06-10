@@ -21,6 +21,19 @@ export type MatchSettings = {
   gravity: number
 
   /**
+   * Gravity increase per second.
+   * Added to base gravity continuously after gmargin expires.
+   * Mirrors TETR.IO's gincrease custom room parameter.
+   */
+  gincrease: number
+
+  /**
+   * Delay in frames (at 60 fps) before gravity starts increasing.
+   * Mirrors TETR.IO's gmargin custom room parameter.
+   */
+  gmargin: number
+
+  /**
    * Time in milliseconds before a piece locks after touching the stack.
    * Resets on movement or rotation, up to lockResetLimit times.
    */

@@ -169,7 +169,9 @@ export class RoomService {
 
   createDefaultMatchSettings(): MatchSettings {
     return {
-      gravity: 1,
+      gravity: 0.02,
+      gincrease: 0.0025,
+      gmargin: 3600,
       lockDelayMs: 500,
       lockResetLimit: 15,
       areMs: 0,
