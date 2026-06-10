@@ -19,7 +19,7 @@ export type AchievementsResponse = {
   achievements: Achievement[]
 }
 
-async function getAchievements(): Promise<AchievementsResponse> {
+export async function getAchievements(): Promise<AchievementsResponse> {
   const res = await axios.get<AchievementsResponse>('/users/achievements')
   return res.data
 }

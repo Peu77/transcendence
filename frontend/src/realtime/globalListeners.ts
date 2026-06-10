@@ -1,6 +1,8 @@
 import { useLiveEvent } from '@/realtime/hooks.ts'
 import { FRIENDS_QUERY_KEYS } from '@/api/friends.ts'
 import { USER_QUERY_KEYS } from '@/api/user.ts'
+import { getAchievements, type AchievementsResponse } from '@/api/achievements.ts'
+import { queueAchievementNotifications } from '@/store/achievementNotificationStore.ts'
 import { toast } from 'sonner'
 import { userStore } from '@/store/userStore.ts'
 import { useQueryClient } from '@tanstack/react-query'
@@ -46,5 +48,26 @@ export function useGlobalListeners() {
   // Keep the multiplayer room list in sync
   useLiveEvent('rooms.updated', async () => {
     await qc.invalidateQueries({ queryKey: ['rooms'] })
+  })
+
+  // Detect newly unlocked achievements after a multiplayer match ends
+  useLiveEvent('game.finished', async () => {
+    const prev = qc.getQueryData<AchievementsResponse>(['achievements'])
+    const prevUnlocked = new Set(
+      prev?.achievements.filter((a) => a.unlocked).map((a) => a.id) ?? [],
+    )
+
+    const next = await qc.fetchQuery({
+      queryKey: ['achievements'],
+      queryFn: getAchievements,
+      staleTime: 0,
+    })
+
+    const newly = next.achievements.filter(
+      (a) => a.unlocked && !prevUnlocked.has(a.id),
+    )
+    if (newly.length > 0) {
+      queueAchievementNotifications(newly)
+    }
   })
 }
