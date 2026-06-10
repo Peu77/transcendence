@@ -550,13 +550,19 @@ export class RealtimeGateway
       }),
     )
 
+    let resultsSaved = false
     try {
       await this.matchResultsRepository.save(matchResults)
+      resultsSaved = true
     } catch (error) {
       this.logger.error(`Failed to save results for match ${matchId}`, error)
     }
 
-    await this.updateStatsAndAchievements(session, results)
+    // Only fold the match into lifetime aggregates if the source-of-truth rows
+    // were persisted; otherwise stats/ranking would drift from match history.
+    if (resultsSaved) {
+      await this.updateStatsAndAchievements(session, results)
+    }
 
     this.emitToGameRoom(roomId, 'game.finished', { roomId, results })
     this.roomService.endGame(roomId)
@@ -567,9 +573,11 @@ export class RealtimeGateway
    * Aggregate finished-match data into per-user lifetime stats, then re-check
    * achievements and notify each player of anything newly unlocked.
    *
-   * `results` is sorted by score descending, so index 0 is the top scorer.
-   * A win/loss is only counted for multiplayer matches (2+ players); solo runs
-   * are recorded as played but neither won nor lost.
+   * The winner is chosen with the same deterministic ordering used by match
+   * history (score desc, then lines desc, then userId) so the credited win
+   * always matches who is shown in first place. A win/loss is only counted for
+   * multiplayer matches (2+ players); solo runs are recorded as played but
+   * neither won nor lost.
    */
   private async updateStatsAndAchievements(
     session: RoomGameSession,
@@ -582,18 +590,34 @@ export class RealtimeGateway
       Math.round((Date.now() - session.startedAt) / 1000),
     )
 
-    const statInputs = results.map((result, index) => {
+    const perUser = results.map((result) => {
       const state = session.players.get(result.userId)!.game.getState()
       return {
         userId: result.userId,
-        won: isMultiplayer && index === 0,
-        lost: isMultiplayer && index !== 0,
         score: state.score,
         lines: state.lines,
         metrics: state.metrics,
-        playTimeInSeconds,
       }
     })
+
+    const winnerUserId = isMultiplayer
+      ? [...perUser].sort(
+          (a, b) =>
+            b.score - a.score ||
+            b.lines - a.lines ||
+            a.userId.localeCompare(b.userId),
+        )[0]?.userId
+      : undefined
+
+    const statInputs = perUser.map((player) => ({
+      userId: player.userId,
+      won: isMultiplayer && player.userId === winnerUserId,
+      lost: isMultiplayer && player.userId !== winnerUserId,
+      score: player.score,
+      lines: player.lines,
+      metrics: player.metrics,
+      playTimeInSeconds,
+    }))
 
     try {
       await this.statsService.recordMatch(statInputs)

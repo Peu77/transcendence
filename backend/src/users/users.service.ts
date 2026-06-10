@@ -279,7 +279,12 @@ export class UsersService {
 
     return userResults.map((userResult) => {
       const players = (resultsByMatch.get(userResult.matchId) ?? [])
-        .sort((a, b) => b.score - a.score || b.lines - a.lines)
+        .sort(
+          (a, b) =>
+            b.score - a.score ||
+            b.lines - a.lines ||
+            a.userId.localeCompare(b.userId),
+        )
         .map((result, index) => ({
           userId: result.userId,
           username: result.user.username,
