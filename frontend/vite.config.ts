@@ -28,5 +28,6 @@ export default defineConfig({
     fs: {
       allow: ['..'],
     },
+    allowedHosts: ['localhost', 'tetris.goetz.sh'],
   },
 })
