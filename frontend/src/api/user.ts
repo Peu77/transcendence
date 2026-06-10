@@ -10,8 +10,8 @@ export enum Theme {
 export type GameControlAction =
   | 'left'
   | 'right'
-  | 'rotate'
-  | 'rotateCcw'
+  | 'rotateCW'
+  | 'rotateCCW'
   | 'rotate180'
   | 'softDrop'
   | 'hardDrop'
@@ -30,8 +30,8 @@ export type TetrisHandlingSettings = {
 export const DEFAULT_GAME_CONTROLS: GameControls = {
   left: 'ArrowLeft',
   right: 'ArrowRight',
-  rotate: 'ArrowUp',
-  rotateCcw: 'z',
+  rotateCW: 'x',
+  rotateCCW: 'z',
   rotate180: 'a',
   softDrop: 'ArrowDown',
   hardDrop: ' ',
@@ -129,8 +129,10 @@ export type PublicProfile = {
   id: string
   username: string
   profilePictureId: string | null
-  level: number
   createdAt: string
+  totalScore: number | null
+  totalLines: number
+  rank: number | null
 }
 
 export async function getPublicProfile(userId: string) {

@@ -12,8 +12,8 @@ export type GamePhase = 'lobby' | 'countdown' | 'playing' | 'finished'
 const VALID_INPUT_ACTIONS = new Set<InputAction>([
   'left',
   'right',
-  'rotate',
-  'rotateCcw',
+  'rotateCW',
+  'rotateCCW',
   'rotate180',
   'softDrop',
   'hardDrop',

@@ -15,8 +15,8 @@ export enum Theme {
 export enum GameControlAction {
   LEFT = 'left',
   RIGHT = 'right',
-  ROTATE = 'rotate',
-  ROTATE_CCW = 'rotateCcw',
+  ROTATE_CW = 'rotateCW',
+  ROTATE_CCW = 'rotateCCW',
   ROTATE_180 = 'rotate180',
   SOFT_DROP = 'softDrop',
   HARD_DROP = 'hardDrop',
@@ -36,7 +36,7 @@ export type TetrisHandlingSettings = {
 export const DEFAULT_GAME_CONTROLS: GameControls = {
   [GameControlAction.LEFT]: 'ArrowLeft',
   [GameControlAction.RIGHT]: 'ArrowRight',
-  [GameControlAction.ROTATE]: 'ArrowUp',
+  [GameControlAction.ROTATE_CW]: 'x',
   [GameControlAction.ROTATE_CCW]: 'z',
   [GameControlAction.ROTATE_180]: 'a',
   [GameControlAction.SOFT_DROP]: 'ArrowDown',

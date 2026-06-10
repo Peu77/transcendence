@@ -14,8 +14,8 @@ export type Block = [number, number]
 export type InputAction =
   | 'left'
   | 'right'
-  | 'rotate'
-  | 'rotateCcw'
+  | 'rotateCW'
+  | 'rotateCCW'
   | 'rotate180'
   | 'softDrop'
   | 'hardDrop'
@@ -66,6 +66,10 @@ export interface TetrisState {
   level: number
   gameOver: boolean
   metrics: GameMetrics
+  /** Current combo count. 0 = first clear, 1 = second consecutive, etc. -1 when no combo active. */
+  combo: number
+  /** Number of consecutive hard clears (Tetris / T-Spin). 0 = B2B not active, 1+ = B2B active. */
+  b2bChain: number
 }
 
 export const BOARD_ROWS = 20

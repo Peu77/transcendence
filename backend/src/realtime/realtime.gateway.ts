@@ -40,6 +40,7 @@ interface PlayerGame {
   game: TetrisGame
   tickTimer: ReturnType<typeof setTimeout> | null
   lastSeq: number
+  placement: number | null
 }
 
 interface RoomGameSession {
@@ -47,6 +48,7 @@ interface RoomGameSession {
   roomId: string
   finishing: boolean
   startedAt: number // epoch ms, used to compute match duration
+  nextPlacement: number
 }
 
 function parseCookie(cookieHeader: string | undefined): Record<string, string> {
@@ -291,6 +293,7 @@ export class RealtimeGateway
         roomId,
         finishing: false,
         startedAt: Date.now(),
+        nextPlacement: room.users.length,
       }
 
       for (const user of room.users) {
@@ -298,6 +301,7 @@ export class RealtimeGateway
           game: new TetrisGame(room.settings),
           tickTimer: null,
           lastSeq: 0,
+          placement: null,
         })
       }
 
@@ -439,6 +443,8 @@ export class RealtimeGateway
       pg.tickTimer = null
     }
 
+    pg.placement = session.nextPlacement--
+
     const state = pg.game.getState()
     this.emitToGameRoom(roomId, 'game.player-over', {
       roomId,
@@ -488,6 +494,7 @@ export class RealtimeGateway
 
       // Mark any remaining active player as game over so results are complete
       for (const p of activePlayers) {
+        p.placement = session.nextPlacement--
         p.game.gameOver = true
         if (p.tickTimer) {
           clearTimeout(p.tickTimer)
@@ -516,6 +523,7 @@ export class RealtimeGateway
         return {
           userId,
           username: user?.username ?? 'Unknown',
+          placement: pg.placement ?? 1,
           score: state.score,
           lines: state.lines,
           level: state.level,
@@ -523,8 +531,12 @@ export class RealtimeGateway
       },
     )
 
-    // Sort by score descending
-    results.sort((a, b) => b.score - a.score)
+    // Sort by placement ascending (1st = winner), score as tiebreaker
+    results.sort((a, b) =>
+      a.placement !== b.placement
+        ? a.placement - b.placement
+        : b.score - a.score,
+    )
 
     const matchId = randomUUID()
     const matchResults = results.map((result) =>
@@ -619,6 +631,7 @@ export class RealtimeGateway
       clearTimeout(pg.tickTimer)
       pg.tickTimer = null
     }
+    pg.placement = session.nextPlacement--
     pg.game.gameOver = true
 
     this.emitToGameRoom(roomId, 'game.player-over', {
