@@ -18,6 +18,8 @@ type SoloSettingsPanelProps = {
 
 type NumericSettingKey =
   | 'gravity'
+  | 'gincrease'
+  | 'gmargin'
   | 'lockDelayMs'
   | 'lineClearDelayMs'
   | 'nextCount'
@@ -38,12 +40,31 @@ const NUMERIC_SETTINGS: NumericSetting[] = [
     key: 'gravity',
     label: 'Gravity',
     description:
-      '1 keeps the standard curve. Any other positive value becomes a direct rows-per-second speed override.',
-    min: 0.25,
-    max: 60,
-    step: 0.25,
-    formatValue: (value) =>
-      value === 1 ? 'Standard' : `${value.toFixed(2)} rows/s`,
+      'Starting gravity (how fast pieces fall). Higher is faster.',
+    min: 0,
+    max: 20,
+    step: 0.01,
+    formatValue: (value) => `${value}`,
+  },
+  {
+    key: 'gincrease',
+    label: 'Gravity increase',
+    description:
+      'Amount of gravity increase per second. Set to 0 to keep gravity constant throughout the run.',
+    min: 0,
+    max: 0.05,
+    step: 0.001,
+    formatValue: (value) => `${value}`,
+  },
+  {
+    key: 'gmargin',
+    label: 'Gravity margin',
+    description:
+      'Amount of time in frames until the gravity starts to increase.',
+    min: 0,
+    max: 7200,
+    step: 60,
+    formatValue: (value) => `${value}`,
   },
   {
     key: 'lockDelayMs',

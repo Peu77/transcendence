@@ -8,6 +8,8 @@ import {
 
 export const matchSettingsSchema = z.object({
   gravity: z.number().min(0),
+  gincrease: z.number().min(0),
+  gmargin: z.number().min(0),
   lockDelayMs: z.number().min(0),
   lockResetLimit: z.number().min(0),
   areMs: z.number().min(0),
