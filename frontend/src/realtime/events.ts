@@ -82,4 +82,5 @@ export type LiveEventMap = {
   }
   'game.finished': { roomId: string; results: GamePlayerResult[] }
   'user.blocked': { blockerId: string }
+  'rooms.updated': Record<string, never>
 }

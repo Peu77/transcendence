@@ -10,6 +10,7 @@ export type LiveEventName =
   | 'presence.updated'
   | 'dm.created'
   | 'user.blocked'
+  | 'rooms.updated'
 
 export interface UserBlockedEvent {
   blockerId: string

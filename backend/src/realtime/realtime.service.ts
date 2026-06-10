@@ -76,6 +76,11 @@ export class RealtimeService {
     this.emitToUser(blockedUserId, 'user.blocked', payload)
   }
 
+  emitRoomsUpdated() {
+    if (!this.server) return
+    this.server.emit('rooms.updated', {})
+  }
+
   emitDirectMessageCreated(
     userIds: [string, string],
     payload: DirectMessageCreatedEvent,

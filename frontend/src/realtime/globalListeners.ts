@@ -42,4 +42,9 @@ export function useGlobalListeners() {
       queryKey: USER_QUERY_KEYS.PUBLIC_PROFILE(event.blockerId),
     })
   })
+
+  // Keep the multiplayer room list in sync
+  useLiveEvent('rooms.updated', async () => {
+    await qc.invalidateQueries({ queryKey: ['rooms'] })
+  })
 }
