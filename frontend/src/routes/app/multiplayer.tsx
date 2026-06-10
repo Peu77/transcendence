@@ -14,7 +14,6 @@ const Multiplayer = () => {
   const { data: rooms, isLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: getRooms,
-    refetchInterval: 5000,
   })
 
   const joinRoomById = async () => {

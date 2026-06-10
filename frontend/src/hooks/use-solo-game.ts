@@ -1,12 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { TetrisGame } from '@transcendence/shared'
-import type { TetrisState, MatchSettings } from '@transcendence/shared'
+import type { InputAction, TetrisState } from '@transcendence/shared'
 import { useStore } from '@tanstack/react-store'
-import { userStore } from '@/store/userStore.ts'
+import { isGameInputElement, RESTART_SOLO_KEY } from '@/game/keyboard.ts'
+import {
+  areSoloMatchSettingsEqual,
+  createSoloMatchSettings,
+  DEFAULT_SOLO_MATCH_SETTINGS,
+  type SoloMatchSettings,
+} from '@/game/solo-settings.ts'
 import { useTetrisInput } from '@/hooks/use-tetris-input.ts'
+import { userStore } from '@/store/userStore.ts'
 
 export type SoloPhase = 'countdown' | 'playing' | 'finished'
+
+const SETTINGS_RESTART_DELAY_MS = 180
 
 export function useSoloGame() {
   const user = useStore(userStore)
@@ -14,12 +23,18 @@ export function useSoloGame() {
   const [phase, setPhase] = useState<SoloPhase>('countdown')
   const [countdown, setCountdown] = useState<number>(3)
   const [gameState, setGameState] = useState<TetrisState | null>(null)
+  const [settings, setSettings] = useState<SoloMatchSettings>(
+    DEFAULT_SOLO_MATCH_SETTINGS,
+  )
 
   const gameRef = useRef<TetrisGame | null>(null)
   const tickTimerRef = useRef<number | null>(null)
   const phaseRef = useRef<SoloPhase>('countdown')
   const lastLevelRef = useRef(1)
   const countdownTimerRef = useRef<number | null>(null)
+  const settingsRestartTimerRef = useRef<number | null>(null)
+  const settingsRef = useRef<SoloMatchSettings>(DEFAULT_SOLO_MATCH_SETTINGS)
+  const blowbackCarryRef = useRef(0)
 
   const clearTick = useCallback(() => {
     if (tickTimerRef.current !== null) {
@@ -28,10 +43,52 @@ export function useSoloGame() {
     }
   }, [])
 
+  const clearCountdown = useCallback(() => {
+    if (countdownTimerRef.current !== null) {
+      window.clearInterval(countdownTimerRef.current)
+      countdownTimerRef.current = null
+    }
+  }, [])
+
+  const clearScheduledRestart = useCallback(() => {
+    if (settingsRestartTimerRef.current !== null) {
+      window.clearTimeout(settingsRestartTimerRef.current)
+      settingsRestartTimerRef.current = null
+    }
+  }, [])
+
   const updateState = useCallback(() => {
     const game = gameRef.current
     if (!game) return
     setGameState(game.getState())
+  }, [])
+
+  const createGame = useCallback(() => {
+    const game = new TetrisGame(createSoloMatchSettings(settingsRef.current))
+    gameRef.current = game
+    lastLevelRef.current = 1
+    blowbackCarryRef.current = 0
+    setGameState(game.getState())
+    return game
+  }, [])
+
+  const applyBlowbackGarbage = useCallback(() => {
+    const game = gameRef.current
+    if (!game) return
+
+    const outgoingGarbage = game.collectOutgoingGarbage()
+    if (outgoingGarbage <= 0) return
+
+    const totalReturn =
+      blowbackCarryRef.current +
+      (outgoingGarbage * settingsRef.current.blowbackPercent) / 100
+    const returnedGarbage = Math.floor(totalReturn)
+
+    blowbackCarryRef.current = totalReturn - returnedGarbage
+
+    if (returnedGarbage > 0) {
+      game.receiveGarbage(returnedGarbage)
+    }
   }, [])
 
   const startTickLoop = useCallback(() => {
@@ -43,6 +100,7 @@ export function useSoloGame() {
 
     tickTimerRef.current = window.setInterval(() => {
       const alive = game.tick()
+      applyBlowbackGarbage()
       updateState()
 
       if (!alive) {
@@ -52,47 +110,31 @@ export function useSoloGame() {
         return
       }
 
-      // Restart interval when level changes (tick speed increases)
       if (game.level !== lastLevelRef.current) {
         startTickLoop()
       }
     }, game.getTickInterval())
-  }, [clearTick, updateState])
-
-  const clearCountdown = useCallback(() => {
-    if (countdownTimerRef.current !== null) {
-      window.clearInterval(countdownTimerRef.current)
-      countdownTimerRef.current = null
-    }
-  }, [])
+  }, [applyBlowbackGarbage, clearTick, updateState])
 
   const startGame = useCallback(() => {
     clearCountdown()
-    // Game instance already created during countdown
+
     if (!gameRef.current) {
-      const game = new TetrisGame({
-        garbage: { enabled: false } as MatchSettings['garbage'],
-      })
-      gameRef.current = game
-      lastLevelRef.current = 1
-      setGameState(game.getState())
+      createGame()
     }
+
     phaseRef.current = 'playing'
     setPhase('playing')
     startTickLoop()
-  }, [clearCountdown, startTickLoop])
+  }, [clearCountdown, createGame, startTickLoop])
 
   const startCountdown = useCallback(() => {
     clearTick()
     clearCountdown()
-    const game = new TetrisGame({
-      garbage: { enabled: false } as MatchSettings['garbage'],
-    })
-    gameRef.current = game
-    lastLevelRef.current = 1
+    clearScheduledRestart()
+    createGame()
     phaseRef.current = 'countdown'
     setPhase('countdown')
-    setGameState(game.getState())
     setCountdown(3)
 
     let count = 3
@@ -106,39 +148,81 @@ export function useSoloGame() {
         setCountdown(count)
       }
     }, 1000)
-  }, [clearTick, clearCountdown, startGame])
+  }, [clearTick, clearCountdown, clearScheduledRestart, createGame, startGame])
 
   const restart = useCallback(() => {
     startCountdown()
   }, [startCountdown])
 
+  const scheduleSettingsRestart = useCallback(() => {
+    clearScheduledRestart()
+    settingsRestartTimerRef.current = window.setTimeout(() => {
+      settingsRestartTimerRef.current = null
+      startCountdown()
+    }, SETTINGS_RESTART_DELAY_MS)
+  }, [clearScheduledRestart, startCountdown])
+
+  const updateSettings = useCallback(
+    (nextSettings: SoloMatchSettings) => {
+      if (areSoloMatchSettingsEqual(settingsRef.current, nextSettings)) return
+
+      settingsRef.current = nextSettings
+      setSettings(nextSettings)
+      scheduleSettingsRestart()
+    },
+    [scheduleSettingsRestart],
+  )
+
   const quit = useCallback(() => {
     clearTick()
     clearCountdown()
+    clearScheduledRestart()
     gameRef.current = null
     navigate({ to: '/app' })
-  }, [clearTick, clearCountdown, navigate])
+  }, [clearTick, clearCountdown, clearScheduledRestart, navigate])
 
-  // Input handling (DAS/ARR + escape-hold-to-quit) shared with multiplayer
+  const emitInput = useCallback(
+    (action: InputAction) => {
+      const game = gameRef.current
+      if (!game || game.gameOver) return
+
+      game.processInput(action)
+      applyBlowbackGarbage()
+      setGameState(game.getState())
+    },
+    [applyBlowbackGarbage],
+  )
+
   const { escapeHoldProgress } = useTetrisInput({
     controls: user?.gameControls,
     handlingSettings: user?.tetrisHandlingSettings,
     isPlaying: () => phaseRef.current === 'playing',
-    emitInput: (action) => {
-      const game = gameRef.current
-      if (!game || game.gameOver) return
-      game.processInput(action)
-      setGameState(game.getState())
-    },
+    emitInput,
     onEscapeComplete: quit,
   })
 
-  // Auto-start countdown on mount
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.repeat) return
+      if (isGameInputElement(event.target)) return
+      if (event.key.toLowerCase() !== RESTART_SOLO_KEY) return
+
+      event.preventDefault()
+      restart()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [restart])
+
   useEffect(() => {
     startCountdown()
     return () => {
       clearTick()
       clearCountdown()
+      clearScheduledRestart()
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -149,5 +233,7 @@ export function useSoloGame() {
     escapeHoldProgress,
     restart,
     quit,
+    settings,
+    updateSettings,
   }
 }

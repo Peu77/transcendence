@@ -55,6 +55,7 @@ export class TetrisGame {
   private lockResetCount = 0
   private lastRotated = false
   private b2bChain = 0
+  private readonly gameStartTime = Date.now()
 
   constructor(settings: Partial<MatchSettings> = {}) {
     this.settings = this.createSettings(settings)
@@ -77,6 +78,7 @@ export class TetrisGame {
     if (this.canMove(this.currentPiece, 1, 0)) {
       this.currentPiece.row += 1
       this.lockDelayStart = null
+      this.lockResetCount = 0
     } else {
       if (this.lockDelayStart === null) {
         this.lockDelayStart = Date.now()
@@ -198,14 +200,24 @@ export class TetrisGame {
     return this.nextTypes.slice(this.settings.nextCount, this.settings.nextCount + count)
   }
 
-  /** Milliseconds between gravity ticks for the current level. */
+  /** Milliseconds between gravity ticks for the current level or custom override. */
   getTickInterval(): number {
-    if (this.settings.gravity >= 20) return 1
-    if (this.settings.gravity > 0 && this.settings.gravity !== 1) {
-      return Math.max(1, Math.round(1000 / this.settings.gravity))
+    const g = this.getEffectiveGravity()
+    if (g >= 20) return 1
+    // Use level-based curve only when gravity is default and gincrease is off.
+    if (this.settings.gincrease === 0 && this.settings.gravity === 1) {
+      return Math.max(100, 800 - (this.level - 1) * 70)
     }
-    // Starts at 800 ms, decreases per level down to a minimum of 100 ms.
-    return Math.max(100, 800 - (this.level - 1) * 70)
+    // G is cells per frame at 60 fps, so interval = (1000ms / 60) / G
+    return Math.max(1, Math.round((1000 / 60) / g))
+  }
+
+  private getEffectiveGravity(): number {
+    if (this.settings.gincrease === 0) return this.settings.gravity
+    const elapsedSeconds = (Date.now() - this.gameStartTime) / 1000
+    const marginSeconds = this.settings.gmargin / 60
+    const increase = this.settings.gincrease * Math.max(0, elapsedSeconds - marginSeconds)
+    return Math.min(20, this.settings.gravity + increase)
   }
 
   /* ------------------------------------------------------------------ */
@@ -220,7 +232,9 @@ export class TetrisGame {
 
   private createSettings(settings: Partial<MatchSettings>): MatchSettings {
     return {
-      gravity: 1,
+      gravity: 0.02,
+      gincrease: 0.0025,
+      gmargin: 3600,
       lockDelayMs: 500,
       lockResetLimit: 15,
       areMs: 0,
@@ -663,6 +677,11 @@ export class TetrisGame {
   }
 
   private lockAndSpawn(): boolean {
+    if (this.canMove(this.currentPiece, 1, 0)) {
+      this.lockDelayStart = null
+      this.lockResetCount = 0
+      return true
+    }
     log(
       `Locking piece ${this.currentPiece.type} at row=${this.currentPiece.row} col=${this.currentPiece.col}`,
     )

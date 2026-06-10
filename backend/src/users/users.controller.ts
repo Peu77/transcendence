@@ -153,8 +153,8 @@ export class UsersController {
   }
 
   @Get('users/profile/:id')
-  async getPublicProfile(@Param('id') id: string) {
-    return this.usersService.getPublicProfile(id)
+  async getPublicProfile(@Param('id') id: string, @UserId() requesterId: string) {
+    return this.usersService.getPublicProfile(id, requesterId)
   }
 
   @Post('users/toggleTheme')

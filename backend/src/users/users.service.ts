@@ -16,6 +16,7 @@ import { GithubValidateReturn } from '../auth/github.strategy'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { MatchResult } from './match-result.entity'
+import { UserBlock } from '../friends/entities/user-block.entity'
 
 export interface MatchHistoryPlayer {
   userId: string
@@ -52,9 +53,15 @@ export class UsersService {
     @InjectRepository(User) private readonly usersRepo: Repository<User>,
     @InjectRepository(MatchResult)
     private readonly matchResultsRepo: Repository<MatchResult>,
+    @InjectRepository(UserBlock)
+    private readonly userBlocksRepo: Repository<UserBlock>,
   ) {}
 
   static readonly UPLOAD_DIR = 'uploads/'
+
+  normalizeUsername(username: string): string {
+    return username.toLowerCase()
+  }
 
   async createUser(
     userType: UserType,
@@ -67,7 +74,7 @@ export class UsersService {
     const user = this.usersRepo.create({
       userType,
       email: email.toLowerCase(),
-      username: username,
+      username: this.normalizeUsername(username),
       password: passwordHash,
       githubId,
       githubAvatarUrl,
@@ -80,7 +87,9 @@ export class UsersService {
   }
 
   async existsByUsername(username: string): Promise<boolean> {
-    return await this.usersRepo.existsBy({ username })
+    return await this.usersRepo.existsBy({
+      username: this.normalizeUsername(username),
+    })
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -197,7 +206,7 @@ export class UsersService {
     return normalized
   }
 
-  async getPublicProfile(userId: string) {
+  async getPublicProfile(userId: string, requesterId: string) {
     const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
 
     const statsResult = await this.matchResultsRepo
@@ -214,7 +223,8 @@ export class UsersService {
 
     const matchCount = Number(statsResult?.matchCount ?? 0)
     const totalLines = Number(statsResult?.totalLines ?? 0)
-    const totalScore = matchCount > 0 ? Number(statsResult?.totalScore ?? 0) : null
+    const totalScore =
+      matchCount > 0 ? Number(statsResult?.totalScore ?? 0) : null
 
     let rank: number | null = null
     if (matchCount > 0) {
@@ -228,6 +238,70 @@ export class UsersService {
       rank = higherRanked.length + 1
     }
 
+    const blockedByThem = userId !== requesterId
+      ? await this.userBlocksRepo.exists({ where: { blockerId: userId, blockedId: requesterId } })
+      : false
+
+    let sharedMatchCount = 0
+    let sharedPoints = 0
+    let requesterTotalPoints = 0
+    let winsAgainstThem = 0
+    if (userId !== requesterId) {
+      const [sharedCountResult, sharedPtsResult, requesterStatsResult, winsResult] =
+        await Promise.all([
+          this.matchResultsRepo
+            .createQueryBuilder('r1')
+            .innerJoin(
+              MatchResult,
+              'r2',
+              'r1.matchId = r2.matchId AND r2.userId = :userId',
+              { userId },
+            )
+            .where('r1.userId = :requesterId', { requesterId })
+            .getCount(),
+          this.matchResultsRepo
+            .createQueryBuilder('r1')
+            .innerJoin(
+              MatchResult,
+              'r2',
+              'r1.matchId = r2.matchId AND r2.userId = :userId',
+              { userId },
+            )
+            .select('SUM(r1.score)', 'total')
+            .where('r1.userId = :requesterId', { requesterId })
+            .getRawOne<{ total: string | null }>(),
+          this.matchResultsRepo
+            .createQueryBuilder('result')
+            .select('SUM(result.score)', 'total')
+            .where('result.userId = :requesterId', { requesterId })
+            .getRawOne<{ total: string | null }>(),
+          this.matchResultsRepo
+            .createQueryBuilder('r1')
+            .innerJoin(
+              MatchResult,
+              'r2',
+              'r1.matchId = r2.matchId AND r2.userId = :userId',
+              { userId },
+            )
+            .where('r1.userId = :requesterId', { requesterId })
+            .andWhere(qb => {
+              const sub = qb
+                .subQuery()
+                .select('MAX(r3.score)')
+                .from(MatchResult, 'r3')
+                .where('r3.matchId = r1.matchId')
+                .getQuery()
+              return `r1.score = ${sub}`
+            })
+            .getCount(),
+        ])
+
+      sharedMatchCount = sharedCountResult
+      sharedPoints = Number(sharedPtsResult?.total ?? 0)
+      requesterTotalPoints = Number(requesterStatsResult?.total ?? 0)
+      winsAgainstThem = winsResult
+    }
+
     return {
       id: user.id,
       username: user.username,
@@ -236,6 +310,11 @@ export class UsersService {
       totalScore,
       totalLines,
       rank,
+      blockedByThem,
+      sharedMatchCount,
+      sharedPoints,
+      requesterTotalPoints,
+      winsAgainstThem,
     }
   }
 

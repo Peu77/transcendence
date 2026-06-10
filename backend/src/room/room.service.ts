@@ -43,6 +43,7 @@ export class RoomService {
     })
 
     this.sendUpdateRoomEvent(roomId)
+    this.realtimeService.emitRoomsUpdated()
   }
 
   getRoom(roomId: string): Room {
@@ -63,6 +64,7 @@ export class RoomService {
 
     if (room.users.length === 0) {
       this.deleteRoom(roomId)
+      this.realtimeService.emitRoomsUpdated()
       return
     }
 
@@ -72,6 +74,7 @@ export class RoomService {
     }
 
     this.sendUpdateRoomEvent(roomId)
+    this.realtimeService.emitRoomsUpdated()
   }
 
   leaveAllRooms(userId: string) {
@@ -90,6 +93,7 @@ export class RoomService {
       users: [],
     }
     this.rooms.set(room.id, room)
+    this.realtimeService.emitRoomsUpdated()
     return room
   }
 
@@ -113,6 +117,7 @@ export class RoomService {
 
     room.status = 'waiting'
     this.sendUpdateRoomEvent(roomId)
+    this.realtimeService.emitRoomsUpdated()
   }
 
   getPublicRooms(): Promise<Room[]> {
@@ -143,6 +148,7 @@ export class RoomService {
     }
 
     this.sendUpdateRoomEvent(roomId)
+    this.realtimeService.emitRoomsUpdated()
     return room
   }
 
@@ -169,7 +175,9 @@ export class RoomService {
 
   createDefaultMatchSettings(): MatchSettings {
     return {
-      gravity: 1,
+      gravity: 0.02,
+      gincrease: 0.0025,
+      gmargin: 3600,
       lockDelayMs: 500,
       lockResetLimit: 15,
       areMs: 0,

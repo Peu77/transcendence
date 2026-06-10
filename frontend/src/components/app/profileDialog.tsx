@@ -9,12 +9,17 @@ import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { LevelBar } from '@/components/app/levelBar.tsx'
 import { StatCard } from '@/components/app/statCard.tsx'
 import { useGetPublicProfile, timeAgo, type PublicProfile } from '@/api/user.ts'
+import { AddFriendButton } from '@/components/app/addFriendButton.tsx'
+import { FriendshipRing } from '@/components/app/friendshipRing.tsx'
+import { SharedPointsPie } from '@/components/app/sharedPointsPie.tsx'
+import { WinRatePie } from '@/components/app/winRatePie.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 
 const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
   const level = Math.floor(profile.totalLines / 10) + 1
   const rank = profile.rank !== null ? `#${profile.rank}` : 'Unranked'
-  const points = profile.totalScore !== null ? profile.totalScore.toLocaleString() : '—'
+  const points =
+    profile.totalScore !== null ? profile.totalScore.toLocaleString() : '—'
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -30,6 +35,19 @@ const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
       <div className="w-full">
         <LevelBar totalLines={profile.totalLines} />
       </div>
+      {profile.sharedMatchCount > 0 && (
+        <div className="flex gap-8 items-start justify-center">
+          <FriendshipRing sharedMatchCount={profile.sharedMatchCount} />
+          <SharedPointsPie
+            sharedPoints={profile.sharedPoints}
+            totalPoints={profile.requesterTotalPoints}
+          />
+          <WinRatePie
+            wins={profile.winsAgainstThem}
+            total={profile.sharedMatchCount}
+          />
+        </div>
+      )}
       <span className="text-sm text-muted-foreground">
         Joined {timeAgo(new Date(profile.createdAt))}
       </span>
@@ -62,7 +80,12 @@ export const ProfileDialog = ({
             <Spinner className="size-8" />
           </div>
         ) : (
-          <ProfileContent profile={profile} />
+          <>
+            <ProfileContent profile={profile} />
+            <div className="flex justify-center mt-2">
+              <AddFriendButton userId={userId} blockedByThem={profile.blockedByThem} />
+            </div>
+          </>
         )}
       </DialogContent>
     </Dialog>

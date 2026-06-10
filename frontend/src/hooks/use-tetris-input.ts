@@ -5,6 +5,7 @@ import {
   buildKeyMap,
   normalizeHandlingSettings,
 } from '@/components/app/room/room-game.ts'
+import { isGameInputElement } from '@/game/keyboard.ts'
 
 export interface TetrisInputChat {
   /** Key that toggles the chat panel open. */
@@ -157,13 +158,18 @@ export function useTetrisInput({
       const chatHandler = optionsRef.current.chat
 
       if (e.key === 'Escape') {
-        e.preventDefault()
         if (!e.repeat && chatHandler?.isOpen()) {
+          e.preventDefault()
           chatHandler.setOpen(false)
+          return
         }
+        if (isGameInputElement(e.target)) return
+        e.preventDefault()
         if (!e.repeat) startEscapeHold()
         return
       }
+
+      if (isGameInputElement(e.target)) return
 
       if (!optionsRef.current.isPlaying()) return
 

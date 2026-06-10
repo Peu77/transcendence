@@ -93,7 +93,7 @@ During the development of this project, Artificial Intelligence was utilized str
 - [x] Allow users to interact with other users (2)
   - [x] A basic chat system
   - [x] A friend system
-  - [ ] A profile system (Theo)
+  - [x] A profile system (Theo)
 - [x] Realtime feature using WebSockets - (2)
 - [x] User interaction - Basic Chat, friend system, profile system - (2)
 - [ ] Public API (at least 5 endpoints) - (2) (blocked by achievements)

@@ -1,4 +1,59 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { axios } from '@/lib/client.ts'
+
+export const FRIENDS_QUERY_KEYS = {
+  FRIENDS: ['friends'],
+  OUTGOING_REQUESTS: ['friends', 'requests', 'outgoing'],
+  INCOMING_REQUESTS: ['friends', 'requests', 'incoming'],
+}
+
+export function useGetFriends() {
+  return useQuery({
+    queryKey: FRIENDS_QUERY_KEYS.FRIENDS,
+    queryFn: getFriends,
+  })
+}
+
+export function useGetOutgoingFriendRequests() {
+  return useQuery({
+    queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS,
+    queryFn: getOutgoingFriendRequests,
+  })
+}
+
+export function useSendFriendRequest() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: sendFriendRequest,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS })
+    },
+  })
+}
+
+export function useCancelFriendRequest() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: cancelFriendRequest,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS })
+    },
+  })
+}
+
+export async function blockUser(blockedId: string): Promise<void> {
+  await axios.post(`/friends/block/${blockedId}`)
+}
+
+export function useBlockUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: blockUser,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.INCOMING_REQUESTS })
+    },
+  })
+}
 
 export type PresenceStatus = 'online' | 'offline' | 'away'
 

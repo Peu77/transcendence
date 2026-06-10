@@ -8,6 +8,8 @@ import {
 
 export const matchSettingsSchema = z.object({
   gravity: z.number().min(0),
+  gincrease: z.number().min(0),
+  gmargin: z.number().min(0),
   lockDelayMs: z.number().min(0),
   lockResetLimit: z.number().min(0),
   areMs: z.number().min(0),
@@ -33,12 +35,16 @@ export const matchSettingsSchema = z.object({
       double: z.number(),
       triple: z.number(),
       tetris: z.number(),
+      tSpinMiniSingle: z.number(),
+      tSpinMiniDouble: z.number(),
       tSpinSingle: z.number(),
       tSpinDouble: z.number(),
       tSpinTriple: z.number(),
+      allClear: z.number(),
     }),
-    comboMultiplier: z.number(),
-    backToBackMultiplier: z.number(),
+    comboTable: z.array(z.number()),
+    backToBackBonus: z.number(),
+    garbageCap: z.number(),
   }),
 })
 
