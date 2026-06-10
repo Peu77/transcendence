@@ -56,6 +56,28 @@ export function MatchSettingsForm({
               />
             )}
           </form.AppField>
+          <form.AppField name="gincrease">
+            {(field) => (
+              <field.Slider
+                label="Gravity Increase"
+                min={0}
+                max={20}
+                step={0.001}
+                disabled={!isHost}
+              />
+            )}
+          </form.AppField>
+          <form.AppField name="gmargin">
+            {(field) => (
+              <field.Slider
+                label="Gravity Margin Time (frames)"
+                min={0}
+                max={10000}
+                step={1}
+                disabled={!isHost}
+              />
+            )}
+          </form.AppField>
           <form.AppField name="lockDelayMs">
             {(field) => (
               <field.Slider

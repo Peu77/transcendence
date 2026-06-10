@@ -16,3 +16,5 @@ frontend/src/game/.vscode/
 frontend/src/game/public/
 frontend/src/game/node_modules/
 backend/.pnpm-store/
+ssl/
+!ssl/generate-certs.sh

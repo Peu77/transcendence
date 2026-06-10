@@ -1,4 +1,18 @@
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: transcendence-nginx
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/certs:ro
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
   postgres:
     image: postgres:18
     container_name: transcendence-postgres
@@ -11,7 +25,40 @@ services:
     volumes:
       - ./postgres-init:/docker-entrypoint-initdb.d
       - postgres_data:/var/lib/postgresql
+      - ./ssl/server.crt:/var/lib/postgresql/server.crt:ro
+      - ./ssl/postgres-server.key:/var/lib/postgresql/server.key:ro
+      - ./ssl/ca.crt:/var/lib/postgresql/ca.crt:ro
+    command: >
+      -c ssl=on
+      -c ssl_cert_file=/var/lib/postgresql/server.crt
+      -c ssl_key_file=/var/lib/postgresql/server.key
+      -c ssl_ca_file=/var/lib/postgresql/ca.crt
     restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/dev/Dockerfile
+    env_file:
+      - backend/dev/.env.docker
+    environment:
+      SSL_ENABLED: "true"
+    container_name: transcendence-backend
+
+    expose:
+      - "4000"
+
+    volumes:
+      - ./backend:/app
+      - ./shared:/shared
+      - /app/node_modules
+      - ./ssl:/certs:ro
+
+    restart: unless-stopped
+
+    depends_on:
+      - prometheus
+
   prometheus:
     image: prom/prometheus:latest
     container_name: transcendence-prometheus
@@ -19,9 +66,12 @@ services:
       - "9090:9090"
     volumes:
       - ./backend/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/web-config.yml:/etc/prometheus/web-config.yml:ro
+      - ./ssl:/certs:ro
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.config.file=/etc/prometheus/web-config.yml'
     restart: unless-stopped
 
   grafana:
@@ -32,9 +82,31 @@ services:
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/etc/grafana/dashboards
+      - ./ssl:/certs:ro
       - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/dev/Dockerfile
+    env_file:
+      - frontend/dev/.env.docker
+    container_name: transcendence-frontend
+
+    expose:
+      - "3000"
+
+    volumes:
+      - ./frontend:/app
+      - ./shared:/shared
+      - /app/node_modules
+
+    depends_on:
+      - backend
+
     restart: unless-stopped
 
 volumes:

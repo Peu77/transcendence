@@ -4,8 +4,10 @@ global:
 
 scrape_configs:
   - job_name: 'backend'
+    scheme: https
+    tls_config:
+      ca_file: /certs/ca.crt
     static_configs:
       - targets: ['backend:4000']
         labels:
           service: 'transcendence-backend'
-

@@ -16,17 +16,17 @@ import { randomUUID } from 'node:crypto'
 import type { Server, Socket } from 'socket.io'
 import { Repository } from 'typeorm'
 import {
-  REALTIME_NAMESPACE,
   dmRoom,
   gameRoom,
+  REALTIME_NAMESPACE,
   userRoom,
 } from './realtime.constants'
 import { RealtimeService } from './realtime.service'
 import { RealtimePresenceService } from './realtime-presence.service'
 import { RoomService } from '../room/room.service'
 import {
-  TetrisGame,
   type InputAction,
+  TetrisGame,
   type TetrisState,
   type TetrominoType,
 } from '@transcendence/shared'
@@ -64,7 +64,7 @@ function parseCookie(cookieHeader: string | undefined): Record<string, string> {
 @WebSocketGateway({
   namespace: REALTIME_NAMESPACE,
   cors: {
-    origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN ?? 'https://localhost',
     credentials: true,
   },
 })
