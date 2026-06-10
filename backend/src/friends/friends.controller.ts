@@ -85,6 +85,15 @@ export class FriendsController {
     return {}
   }
 
+  @Post('friends/block/:userId')
+  async blockUser(
+    @UserId() blockerId: string,
+    @Param('userId') blockedId: string,
+  ) {
+    await this.friendsService.blockUser(blockerId, blockedId)
+    return {}
+  }
+
   @Post('friends/requests/:requestId/cancel')
   async cancel(
     @UserId() userId: string,

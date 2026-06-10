@@ -133,6 +133,11 @@ export type PublicProfile = {
   totalScore: number | null
   totalLines: number
   rank: number | null
+  blockedByThem: boolean
+  sharedMatchCount: number
+  sharedPoints: number
+  requesterTotalPoints: number
+  winsAgainstThem: number
 }
 
 export async function getPublicProfile(userId: string) {

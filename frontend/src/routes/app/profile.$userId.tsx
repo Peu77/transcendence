@@ -4,6 +4,10 @@ import { useGetPublicProfile, timeAgo, type PublicProfile } from '@/api/user.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { LevelBar } from '@/components/app/levelBar.tsx'
 import { StatCard } from '@/components/app/statCard.tsx'
+import { AddFriendButton } from '@/components/app/addFriendButton.tsx'
+import { FriendshipRing } from '@/components/app/friendshipRing.tsx'
+import { SharedPointsPie } from '@/components/app/sharedPointsPie.tsx'
+import { WinRatePie } from '@/components/app/winRatePie.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { ArrowLeftIcon } from 'lucide-react'
@@ -30,6 +34,20 @@ function ProfileContent({ profile }: { profile: PublicProfile }) {
       <div className="w-full max-w-sm">
         <LevelBar totalLines={profile.totalLines} />
       </div>
+
+      {profile.sharedMatchCount > 0 && (
+        <div className="flex gap-8 items-start justify-center">
+          <FriendshipRing sharedMatchCount={profile.sharedMatchCount} />
+          <SharedPointsPie
+            sharedPoints={profile.sharedPoints}
+            totalPoints={profile.requesterTotalPoints}
+          />
+          <WinRatePie
+            wins={profile.winsAgainstThem}
+            total={profile.sharedMatchCount}
+          />
+        </div>
+      )}
 
       <span className="text-sm text-muted-foreground">
         Joined {timeAgo(new Date(profile.createdAt))}
@@ -61,7 +79,12 @@ function ProfilePage() {
           <Spinner className="size-8" />
         </div>
       ) : (
-        <ProfileContent profile={profile} />
+        <>
+          <ProfileContent profile={profile} />
+          <div className="flex justify-center mt-6">
+            <AddFriendButton userId={userId} blockedByThem={profile.blockedByThem} />
+          </div>
+        </>
       )}
     </div>
   )
