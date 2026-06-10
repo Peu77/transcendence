@@ -7,6 +7,7 @@ import { StatCard } from '@/components/app/statCard.tsx'
 import { AddFriendButton } from '@/components/app/addFriendButton.tsx'
 import { FriendshipRing } from '@/components/app/friendshipRing.tsx'
 import { SharedPointsPie } from '@/components/app/sharedPointsPie.tsx'
+import { WinRatePie } from '@/components/app/winRatePie.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { ArrowLeftIcon } from 'lucide-react'
@@ -39,6 +40,10 @@ function ProfileContent({ profile }: { profile: PublicProfile }) {
           <SharedPointsPie
             sharedPoints={profile.sharedPoints}
             totalPoints={profile.requesterTotalPoints}
+          />
+          <WinRatePie
+            wins={profile.winsAgainstThem}
+            total={profile.sharedMatchCount}
           />
         </div>
       )}

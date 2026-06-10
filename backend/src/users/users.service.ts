@@ -238,8 +238,9 @@ export class UsersService {
     let sharedMatchCount = 0
     let sharedPoints = 0
     let requesterTotalPoints = 0
+    let winsAgainstThem = 0
     if (userId !== requesterId) {
-      const [sharedCountResult, sharedPtsResult, requesterStatsResult] =
+      const [sharedCountResult, sharedPtsResult, requesterStatsResult, winsResult] =
         await Promise.all([
           this.matchResultsRepo
             .createQueryBuilder('r1')
@@ -267,11 +268,31 @@ export class UsersService {
             .select('SUM(result.score)', 'total')
             .where('result.userId = :requesterId', { requesterId })
             .getRawOne<{ total: string | null }>(),
+          this.matchResultsRepo
+            .createQueryBuilder('r1')
+            .innerJoin(
+              MatchResult,
+              'r2',
+              'r1.matchId = r2.matchId AND r2.userId = :userId',
+              { userId },
+            )
+            .where('r1.userId = :requesterId', { requesterId })
+            .andWhere(qb => {
+              const sub = qb
+                .subQuery()
+                .select('MAX(r3.score)')
+                .from(MatchResult, 'r3')
+                .where('r3.matchId = r1.matchId')
+                .getQuery()
+              return `r1.score = ${sub}`
+            })
+            .getCount(),
         ])
 
       sharedMatchCount = sharedCountResult
       sharedPoints = Number(sharedPtsResult?.total ?? 0)
       requesterTotalPoints = Number(requesterStatsResult?.total ?? 0)
+      winsAgainstThem = winsResult
     }
 
     return {
@@ -286,6 +307,7 @@ export class UsersService {
       sharedMatchCount,
       sharedPoints,
       requesterTotalPoints,
+      winsAgainstThem,
     }
   }
 

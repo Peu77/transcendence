@@ -137,6 +137,7 @@ export type PublicProfile = {
   sharedMatchCount: number
   sharedPoints: number
   requesterTotalPoints: number
+  winsAgainstThem: number
 }
 
 export async function getPublicProfile(userId: string) {
