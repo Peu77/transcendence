@@ -19,6 +19,7 @@ import {
   LockIcon,
   MedalIcon,
   StarIcon,
+  SwordsIcon,
   TrendingUpIcon,
   TrophyIcon,
   UsersIcon,
@@ -142,6 +143,23 @@ const CATEGORIES: CategoryDef[] = [
     tiers: [
       { id: 'first_friend', threshold: 1 },
       { id: 'friends_5', threshold: 5 },
+    ],
+  },
+  {
+    id: 'domination',
+    label: 'Domination',
+    statKey: 'bestDomination',
+    Icon: SwordsIcon,
+    unit: 'games',
+    formatStat: (v) => `${v}`,
+    progressLabel: (v, t) =>
+      v === 0
+        ? 'Win all games against a single opponent'
+        : `Best: ${v} / ${t} undefeated games`,
+    tiers: [
+      { id: 'domination_3', threshold: 3 },
+      { id: 'domination_5', threshold: 5 },
+      { id: 'domination_10', threshold: 10 },
     ],
   },
   {

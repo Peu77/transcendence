@@ -463,6 +463,44 @@ export class UsersService {
     const rank = matches > 0 ? higherRankedUsers.length + 1 : 0
     const level = Math.floor(lines / 10) + 1
 
+    // Compute best domination: max games against a single opponent where user won ALL of them
+    let bestDomination = 0
+    if (matches > 0) {
+      const userResults = await this.matchResultsRepo.find({
+        where: { userId },
+        select: ['matchId', 'score'],
+      })
+      const matchIds = [...new Set(userResults.map((r) => r.matchId))]
+      const allResults = await this.matchResultsRepo.find({
+        where: { matchId: In(matchIds) },
+        select: ['matchId', 'userId', 'score'],
+      })
+      const matchMaxScore = new Map<string, number>()
+      for (const r of allResults) {
+        if ((r.score ?? 0) > (matchMaxScore.get(r.matchId) ?? 0))
+          matchMaxScore.set(r.matchId, r.score ?? 0)
+      }
+      const userWonMatches = new Set(
+        userResults
+          .filter((r) => (r.score ?? 0) === matchMaxScore.get(r.matchId))
+          .map((r) => r.matchId),
+      )
+      const opponentStats = new Map<string, { total: number; wins: number }>()
+      for (const r of allResults) {
+        if (r.userId === userId) continue
+        const s = opponentStats.get(r.userId) ?? { total: 0, wins: 0 }
+        s.total++
+        if (userWonMatches.has(r.matchId)) s.wins++
+        opponentStats.set(r.userId, s)
+      }
+      bestDomination = Math.max(
+        0,
+        ...Array.from(opponentStats.values())
+          .filter((s) => s.wins === s.total)
+          .map((s) => s.total),
+      )
+    }
+
     const baseAchievements = [
         {
           id: 'first_match',
@@ -596,6 +634,24 @@ export class UsersService {
           description: 'Reach #1 on the leaderboard',
           unlocked: rank === 1,
         },
+        {
+          id: 'domination_3',
+          label: 'Bully',
+          description: 'Beat the same opponent in 3 matches without ever losing to them',
+          unlocked: bestDomination >= 3,
+        },
+        {
+          id: 'domination_5',
+          label: 'Dominator',
+          description: 'Beat the same opponent in 5 matches without ever losing to them',
+          unlocked: bestDomination >= 5,
+        },
+        {
+          id: 'domination_10',
+          label: 'Their Nightmare',
+          description: 'Beat the same opponent in 10 matches without ever losing to them',
+          unlocked: bestDomination >= 10,
+        },
     ]
 
     const baseUnlocked = baseAchievements.filter((a) => a.unlocked).length
@@ -622,7 +678,7 @@ export class UsersService {
     ]
 
     return {
-      stats: { matches, score, lines, wins, friends, rank, level, baseUnlocked, totalBaseAchievements: baseAchievements.length },
+      stats: { matches, score, lines, wins, friends, rank, level, bestDomination, baseUnlocked, totalBaseAchievements: baseAchievements.length },
       achievements: [...baseAchievements, ...metaAchievements],
     }
   }

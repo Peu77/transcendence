@@ -17,6 +17,7 @@ export type AchievementsResponse = {
     friends: number
     rank: number
     level: number
+    bestDomination: number
     baseUnlocked: number
     totalBaseAchievements: number
   }
