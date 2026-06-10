@@ -11,6 +11,7 @@ import { StatCard } from '@/components/app/statCard.tsx'
 import { useGetPublicProfile, timeAgo, type PublicProfile } from '@/api/user.ts'
 import { AddFriendButton } from '@/components/app/addFriendButton.tsx'
 import { FriendshipRing } from '@/components/app/friendshipRing.tsx'
+import { SharedPointsPie } from '@/components/app/sharedPointsPie.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 
 const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
@@ -33,7 +34,13 @@ const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
         <LevelBar totalLines={profile.totalLines} />
       </div>
       {profile.sharedMatchCount > 0 && (
-        <FriendshipRing sharedMatchCount={profile.sharedMatchCount} />
+        <div className="flex gap-8 items-start justify-center">
+          <FriendshipRing sharedMatchCount={profile.sharedMatchCount} />
+          <SharedPointsPie
+            sharedPoints={profile.sharedPoints}
+            totalPoints={profile.requesterTotalPoints}
+          />
+        </div>
       )}
       <span className="text-sm text-muted-foreground">
         Joined {timeAgo(new Date(profile.createdAt))}

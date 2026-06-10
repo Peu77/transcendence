@@ -135,6 +135,8 @@ export type PublicProfile = {
   rank: number | null
   blockedByThem: boolean
   sharedMatchCount: number
+  sharedPoints: number
+  requesterTotalPoints: number
 }
 
 export async function getPublicProfile(userId: string) {

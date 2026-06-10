@@ -6,6 +6,7 @@ import { LevelBar } from '@/components/app/levelBar.tsx'
 import { StatCard } from '@/components/app/statCard.tsx'
 import { AddFriendButton } from '@/components/app/addFriendButton.tsx'
 import { FriendshipRing } from '@/components/app/friendshipRing.tsx'
+import { SharedPointsPie } from '@/components/app/sharedPointsPie.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { ArrowLeftIcon } from 'lucide-react'
@@ -33,7 +34,13 @@ function ProfileContent({ profile }: { profile: PublicProfile }) {
       </div>
 
       {profile.sharedMatchCount > 0 && (
-        <FriendshipRing sharedMatchCount={profile.sharedMatchCount} />
+        <div className="flex gap-8 items-start justify-center">
+          <FriendshipRing sharedMatchCount={profile.sharedMatchCount} />
+          <SharedPointsPie
+            sharedPoints={profile.sharedPoints}
+            totalPoints={profile.requesterTotalPoints}
+          />
+        </div>
       )}
 
       <span className="text-sm text-muted-foreground">
