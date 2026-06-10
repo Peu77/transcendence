@@ -20,6 +20,17 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs.tsx'
 import { Button } from '@/components/ui/button.tsx'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog.tsx'
+import { getFriends, sendMatchInvite } from '@/api/friends.ts'
+import { ProfileImage } from '@/components/app/profileImage.tsx'
+import { PresencePill } from '@/components/app/friends/presencePill.tsx'
 import { userStore } from '@/store/userStore'
 import { type RoomSettingsValues } from './room.settings.ts'
 import { MatchSettingsForm } from '@/components/app/room/match-settings-form.tsx'
@@ -109,6 +120,89 @@ function GameBoard({
 }
 
 /* ------------------------------------------------------------------ */
+/*  Invite a friend to the current lobby                               */
+/* ------------------------------------------------------------------ */
+
+function InviteFriendsDialog({ room }: { room: Room }) {
+  const [open, setOpen] = useState(false)
+  const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set())
+
+  const friendsQuery = useQuery({
+    queryKey: ['friends'],
+    queryFn: getFriends,
+    enabled: open,
+  })
+
+  const inviteMutation = useMutation({
+    mutationFn: (friendId: string) => sendMatchInvite(friendId, room.id),
+    onSuccess: (_data, friendId) => {
+      setInvitedIds((prev) => new Set(prev).add(friendId))
+      toast.success('Invite sent')
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? 'Failed to send invite')
+    },
+  })
+
+  const memberIds = new Set(room.users.map((u) => u.id))
+  const friends = friendsQuery.data ?? []
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline">
+          Invite a friend
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Invite a friend to this match</DialogTitle>
+          <DialogDescription>
+            They'll receive an invite in chat to join room {room.id}.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex max-h-80 flex-col gap-1 overflow-auto">
+          {friendsQuery.isLoading && (
+            <div className="text-sm text-muted-foreground">Loading…</div>
+          )}
+          {!friendsQuery.isLoading && friends.length === 0 && (
+            <div className="text-sm text-muted-foreground">
+              No friends to invite.
+            </div>
+          )}
+          {friends.map((f) => {
+            const inRoom = memberIds.has(f.id)
+            const invited = invitedIds.has(f.id)
+            return (
+              <div
+                key={f.id}
+                className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-accent/40"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <ProfileImage profilePictureId={f.profilePictureId} />
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{f.username}</div>
+                    <PresencePill friend={f} />
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  disabled={inRoom || invited || inviteMutation.isPending}
+                  onClick={() => inviteMutation.mutate(f.id)}
+                >
+                  {inRoom ? 'In lobby' : invited ? 'Invited' : 'Invite'}
+                </Button>
+              </div>
+            )
+          })}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Lobby phase (existing settings UI)                                 */
 /* ------------------------------------------------------------------ */
 
@@ -154,11 +248,14 @@ function LobbyPhase({
 
       <section className="flex min-h-0 flex-col gap-4">
         <div className="rounded-2xl border border-border bg-card/95 px-6 py-5 shadow-lg">
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-              Room overview
-            </p>
-            <h1 className="text-3xl font-bold xl:text-4xl">Room: {room.id}</h1>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                Room overview
+              </p>
+              <h1 className="text-3xl font-bold xl:text-4xl">Room: {room.id}</h1>
+            </div>
+            <InviteFriendsDialog room={room} />
           </div>
         </div>
 

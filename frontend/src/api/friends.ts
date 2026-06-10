@@ -125,11 +125,15 @@ export async function updateMyPresence(
   return res.data
 }
 
+export type DirectMessageType = 'text' | 'match_invite'
+
 export type DirectMessage = {
   id: string
   senderId: string
   recipientId: string
   content: string
+  type: DirectMessageType
+  roomId: string | null
   createdAt: string
 }
 
@@ -142,6 +146,17 @@ export async function sendDirectMessage(
   const res = await axios.post<DirectMessage>(
     `/dm/${friendUserId}/messages`,
     values,
+  )
+  return res.data
+}
+
+export async function sendMatchInvite(
+  friendUserId: string,
+  roomId?: string,
+): Promise<DirectMessage> {
+  const res = await axios.post<DirectMessage>(
+    `/dm/${friendUserId}/invite`,
+    roomId ? { roomId } : {},
   )
   return res.data
 }

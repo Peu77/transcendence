@@ -10,6 +10,7 @@ import { UserPresence } from './entities/user-presence.entity'
 import { UserBlock } from './entities/block.entity'
 import { RealtimeModule } from '../realtime/realtime.module'
 import { UsersModule } from '../users/users.module'
+import { RoomModule } from '../room/room.module'
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { UsersModule } from '../users/users.module'
     ]),
     RealtimeModule,
     UsersModule,
+    RoomModule,
   ],
   controllers: [FriendsController],
   providers: [FriendsService],

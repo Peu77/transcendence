@@ -13,6 +13,7 @@ import {
 import { AuthGuard, UserId } from '../auth/auth.guard'
 import {
   GetMessagesQueryDto,
+  InviteToMatchDto,
   SendDirectMessageDto,
   SendFriendRequestDto,
   UpdatePresenceDto,
@@ -142,6 +143,30 @@ export class FriendsController {
       senderId: msg.senderId,
       recipientId: msg.recipientId,
       content: msg.content,
+      type: msg.type,
+      roomId: msg.roomId,
+      createdAt: msg.createdAt,
+    }
+  }
+
+  @Post('dm/:friendUserId/invite')
+  async inviteToMatch(
+    @UserId() userId: string,
+    @Param('friendUserId') friendUserId: string,
+    @Body() body: InviteToMatchDto,
+  ) {
+    const msg = await this.friendsService.sendMatchInvite(
+      userId,
+      friendUserId,
+      body.roomId,
+    )
+    return {
+      id: msg.id,
+      senderId: msg.senderId,
+      recipientId: msg.recipientId,
+      content: msg.content,
+      type: msg.type,
+      roomId: msg.roomId,
       createdAt: msg.createdAt,
     }
   }
@@ -168,6 +193,8 @@ export class FriendsController {
         senderId: m.senderId,
         recipientId: m.recipientId,
         content: m.content,
+        type: m.type,
+        roomId: m.roomId,
         createdAt: m.createdAt,
       })),
       pageInfo: result.pageInfo,

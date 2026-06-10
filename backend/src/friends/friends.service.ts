@@ -19,6 +19,7 @@ import { UserBlock } from './entities/block.entity'
 import { isUUID } from 'class-validator'
 import { RealtimeService } from '../realtime/realtime.service'
 import { UsersService } from '../users/users.service'
+import { RoomService } from '../room/room.service'
 
 @Injectable()
 export class FriendsService {
@@ -36,6 +37,7 @@ export class FriendsService {
     private readonly blocksRepo: Repository<UserBlock>,
     private readonly realtime: RealtimeService,
     private readonly userService: UsersService,
+    private readonly roomService: RoomService,
   ) {}
 
   private canonicalPair(a: string, b: string): { low: string; high: string } {
@@ -379,6 +381,57 @@ export class FriendsService {
       senderId: saved.senderId,
       recipientId: saved.recipientId,
       content: saved.content,
+      type: saved.type,
+      roomId: saved.roomId,
+      createdAt: saved.createdAt.toISOString(),
+    })
+
+    return saved
+  }
+
+  // Sends the friend a special "match invite" direct message that links to a
+  // room. If `roomId` is provided, the friend is invited to that existing
+  // room/lobby (the sender must be in it); otherwise a fresh room is created
+  // so the sender can be navigated into a new lobby.
+  async sendMatchInvite(
+    senderId: string,
+    friendUserId: string,
+    roomId?: string,
+  ): Promise<DirectMessage> {
+    const senderInfo = await this.userService.getUserInfo(senderId)
+    await this.assertFriends(senderId, friendUserId)
+
+    let targetRoomId: string
+    if (roomId) {
+      const room = this.roomService.getRoom(roomId)
+      const senderInRoom =
+        room.hostUserId === senderId ||
+        room.users.some((u) => u.id === senderId)
+      if (!senderInRoom) {
+        throw new BadRequestException('You are not in this room')
+      }
+      targetRoomId = room.id
+    } else {
+      targetRoomId = this.roomService.createNewRoom(senderId).id
+    }
+
+    const msg = this.messagesRepo.create({
+      senderId,
+      recipientId: friendUserId,
+      content: `${senderInfo.username} invited you to a match`,
+      type: 'match_invite',
+      roomId: targetRoomId,
+    })
+    const saved = await this.messagesRepo.save(msg)
+
+    this.realtime.emitDirectMessageCreated([senderId, friendUserId], {
+      senderInfo,
+      id: saved.id,
+      senderId: saved.senderId,
+      recipientId: saved.recipientId,
+      content: saved.content,
+      type: saved.type,
+      roomId: saved.roomId,
       createdAt: saved.createdAt.toISOString(),
     })
 

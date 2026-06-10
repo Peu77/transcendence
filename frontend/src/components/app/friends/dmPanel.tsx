@@ -1,24 +1,65 @@
-import { useCallback, useMemo, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import {
   getDirectMessages,
   sendDirectMessage,
+  sendMatchInvite,
+  type DirectMessage,
   type Friend,
 } from '@/api/friends.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { Input } from '@/components/ui/input.tsx'
 import { useDmRoom, useLiveEvent } from '@/realtime/hooks.ts'
+import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
+
+function dedupeById<T extends { id: string }>(items: T[]): T[] {
+  const seen = new Set<string>()
+  const result: T[] = []
+  for (const item of items) {
+    if (seen.has(item.id)) continue
+    seen.add(item.id)
+    result.push(item)
+  }
+  return result
+}
 
 export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
   const qc = useQueryClient()
+  const navigate = useNavigate()
 
   useDmRoom(props.friend.id)
+
+  const goToRoom = useCallback(
+    async (roomId: string) => {
+      setFriendsOverlayIsOpen(false)
+      await navigate({ to: '/app/room/$roomId', params: { roomId } })
+    },
+    [navigate],
+  )
 
   const [input, setInput] = useState('')
   const [oldestCursor, setOldestCursor] = useState<string | null>(null)
   const [newestCursor, setNewestCursor] = useState<string | null>(null)
+
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const pendingOlderRef = useRef(false)
+  const prevScrollHeightRef = useRef(0)
+  const prevScrollTopRef = useRef(0)
+  const stickToBottomRef = useRef(true)
+  const didInitialScrollRef = useRef(false)
+  const sendingRef = useRef(false)
+  const loadingOlderRef = useRef(false)
+  const loadingNewerRef = useRef(false)
 
   const queryKey = useMemo(() => ['dm', props.friend.id], [props.friend.id])
 
@@ -49,7 +90,7 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
         if (!prev) return data
         return {
           ...prev,
-          messages: [...data.messages, ...(prev.messages ?? [])],
+          messages: dedupeById([...data.messages, ...(prev.messages ?? [])]),
           pageInfo: {
             ...prev.pageInfo,
             ...data.pageInfo,
@@ -58,6 +99,9 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
           },
         }
       })
+    },
+    onSettled: () => {
+      loadingOlderRef.current = false
     },
   })
 
@@ -76,7 +120,7 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
         if (!prev) return data
         return {
           ...prev,
-          messages: [...(prev.messages ?? []), ...data.messages],
+          messages: dedupeById([...(prev.messages ?? []), ...data.messages]),
           pageInfo: {
             ...prev.pageInfo,
             ...data.pageInfo,
@@ -86,16 +130,49 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
         }
       })
     },
+    onSettled: () => {
+      loadingNewerRef.current = false
+    },
   })
 
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+
+    const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+    stickToBottomRef.current = distanceToBottom < 80
+
+    if (
+      el.scrollTop < 80 &&
+      dmQuery.data?.pageInfo?.hasOlder &&
+      !loadingOlderRef.current
+    ) {
+      loadingOlderRef.current = true
+      pendingOlderRef.current = true
+      prevScrollHeightRef.current = el.scrollHeight
+      prevScrollTopRef.current = el.scrollTop
+      loadOlderMutation.mutate()
+    }
+
+    if (
+      distanceToBottom < 80 &&
+      dmQuery.data?.pageInfo?.hasNewer &&
+      !loadingNewerRef.current
+    ) {
+      loadingNewerRef.current = true
+      loadNewerMutation.mutate()
+    }
+  }, [
+    dmQuery.data?.pageInfo?.hasOlder,
+    dmQuery.data?.pageInfo?.hasNewer,
+    loadOlderMutation,
+    loadNewerMutation,
+  ])
+
   const sendMutation = useMutation({
-    mutationFn: async () => {
-      const content = input.trim()
-      if (!content) return null
-      return sendDirectMessage(props.friend.id, { content })
-    },
-    onSuccess: async (msg) => {
-      if (!msg) return
+    mutationFn: (content: string) =>
+      sendDirectMessage(props.friend.id, { content }),
+    onSuccess: async () => {
       setInput('')
       await qc.invalidateQueries({ queryKey })
     },
@@ -106,9 +183,60 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
       }
       toast.error(e?.response?.data?.message ?? 'Failed to send message')
     },
+    onSettled: () => {
+      sendingRef.current = false
+    },
+  })
+
+  const handleSend = useCallback(() => {
+    if (sendingRef.current) return
+    const content = input.trim()
+    if (!content) return
+    sendingRef.current = true
+    sendMutation.mutate(content)
+  }, [input, sendMutation])
+
+  const inviteMutation = useMutation({
+    mutationFn: () => sendMatchInvite(props.friend.id),
+    onSuccess: async (msg) => {
+      await qc.invalidateQueries({ queryKey })
+      if (msg.roomId) await goToRoom(msg.roomId)
+    },
+    onError: (e: any) => {
+      toast.error(e?.response?.data?.message ?? 'Failed to send invite')
+    },
   })
 
   const messages = dmQuery.data?.messages ?? []
+
+  useEffect(() => {
+    didInitialScrollRef.current = false
+    stickToBottomRef.current = true
+    pendingOlderRef.current = false
+  }, [props.friend.id])
+
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+
+    if (pendingOlderRef.current) {
+      el.scrollTop =
+        prevScrollTopRef.current +
+        (el.scrollHeight - prevScrollHeightRef.current)
+      pendingOlderRef.current = false
+      return
+    }
+
+    if (!didInitialScrollRef.current && messages.length > 0) {
+      el.scrollTop = el.scrollHeight
+      didInitialScrollRef.current = true
+      return
+    }
+
+    if (stickToBottomRef.current) {
+      el.scrollTop = el.scrollHeight
+    }
+  }, [messages])
 
   const messagesContent = (() => {
     if (dmQuery.isLoading)
@@ -117,12 +245,41 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
       return <div className="text-muted-foreground">No messages yet.</div>
     return (
       <div className="flex flex-col gap-2">
+        {loadOlderMutation.isPending && (
+          <div className="text-center text-xs text-muted-foreground">
+            Loading older messages…
+          </div>
+        )}
         {messages.map((m) => (
           <div key={m.id} className="flex flex-col">
             <div className="text-xs text-muted-foreground">
               {new Date(m.createdAt).toLocaleString()}
             </div>
-            <div className="break-words">{m.content}</div>
+            {m.type === 'match_invite' ? (
+              <div className="flex flex-col gap-2 rounded-md border border-sidebar-border/70 bg-background/40 p-2">
+                <div className="break-words font-medium">{m.content}</div>
+                {m.senderId === props.friend.id ? (
+                  <Button
+                    size="sm"
+                    disabled={!m.roomId}
+                    onClick={() => m.roomId && goToRoom(m.roomId)}
+                  >
+                    Join match
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!m.roomId}
+                    onClick={() => m.roomId && goToRoom(m.roomId)}
+                  >
+                    Go to your match
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="break-words">{m.content}</div>
+            )}
           </div>
         ))}
       </div>
@@ -130,13 +287,7 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
   })()
 
   const handleDmCreated = useCallback(
-    (msg: {
-      id: string
-      senderId: string
-      recipientId: string
-      createdAt: string
-      content: string
-    }) => {
+    (msg: DirectMessage) => {
       const isForThisThread =
         msg.senderId === props.friend.id || msg.recipientId === props.friend.id
       if (!isForThisThread) return
@@ -174,39 +325,29 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
               DM: {props.friend.username}
             </div>
             <div className="text-xs text-muted-foreground">
-              Scroll with buttons for now (top/bottom pagination)
+              Scroll up to load older messages
             </div>
           </div>
         </div>
-        <Button size="sm" variant="ghost" onClick={props.onClose}>
-          Close
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            size="sm"
+            onClick={() => inviteMutation.mutate()}
+            disabled={inviteMutation.isPending}
+          >
+            Invite to match
+          </Button>
+          <Button size="sm" variant="ghost" onClick={props.onClose}>
+            Close
+          </Button>
+        </div>
       </div>
 
-      <div className="flex gap-2 mt-3">
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={
-            loadOlderMutation.isPending || !dmQuery.data?.pageInfo?.hasOlder
-          }
-          onClick={() => loadOlderMutation.mutate()}
-        >
-          Load older
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={
-            loadNewerMutation.isPending || !dmQuery.data?.pageInfo?.hasNewer
-          }
-          onClick={() => loadNewerMutation.mutate()}
-        >
-          Load newer
-        </Button>
-      </div>
-
-      <div className="mt-3 flex-1 min-h-0 overflow-auto bg-background/30 border border-sidebar-border/50 clip-pixel-corners-btn p-2 text-sm">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="mt-3 flex-1 min-h-0 overflow-auto bg-background/30 border border-sidebar-border/50 clip-pixel-corners-btn p-2 text-sm"
+      >
         {messagesContent}
       </div>
 
@@ -214,7 +355,7 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
         className="mt-3 flex gap-2"
         onSubmit={(e) => {
           e.preventDefault()
-          sendMutation.mutate()
+          handleSend()
         }}
       >
         <Input
