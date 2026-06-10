@@ -1,5 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { TwoFa } from '../auth/twofa.entity'
+import { MatchResult } from './match-result.entity'
 
 export enum UserType {
   EMAIL = 'email',
@@ -9,6 +10,46 @@ export enum UserType {
 export enum Theme {
   LIGHT = 'light',
   DARK = 'dark',
+}
+
+export enum GameControlAction {
+  LEFT = 'left',
+  RIGHT = 'right',
+  ROTATE_CW = 'rotateCW',
+  ROTATE_CCW = 'rotateCCW',
+  ROTATE_180 = 'rotate180',
+  SOFT_DROP = 'softDrop',
+  HARD_DROP = 'hardDrop',
+  HOLD = 'hold',
+  TOGGLE_CHAT = 'toggleChat',
+}
+
+export type GameControls = Record<GameControlAction, string>
+
+export type TetrisHandlingSettings = {
+  arr: number
+  das: number
+  dcd: number
+  sdf: number
+}
+
+export const DEFAULT_GAME_CONTROLS: GameControls = {
+  [GameControlAction.LEFT]: 'ArrowLeft',
+  [GameControlAction.RIGHT]: 'ArrowRight',
+  [GameControlAction.ROTATE_CW]: 'x',
+  [GameControlAction.ROTATE_CCW]: 'z',
+  [GameControlAction.ROTATE_180]: 'a',
+  [GameControlAction.SOFT_DROP]: 'ArrowDown',
+  [GameControlAction.HARD_DROP]: ' ',
+  [GameControlAction.HOLD]: 'c',
+  [GameControlAction.TOGGLE_CHAT]: 't',
+}
+
+export const DEFAULT_TETRIS_HANDLING_SETTINGS: TetrisHandlingSettings = {
+  arr: 33,
+  das: 167,
+  dcd: 0,
+  sdf: 33,
 }
 
 @Entity({ name: 'users' })
@@ -24,6 +65,19 @@ export class User {
 
   @Column({ type: 'text', default: Theme.LIGHT })
   theme!: Theme
+
+  @Column({
+    type: 'jsonb',
+    default: () => `'${JSON.stringify(DEFAULT_GAME_CONTROLS)}'::jsonb`,
+  })
+  gameControls!: GameControls
+
+  @Column({
+    type: 'jsonb',
+    default: () =>
+      `'${JSON.stringify(DEFAULT_TETRIS_HANDLING_SETTINGS)}'::jsonb`,
+  })
+  tetrisHandlingSettings!: TetrisHandlingSettings
 
   @Column({ type: 'text', nullable: true, unique: true })
   profilePictureId!: string | null
@@ -49,6 +103,11 @@ export class User {
   @Column({ default: 1 })
   level!: number
 
+  // TODO(stats): The aggregate stat columns below are superseded by the
+  // dedicated `user_stats` table (see src/stats/user-stats.entity.ts). They are
+  // currently unused (never read or written anywhere in the codebase) and
+  // should be removed once nothing depends on them. Verified unused as of the
+  // stats-achievements branch; double-check before deleting.
   @Column({ default: 0 })
   matchesPlayed!: number
 
@@ -72,4 +131,7 @@ export class User {
 
   @OneToMany(() => TwoFa, (twofa) => twofa.user)
   twoFaSessions!: TwoFa[]
+
+  @OneToMany(() => MatchResult, (matchResult) => matchResult.user)
+  matchResults!: MatchResult[]
 }

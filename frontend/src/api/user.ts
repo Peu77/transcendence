@@ -7,6 +7,45 @@ export enum Theme {
   DARK = 'dark',
 }
 
+export type GameControlAction =
+  | 'left'
+  | 'right'
+  | 'rotateCW'
+  | 'rotateCCW'
+  | 'rotate180'
+  | 'softDrop'
+  | 'hardDrop'
+  | 'hold'
+  | 'toggleChat'
+
+export type GameControls = Record<GameControlAction, string>
+
+export type TetrisHandlingSettings = {
+  arr: number
+  das: number
+  dcd: number
+  sdf: number
+}
+
+export const DEFAULT_GAME_CONTROLS: GameControls = {
+  left: 'ArrowLeft',
+  right: 'ArrowRight',
+  rotateCW: 'x',
+  rotateCCW: 'z',
+  rotate180: 'a',
+  softDrop: 'ArrowDown',
+  hardDrop: ' ',
+  hold: 'c',
+  toggleChat: 't',
+}
+
+export const DEFAULT_TETRIS_HANDLING_SETTINGS: TetrisHandlingSettings = {
+  arr: 33,
+  das: 167,
+  dcd: 0,
+  sdf: 33,
+}
+
 export type User = {
   id: string
   email: string
@@ -14,6 +53,8 @@ export type User = {
   username: string
   twoFaEnabled: boolean
   theme: Theme
+  gameControls: GameControls
+  tetrisHandlingSettings: TetrisHandlingSettings
 }
 
 export const USER_QUERY_KEYS = {
@@ -53,12 +94,45 @@ export function useUploadProfilePicture() {
   })
 }
 
+export function useUpdateGameControls() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (controls: GameControls) => {
+      const res = await axios.post<{ gameControls: GameControls }>(
+        '/users/gameControls',
+        { controls },
+      )
+      return res.data.gameControls
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.USER })
+    },
+  })
+}
+
+export function useUpdateTetrisHandlingSettings() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (settings: TetrisHandlingSettings) => {
+      const res = await axios.post<{
+        tetrisHandlingSettings: TetrisHandlingSettings
+      }>('/users/tetrisHandlingSettings', { settings })
+      return res.data.tetrisHandlingSettings
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.USER })
+    },
+  })
+}
+
 export type PublicProfile = {
   id: string
   username: string
   profilePictureId: string | null
-  level: number
   createdAt: string
+  totalScore: number | null
+  totalLines: number
+  rank: number | null
 }
 
 export async function getPublicProfile(userId: string) {

@@ -28,6 +28,15 @@ const Index = () => {
       textColor: 'text-green-50',
     },
     {
+      label: 'stats',
+      description:
+        'Your stats, achievements, match history and the global ranking.',
+      path: '/app/stats',
+      color: 'bg-orange-400',
+      borderColor: 'bg-orange-600',
+      textColor: 'text-orange-50',
+    },
+    {
       label: 'settings',
       description: 'Customize your experience and preferences.',
       path: '/app/settings',

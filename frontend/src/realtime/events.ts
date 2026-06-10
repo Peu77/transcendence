@@ -1,5 +1,5 @@
 import type { DirectMessage, PresenceStatus } from '@/api/friends'
-import type { TetrisState } from '@/game/tetris/types'
+import type { TetrisState, TetrominoType } from '@transcendence/shared'
 
 export type UserInfo = {
   username: string
@@ -38,6 +38,15 @@ export type DirectMessageCreatedEvent = DirectMessage & {
   senderInfo: UserInfo
 }
 
+export type RoomChatMessageEvent = {
+  id: string
+  roomId: string
+  senderId: string
+  senderInfo: UserInfo
+  content: string
+  createdAt: string
+}
+
 export type GamePlayerResult = {
   userId: string
   username: string
@@ -49,6 +58,7 @@ export type GamePlayerResult = {
 export type LiveEventMap = {
   ready: { userId: string }
   'room.updated': Record<string, never>
+  'room.chat.message': RoomChatMessageEvent
   'friend_request.created': FriendRequestCreatedEvent
   'friend_request.accepted': FriendRequestResolvedEvent
   'friend_request.denied': FriendRequestResolvedEvent
@@ -57,9 +67,12 @@ export type LiveEventMap = {
   'presence.updated': PresenceUpdatedEvent
   'dm.created': DirectMessageCreatedEvent
   'game.countdown': { roomId: string; count: number }
-  'game.state': { roomId: string; players: Record<string, TetrisState> }
-  'game.paused': { roomId: string; players: Record<string, TetrisState> }
-  'game.resumed': { roomId: string; players: Record<string, TetrisState> }
+  'game.state': {
+    roomId: string
+    players: Record<string, TetrisState>
+    lastSeq?: Record<string, number>
+    predictionPieces?: Record<string, TetrominoType[]>
+  }
   'game.player-over': {
     roomId: string
     userId: string

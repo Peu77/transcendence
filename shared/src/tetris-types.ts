@@ -11,7 +11,15 @@ export enum TetrominoType {
 /** A 2D coordinate offset [row, col] relative to the piece origin. */
 export type Block = [number, number]
 
-export type InputAction = 'left' | 'right' | 'rotate' | 'softDrop' | 'hardDrop'
+export type InputAction =
+  | 'left'
+  | 'right'
+  | 'rotateCW'
+  | 'rotateCCW'
+  | 'rotate180'
+  | 'softDrop'
+  | 'hardDrop'
+  | 'hold'
 
 export interface TetrisPiece {
   type: TetrominoType
@@ -22,17 +30,46 @@ export interface TetrisPiece {
   rotation: number
 }
 
+export interface GameMetrics {
+  piecesPlaced: number
+  singles: number
+  doubles: number
+  triples: number
+  tetrises: number
+  maxCombo: number
+  holds: number
+}
+
+export function createEmptyGameMetrics(): GameMetrics {
+  return {
+    piecesPlaced: 0,
+    singles: 0,
+    doubles: 0,
+    triples: 0,
+    tetrises: 0,
+    maxCombo: 0,
+    holds: 0,
+  }
+}
+
 export interface TetrisState {
   /** 20 rows x 10 cols.  0 = empty, otherwise a TetrominoType char code */
   board: (string | 0)[][]
   currentPiece: TetrisPiece
   nextPiece: TetrominoType
+  nextPieces: TetrominoType[]
+  heldPiece: TetrominoType | null
+  canHold: boolean
   ghostRow: number
   score: number
   lines: number
   level: number
   gameOver: boolean
-  paused: boolean
+  metrics: GameMetrics
+  /** Current combo count. 0 = first clear, 1 = second consecutive, etc. -1 when no combo active. */
+  combo: number
+  /** Number of consecutive hard clears (Tetris / T-Spin). 0 = B2B not active, 1+ = B2B active. */
+  b2bChain: number
 }
 
 export const BOARD_ROWS = 20

@@ -3,6 +3,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html,
+body {
+  overflow: hidden;
+  height: 100%;
+}
+
 body {
   @apply m-0;
   font-family:
@@ -174,15 +180,15 @@ code {
 
 @layer base {
   @font-face {
-    font-family: 'ArcadeClassic';
-    src: url('./assets/arcadeclassic.ttf') format('truetype');
+    font-family: 'VT323';
+    src: url('./assets/VT323-Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
   }
 
   * {
     @apply border-border;
-    font-family: ArcadeClassic, serif;
+    font-family: VT323, serif;
   }
 
   body {

@@ -10,8 +10,11 @@ import {
 } from '@nestjs/websockets'
 import { ConfigService } from '@nestjs/config'
 import { Logger } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
 import { verify } from 'jsonwebtoken'
+import { randomUUID } from 'node:crypto'
 import type { Server, Socket } from 'socket.io'
+import { Repository } from 'typeorm'
 import {
   REALTIME_NAMESPACE,
   dmRoom,
@@ -21,19 +24,31 @@ import {
 import { RealtimeService } from './realtime.service'
 import { RealtimePresenceService } from './realtime-presence.service'
 import { RoomService } from '../room/room.service'
-import { TetrisGame } from '../game/tetris/TetrisGame'
-import type { InputAction, TetrisState } from '../game/tetris/tetris.types'
+import {
+  TetrisGame,
+  type InputAction,
+  type TetrisState,
+  type TetrominoType,
+} from '@transcendence/shared'
+import { MatchResult } from '../users/match-result.entity'
+import { StatsService } from '../stats/stats.service'
+import { AchievementsService } from '../achievements/achievements.service'
 
 type SocketAuthUser = { userId: string }
 
 interface PlayerGame {
   game: TetrisGame
   tickTimer: ReturnType<typeof setTimeout> | null
+  lastSeq: number
+  placement: number | null
 }
 
 interface RoomGameSession {
   players: Map<string, PlayerGame> // userId → their game
   roomId: string
+  finishing: boolean
+  startedAt: number // epoch ms, used to compute match duration
+  nextPlacement: number
 }
 
 function parseCookie(cookieHeader: string | undefined): Record<string, string> {
@@ -72,6 +87,10 @@ export class RealtimeGateway
     private readonly realtime: RealtimeService,
     private readonly realtimePresence: RealtimePresenceService,
     private readonly roomService: RoomService,
+    @InjectRepository(MatchResult)
+    private readonly matchResultsRepository: Repository<MatchResult>,
+    private readonly statsService: StatsService,
+    private readonly achievementsService: AchievementsService,
   ) {
     this.jwtSecret = configService.getOrThrow<string>('JWT_SECRET')
   }
@@ -176,9 +195,50 @@ export class RealtimeGateway
     if (!userId) return { ok: false }
     if (!body?.roomId) return { ok: false }
 
+    if (this.gameSessions.get(body.roomId)?.players.has(userId)) {
+      this.handlePlayerDisconnectFromGame(body.roomId, userId)
+    }
     this.roomService.leaveRoom(body.roomId, userId)
     await client.leave(gameRoom(body.roomId))
     return { ok: true }
+  }
+
+  @SubscribeMessage('room.chat.send')
+  async sendRoomChatMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { roomId: string; content: string },
+  ) {
+    const userId: string | undefined = client.data.userId
+    if (!userId) return { ok: false, error: 'Unauthorized' }
+    if (!body?.roomId) return { ok: false, error: 'Missing roomId' }
+
+    const content = typeof body.content === 'string' ? body.content.trim() : ''
+    if (!content) return { ok: false, error: 'Message is empty' }
+    if (content.length > 500) return { ok: false, error: 'Message is too long' }
+
+    try {
+      const room = this.roomService.getRoom(body.roomId)
+      if (!room.users.some((user) => user.id === userId)) {
+        return { ok: false, error: 'You are not in this room' }
+      }
+
+      const sender = room.users.find((user) => user.id === userId)
+      this.emitToGameRoom(body.roomId, 'room.chat.message', {
+        id: `${Date.now()}-${userId}`,
+        roomId: body.roomId,
+        senderId: userId,
+        senderInfo: {
+          username: sender?.username ?? 'Player',
+          profilePictureId: sender?.profilePictureId ?? null,
+        },
+        content,
+        createdAt: new Date().toISOString(),
+      })
+
+      return { ok: true }
+    } catch (e: any) {
+      return { ok: false, error: e.message }
+    }
   }
 
   @SubscribeMessage('dm.join')
@@ -231,12 +291,17 @@ export class RealtimeGateway
       const session: RoomGameSession = {
         players: new Map(),
         roomId,
+        finishing: false,
+        startedAt: Date.now(),
+        nextPlacement: room.users.length,
       }
 
       for (const user of room.users) {
         session.players.set(user.id, {
-          game: new TetrisGame(),
+          game: new TetrisGame(room.settings),
           tickTimer: null,
+          lastSeq: 0,
+          placement: null,
         })
       }
 
@@ -268,7 +333,7 @@ export class RealtimeGateway
   @SubscribeMessage('game.input')
   handleGameInput(
     @ConnectedSocket() client: Socket,
-    @MessageBody() body: { roomId: string; action: InputAction },
+    @MessageBody() body: { roomId: string; action: InputAction; seq?: number },
   ) {
     const userId: string | undefined = client.data.userId
     if (!userId || !body?.roomId || !body?.action) return
@@ -277,73 +342,23 @@ export class RealtimeGateway
     if (!session) return
 
     const playerGame = session.players.get(userId)
-    if (!playerGame || playerGame.game.gameOver || playerGame.game.paused)
-      return
+    if (!playerGame || playerGame.game.gameOver) return
+
+    const seq = typeof body.seq === 'number' ? body.seq : undefined
+    if (seq !== undefined) {
+      // Drop stale / out-of-order inputs so server order matches client prediction.
+      if (seq <= playerGame.lastSeq) return
+      playerGame.lastSeq = seq
+    }
 
     playerGame.game.processInput(body.action)
+    this.sendGarbageToOpponents(body.roomId, userId, playerGame.game)
     this.emitAllPlayerStates(body.roomId)
 
     // Check if this player's game is over after input (hard drop can cause game over)
     if (playerGame.game.gameOver) {
       this.handlePlayerGameOver(body.roomId, userId)
     }
-  }
-
-  @SubscribeMessage('game.pause')
-  handleGamePause(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() body: { roomId: string },
-  ) {
-    const userId: string | undefined = client.data.userId
-    if (!userId || !body?.roomId) return
-
-    const session = this.gameSessions.get(body.roomId)
-    if (!session) return
-
-    // Pause ALL games in the room
-    for (const [, pg] of session.players) {
-      if (!pg.game.gameOver) {
-        pg.game.pause()
-        if (pg.tickTimer) {
-          clearTimeout(pg.tickTimer)
-          pg.tickTimer = null
-        }
-      }
-    }
-
-    this.logger.log(`Game paused in room ${body.roomId} by user ${userId}`)
-    this.emitToGameRoom(body.roomId, 'game.paused', {
-      roomId: body.roomId,
-      players: this.getAllPlayerStates(body.roomId),
-    })
-  }
-
-  @SubscribeMessage('game.resume')
-  handleGameResume(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() body: { roomId: string },
-  ) {
-    const userId: string | undefined = client.data.userId
-    if (!userId || !body?.roomId) return
-
-    const session = this.gameSessions.get(body.roomId)
-    if (!session) return
-
-    // Resume ALL games in the room
-    for (const [, pg] of session.players) {
-      if (!pg.game.gameOver && pg.game.paused) {
-        pg.game.resume()
-      }
-    }
-
-    this.logger.log(`Game resumed in room ${body.roomId} by user ${userId}`)
-    this.emitToGameRoom(body.roomId, 'game.resumed', {
-      roomId: body.roomId,
-      players: this.getAllPlayerStates(body.roomId),
-    })
-
-    // Restart game loops for non-game-over players
-    this.startAllGameLoops(body.roomId)
   }
 
   /* ---------------------------------------------------------------- */
@@ -354,21 +369,25 @@ export class RealtimeGateway
     this.server.to(gameRoom(roomId)).emit(event, data)
   }
 
-  private getAllPlayerStates(roomId: string): Record<string, TetrisState> {
-    const session = this.gameSessions.get(roomId)
-    if (!session) return {}
-
-    const states: Record<string, TetrisState> = {}
-    for (const [userId, pg] of session.players) {
-      states[userId] = pg.game.getState()
-    }
-    return states
-  }
-
   private emitAllPlayerStates(roomId: string) {
+    const session = this.gameSessions.get(roomId)
+    if (!session) return
+
+    const players: Record<string, TetrisState> = {}
+    const lastSeq: Record<string, number> = {}
+    const predictionPieces: Record<string, TetrominoType[]> = {}
+
+    for (const [userId, pg] of session.players) {
+      players[userId] = pg.game.getState()
+      lastSeq[userId] = pg.lastSeq
+      predictionPieces[userId] = pg.game.getPredictionPieces(4)
+    }
+
     this.emitToGameRoom(roomId, 'game.state', {
       roomId,
-      players: this.getAllPlayerStates(roomId),
+      players,
+      lastSeq,
+      predictionPieces,
     })
   }
 
@@ -377,7 +396,7 @@ export class RealtimeGateway
     if (!session) return
 
     for (const [userId, pg] of session.players) {
-      if (!pg.game.gameOver && !pg.game.paused) {
+      if (!pg.game.gameOver) {
         this.startPlayerGameLoop(roomId, userId, pg)
       }
     }
@@ -394,9 +413,10 @@ export class RealtimeGateway
     }
 
     const tick = () => {
-      if (playerGame.game.paused || playerGame.game.gameOver) return
+      if (playerGame.game.gameOver) return
 
       const running = playerGame.game.tick()
+      this.sendGarbageToOpponents(roomId, userId, playerGame.game)
       this.emitAllPlayerStates(roomId)
 
       if (!running) {
@@ -423,6 +443,8 @@ export class RealtimeGateway
       pg.tickTimer = null
     }
 
+    pg.placement = session.nextPlacement--
+
     const state = pg.game.getState()
     this.emitToGameRoom(roomId, 'game.player-over', {
       roomId,
@@ -433,6 +455,23 @@ export class RealtimeGateway
     })
 
     this.checkGameEndCondition(roomId)
+  }
+
+  private sendGarbageToOpponents(
+    roomId: string,
+    attackerUserId: string,
+    attackerGame: TetrisGame,
+  ) {
+    const garbage = attackerGame.collectOutgoingGarbage()
+    if (garbage <= 0) return
+
+    const session = this.gameSessions.get(roomId)
+    if (!session) return
+
+    for (const [targetUserId, target] of session.players) {
+      if (targetUserId === attackerUserId || target.game.gameOver) continue
+      target.game.receiveGarbage(garbage)
+    }
   }
 
   private checkGameEndCondition(roomId: string) {
@@ -450,19 +489,23 @@ export class RealtimeGateway
       (totalPlayers > 1 && activePlayers.length === 1)
 
     if (shouldEnd) {
+      if (session.finishing) return
+      session.finishing = true
+
       // Mark any remaining active player as game over so results are complete
       for (const p of activePlayers) {
+        p.placement = session.nextPlacement--
         p.game.gameOver = true
         if (p.tickTimer) {
           clearTimeout(p.tickTimer)
           p.tickTimer = null
         }
       }
-      this.handleAllPlayersGameOver(roomId)
+      void this.handleAllPlayersGameOver(roomId)
     }
   }
 
-  private handleAllPlayersGameOver(roomId: string) {
+  private async handleAllPlayersGameOver(roomId: string) {
     const session = this.gameSessions.get(roomId)
     if (!session) return
 
@@ -480,6 +523,7 @@ export class RealtimeGateway
         return {
           userId,
           username: user?.username ?? 'Unknown',
+          placement: pg.placement ?? 1,
           score: state.score,
           lines: state.lines,
           level: state.level,
@@ -487,12 +531,116 @@ export class RealtimeGateway
       },
     )
 
-    // Sort by score descending
-    results.sort((a, b) => b.score - a.score)
+    // Sort by placement ascending (1st = winner), score as tiebreaker
+    results.sort((a, b) =>
+      a.placement !== b.placement
+        ? a.placement - b.placement
+        : b.score - a.score,
+    )
+
+    const matchId = randomUUID()
+    const matchResults = results.map((result) =>
+      this.matchResultsRepository.create({
+        matchId,
+        roomId,
+        userId: result.userId,
+        score: result.score,
+        lines: result.lines,
+        state: session.players.get(result.userId)!.game.getState(),
+      }),
+    )
+
+    let resultsSaved = false
+    try {
+      await this.matchResultsRepository.save(matchResults)
+      resultsSaved = true
+    } catch (error) {
+      this.logger.error(`Failed to save results for match ${matchId}`, error)
+    }
+
+    // Only fold the match into lifetime aggregates if the source-of-truth rows
+    // were persisted; otherwise stats/ranking would drift from match history.
+    if (resultsSaved) {
+      await this.updateStatsAndAchievements(session, results)
+    }
 
     this.emitToGameRoom(roomId, 'game.finished', { roomId, results })
     this.roomService.endGame(roomId)
     this.destroyGameSession(roomId)
+  }
+
+  /**
+   * Aggregate finished-match data into per-user lifetime stats, then re-check
+   * achievements and notify each player of anything newly unlocked.
+   *
+   * The winner is chosen with the same deterministic ordering used by match
+   * history (score desc, then lines desc, then userId) so the credited win
+   * always matches who is shown in first place. A win/loss is only counted for
+   * multiplayer matches (2+ players); solo runs are recorded as played but
+   * neither won nor lost.
+   */
+  private async updateStatsAndAchievements(
+    session: RoomGameSession,
+    results: { userId: string }[],
+  ): Promise<void> {
+    const playerCount = results.length
+    const isMultiplayer = playerCount > 1
+    const playTimeInSeconds = Math.max(
+      0,
+      Math.round((Date.now() - session.startedAt) / 1000),
+    )
+
+    const perUser = results.map((result) => {
+      const state = session.players.get(result.userId)!.game.getState()
+      return {
+        userId: result.userId,
+        score: state.score,
+        lines: state.lines,
+        metrics: state.metrics,
+      }
+    })
+
+    const winnerUserId = isMultiplayer
+      ? [...perUser].sort(
+          (a, b) =>
+            b.score - a.score ||
+            b.lines - a.lines ||
+            a.userId.localeCompare(b.userId),
+        )[0]?.userId
+      : undefined
+
+    const statInputs = perUser.map((player) => ({
+      userId: player.userId,
+      won: isMultiplayer && player.userId === winnerUserId,
+      lost: isMultiplayer && player.userId !== winnerUserId,
+      score: player.score,
+      lines: player.lines,
+      metrics: player.metrics,
+      playTimeInSeconds,
+    }))
+
+    try {
+      await this.statsService.recordMatch(statInputs)
+    } catch (error) {
+      this.logger.error('Failed to record match stats', error)
+      return
+    }
+
+    for (const input of statInputs) {
+      try {
+        const unlocked = await this.achievementsService.evaluate(input.userId)
+        if (unlocked.length > 0) {
+          this.server
+            .to(userRoom(input.userId))
+            .emit('achievements.unlocked', { achievements: unlocked })
+        }
+      } catch (error) {
+        this.logger.error(
+          `Failed to evaluate achievements for user ${input.userId}`,
+          error,
+        )
+      }
+    }
   }
 
   private handlePlayerDisconnectFromGame(roomId: string, userId: string) {
@@ -507,6 +655,7 @@ export class RealtimeGateway
       clearTimeout(pg.tickTimer)
       pg.tickTimer = null
     }
+    pg.placement = session.nextPlacement--
     pg.game.gameOver = true
 
     this.emitToGameRoom(roomId, 'game.player-over', {

@@ -1,19 +1,67 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
-import { Theme, User, UserType } from './user.entity'
+import { In, Repository } from 'typeorm'
+import {
+  DEFAULT_GAME_CONTROLS,
+  DEFAULT_TETRIS_HANDLING_SETTINGS,
+  GameControlAction,
+  GameControls,
+  TetrisHandlingSettings,
+  Theme,
+  User,
+  UserType,
+} from './user.entity'
 import { UserInfo } from '../realtime/realtime.events'
 import { GithubValidateReturn } from '../auth/github.strategy'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
+import { MatchResult } from './match-result.entity'
+import { UserStats } from '../stats/user-stats.entity'
+
+export interface MatchHistoryPlayer {
+  userId: string
+  username: string
+  score: number
+  lines: number
+  level: number
+  placement: number
+}
+
+export interface MatchHistoryItem {
+  matchId: string
+  roomId: string
+  playedAt: Date
+  placement: number
+  playerCount: number
+  score: number
+  lines: number
+  level: number
+  players: MatchHistoryPlayer[]
+}
+
+export interface GlobalRankingItem {
+  userId: string
+  username: string
+  profilePictureId: string | null
+  score: number
+  matchesPlayed: number
+}
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepo: Repository<User>,
+    @InjectRepository(MatchResult)
+    private readonly matchResultsRepo: Repository<MatchResult>,
+    @InjectRepository(UserStats)
+    private readonly userStatsRepo: Repository<UserStats>,
   ) {}
 
   static readonly UPLOAD_DIR = 'uploads/'
+
+  normalizeUsername(username: string): string {
+    return username.toLowerCase()
+  }
 
   async createUser(
     userType: UserType,
@@ -26,12 +74,22 @@ export class UsersService {
     const user = this.usersRepo.create({
       userType,
       email: email.toLowerCase(),
-      username,
+      username: this.normalizeUsername(username),
       password: passwordHash,
       githubId,
       githubAvatarUrl,
     })
     return await this.usersRepo.save(user)
+  }
+
+  async existsByEmail(email: string): Promise<boolean> {
+    return await this.usersRepo.existsBy({ email: email.toLowerCase() })
+  }
+
+  async existsByUsername(username: string): Promise<boolean> {
+    return await this.usersRepo.existsBy({
+      username: this.normalizeUsername(username),
+    })
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -94,14 +152,99 @@ export class UsersService {
     return newTheme
   }
 
+  async updateGameControls(
+    userId: string,
+    controls: Partial<GameControls>,
+  ): Promise<GameControls> {
+    const gameControls = this.normalizeGameControls(controls)
+    await this.usersRepo.update({ id: userId }, { gameControls })
+    return gameControls
+  }
+
+  async updateTetrisHandlingSettings(
+    userId: string,
+    settings: Partial<TetrisHandlingSettings>,
+  ): Promise<TetrisHandlingSettings> {
+    const tetrisHandlingSettings =
+      this.normalizeTetrisHandlingSettings(settings)
+    await this.usersRepo.update({ id: userId }, { tetrisHandlingSettings })
+    return tetrisHandlingSettings
+  }
+
+  normalizeGameControls(controls: Partial<GameControls> | null): GameControls {
+    const normalized = { ...DEFAULT_GAME_CONTROLS }
+
+    for (const action of Object.values(GameControlAction)) {
+      const key = controls?.[action]
+      if (typeof key === 'string' && key.length > 0) {
+        normalized[action] = key
+      }
+    }
+
+    return normalized
+  }
+
+  normalizeTetrisHandlingSettings(
+    settings: Partial<TetrisHandlingSettings> | null,
+  ): TetrisHandlingSettings {
+    const normalized = { ...DEFAULT_TETRIS_HANDLING_SETTINGS }
+    const limits: Record<keyof TetrisHandlingSettings, [number, number]> = {
+      arr: [0, 1000],
+      das: [0, 1000],
+      dcd: [0, 1000],
+      sdf: [0, 1000],
+    }
+
+    for (const key of Object.keys(limits) as (keyof TetrisHandlingSettings)[]) {
+      const value = settings?.[key]
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        const [min, max] = limits[key]
+        normalized[key] = Math.min(Math.max(Math.round(value), min), max)
+      }
+    }
+
+    return normalized
+  }
+
   async getPublicProfile(userId: string) {
     const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
+
+    const statsResult = await this.matchResultsRepo
+      .createQueryBuilder('result')
+      .select('SUM(result.score)', 'totalScore')
+      .addSelect('SUM(result.lines)', 'totalLines')
+      .addSelect('COUNT(result.id)', 'matchCount')
+      .where('result.userId = :userId', { userId })
+      .getRawOne<{
+        totalScore: string | null
+        totalLines: string | null
+        matchCount: string
+      }>()
+
+    const matchCount = Number(statsResult?.matchCount ?? 0)
+    const totalLines = Number(statsResult?.totalLines ?? 0)
+    const totalScore = matchCount > 0 ? Number(statsResult?.totalScore ?? 0) : null
+
+    let rank: number | null = null
+    if (matchCount > 0) {
+      const higherRanked = await this.matchResultsRepo
+        .createQueryBuilder('result')
+        .select('result.userId')
+        .groupBy('result.userId')
+        .having('SUM(result.score) > :totalScore', { totalScore })
+        .getRawMany()
+
+      rank = higherRanked.length + 1
+    }
+
     return {
       id: user.id,
       username: user.username,
       profilePictureId: user.profilePictureId,
-      level: user.level,
       createdAt: user.createdAt,
+      totalScore,
+      totalLines,
+      rank,
     }
   }
 
@@ -111,6 +254,90 @@ export class UsersService {
       username: user.username,
       profilePictureId: user.profilePictureId,
     }
+  }
+
+  async getMatchHistory(userId: string): Promise<MatchHistoryItem[]> {
+    const userResults = await this.matchResultsRepo.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+      take: 50,
+    })
+
+    if (userResults.length === 0) return []
+
+    const allResults = await this.matchResultsRepo.find({
+      where: { matchId: In(userResults.map((result) => result.matchId)) },
+      relations: { user: true },
+    })
+
+    const resultsByMatch = new Map<string, MatchResult[]>()
+    for (const result of allResults) {
+      const matchResults = resultsByMatch.get(result.matchId) ?? []
+      matchResults.push(result)
+      resultsByMatch.set(result.matchId, matchResults)
+    }
+
+    return userResults.map((userResult) => {
+      const players = (resultsByMatch.get(userResult.matchId) ?? [])
+        .sort(
+          (a, b) =>
+            b.score - a.score ||
+            b.lines - a.lines ||
+            a.userId.localeCompare(b.userId),
+        )
+        .map((result, index) => ({
+          userId: result.userId,
+          username: result.user.username,
+          profilePictureId: result.user.profilePictureId ?? null,
+          score: result.score,
+          lines: result.lines,
+          level: result.state.level,
+          placement: index + 1,
+        }))
+
+      return {
+        matchId: userResult.matchId,
+        roomId: userResult.roomId,
+        playedAt: userResult.createdAt,
+        placement:
+          players.find((player) => player.userId === userId)?.placement ?? 1,
+        playerCount: players.length,
+        score: userResult.score,
+        lines: userResult.lines,
+        level: userResult.state.level,
+        players,
+      }
+    })
+  }
+
+  async getGlobalRanking(): Promise<GlobalRankingItem[]> {
+    // Reads from the cached `user_stats` aggregate table (kept up to date as
+    // matches finish) rather than recomputing from raw match_results.
+    const rankings = await this.userStatsRepo
+      .createQueryBuilder('stats')
+      .innerJoin('stats.user', 'user')
+      .select('user.id', 'userId')
+      .addSelect('user.username', 'username')
+      .addSelect('user.profilePictureId', 'profilePictureId')
+      .addSelect('stats.totalScore', 'score')
+      .addSelect('stats.matchesPlayed', 'matchesPlayed')
+      .where('stats.matchesPlayed > 0')
+      .orderBy('stats.totalScore', 'DESC')
+      .addOrderBy('stats.matchesPlayed', 'DESC')
+      .addOrderBy('user.username', 'ASC')
+      .getRawMany<{
+        userId: string
+        username: string
+        profilePictureId: string | null
+        score: string
+        matchesPlayed: number
+      }>()
+
+    return rankings.map((ranking) => ({
+      ...ranking,
+      score: Number(ranking.score),
+      matchesPlayed: Number(ranking.matchesPlayed),
+    }))
   }
 
   async existUserProfilePictureInFs(

@@ -33,12 +33,16 @@ export const matchSettingsSchema = z.object({
       double: z.number(),
       triple: z.number(),
       tetris: z.number(),
+      tSpinMiniSingle: z.number(),
+      tSpinMiniDouble: z.number(),
       tSpinSingle: z.number(),
       tSpinDouble: z.number(),
       tSpinTriple: z.number(),
+      allClear: z.number(),
     }),
-    comboMultiplier: z.number(),
-    backToBackMultiplier: z.number(),
+    comboTable: z.array(z.number()),
+    backToBackBonus: z.number(),
+    garbageCap: z.number(),
   }),
 })
 
