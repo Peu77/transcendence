@@ -7,7 +7,7 @@ import { StatCard } from '@/components/app/statCard.tsx'
 import { AddFriendButton } from '@/components/app/addFriendButton.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 import { Button } from '@/components/ui/button.tsx'
-import { ArrowLeftIcon } from 'lucide-react'
+import { ArrowLeftIcon, SwordsIcon } from 'lucide-react'
 
 function ProfileContent({ profile }: { profile: PublicProfile }) {
   const level = Math.floor(profile.totalLines / 10) + 1
@@ -30,6 +30,15 @@ function ProfileContent({ profile }: { profile: PublicProfile }) {
       <div className="w-full max-w-sm">
         <LevelBar totalLines={profile.totalLines} />
       </div>
+
+      {profile.sharedMatchCount > 0 && (
+        <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <SwordsIcon className="size-4" />
+          {profile.sharedMatchCount === 1
+            ? '1 game played together'
+            : `${profile.sharedMatchCount} games played together`}
+        </span>
+      )}
 
       <span className="text-sm text-muted-foreground">
         Joined {timeAgo(new Date(profile.createdAt))}

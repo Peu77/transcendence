@@ -235,6 +235,21 @@ export class UsersService {
       ? await this.userBlocksRepo.exists({ where: { blockerId: userId, blockedId: requesterId } })
       : false
 
+    let sharedMatchCount = 0
+    if (userId !== requesterId) {
+      const result = await this.matchResultsRepo
+        .createQueryBuilder('r1')
+        .innerJoin(
+          MatchResult,
+          'r2',
+          'r1.matchId = r2.matchId AND r2.userId = :requesterId',
+          { requesterId },
+        )
+        .where('r1.userId = :userId', { userId })
+        .getCount()
+      sharedMatchCount = result
+    }
+
     return {
       id: user.id,
       username: user.username,
@@ -244,6 +259,7 @@ export class UsersService {
       totalLines,
       rank,
       blockedByThem,
+      sharedMatchCount,
     }
   }
 
