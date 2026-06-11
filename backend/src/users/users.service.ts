@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { In, Repository } from 'typeorm'
+import { In, Repository, SelectQueryBuilder } from 'typeorm'
 import {
   DEFAULT_GAME_CONTROLS,
   DEFAULT_TETRIS_HANDLING_SETTINGS,
@@ -17,6 +17,7 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { MatchResult } from './match-result.entity'
 import { UserBlock } from '../friends/entities/user-block.entity'
+import { Friendship } from '../friends/entities/friendship.entity'
 
 export interface MatchHistoryPlayer {
   userId: string
@@ -47,6 +48,19 @@ export interface GlobalRankingItem {
   matchesPlayed: number
 }
 
+interface PlayerStats {
+  matchCount: number
+  totalLines: number
+  totalScore: number | null
+}
+
+interface HeadToHeadStats {
+  sharedMatchCount: number
+  sharedPoints: number
+  requesterTotalPoints: number
+  winsAgainstThem: number
+}
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -55,6 +69,8 @@ export class UsersService {
     private readonly matchResultsRepo: Repository<MatchResult>,
     @InjectRepository(UserBlock)
     private readonly userBlocksRepo: Repository<UserBlock>,
+    @InjectRepository(Friendship)
+    private readonly friendshipsRepo: Repository<Friendship>,
   ) {}
 
   static readonly UPLOAD_DIR = 'uploads/'
@@ -207,9 +223,31 @@ export class UsersService {
   }
 
   async getPublicProfile(userId: string, requesterId: string) {
-    const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
+    const [user, playerStats, blockedByThem] = await Promise.all([
+      this.usersRepo.findOneOrFail({ where: { id: userId } }),
+      this.getPlayerStats(userId),
+      this.isBlockedByUser(userId, requesterId),
+    ])
+    const [rank, headToHeadStats] = await Promise.all([
+      this.getPlayerRank(playerStats),
+      this.getHeadToHeadStats(userId, requesterId),
+    ])
 
-    const statsResult = await this.matchResultsRepo
+    return {
+      id: user.id,
+      username: user.username,
+      profilePictureId: user.profilePictureId,
+      createdAt: user.createdAt,
+      totalScore: playerStats.totalScore,
+      totalLines: playerStats.totalLines,
+      rank,
+      blockedByThem,
+      ...headToHeadStats,
+    }
+  }
+
+  private async getPlayerStats(userId: string): Promise<PlayerStats> {
+    const result = await this.matchResultsRepo
       .createQueryBuilder('result')
       .select('SUM(result.score)', 'totalScore')
       .addSelect('SUM(result.lines)', 'totalLines')
@@ -223,96 +261,109 @@ export class UsersService {
         wins: string
       }>()
 
-    const matchCount = Number(statsResult?.matchCount ?? 0)
-    const totalLines = Number(statsResult?.totalLines ?? 0)
-    const totalScore =
-      matchCount > 0 ? Number(statsResult?.totalScore ?? 0) : null
-    const wins = Number(statsResult?.wins ?? 0)
-
-    let rank: number | null = null
-    if (matchCount > 0) {
-      const higherRanked = await this.matchResultsRepo
-        .createQueryBuilder('result')
-        .select('result.userId')
-        .groupBy('result.userId')
-        .having(
-          'SUM(CASE WHEN result.placement = 1 THEN 1 ELSE 0 END) > :wins',
-          { wins },
-        )
-        .getRawMany()
-
-      rank = higherRanked.length + 1
-    }
-
-    const blockedByThem = userId !== requesterId
-      ? await this.userBlocksRepo.exists({ where: { blockerId: userId, blockedId: requesterId } })
-      : false
-
-    let sharedMatchCount = 0
-    let sharedPoints = 0
-    let requesterTotalPoints = 0
-    let winsAgainstThem = 0
-    if (userId !== requesterId) {
-      const [sharedCountResult, sharedPtsResult, requesterStatsResult, winsResult] =
-        await Promise.all([
-          this.matchResultsRepo
-            .createQueryBuilder('r1')
-            .innerJoin(
-              MatchResult,
-              'r2',
-              'r1.matchId = r2.matchId AND r2.userId = :userId',
-              { userId },
-            )
-            .where('r1.userId = :requesterId', { requesterId })
-            .getCount(),
-          this.matchResultsRepo
-            .createQueryBuilder('r1')
-            .innerJoin(
-              MatchResult,
-              'r2',
-              'r1.matchId = r2.matchId AND r2.userId = :userId',
-              { userId },
-            )
-            .select('SUM(r1.score)', 'total')
-            .where('r1.userId = :requesterId', { requesterId })
-            .getRawOne<{ total: string | null }>(),
-          this.matchResultsRepo
-            .createQueryBuilder('result')
-            .select('SUM(result.score)', 'total')
-            .where('result.userId = :requesterId', { requesterId })
-            .getRawOne<{ total: string | null }>(),
-          this.matchResultsRepo
-            .createQueryBuilder('r1')
-            .innerJoin(
-              MatchResult,
-              'r2',
-              'r1.matchId = r2.matchId AND r2.userId = :userId',
-              { userId },
-            )
-            .where('r1.userId = :requesterId', { requesterId })
-            .andWhere('r1.placement = 1')
-            .getCount(),
-        ])
-
-      sharedMatchCount = sharedCountResult
-      sharedPoints = Number(sharedPtsResult?.total ?? 0)
-      requesterTotalPoints = Number(requesterStatsResult?.total ?? 0)
-      winsAgainstThem = winsResult
-    }
+    const matchCount = Number(result?.matchCount ?? 0)
 
     return {
-      id: user.id,
-      username: user.username,
-      profilePictureId: user.profilePictureId,
-      createdAt: user.createdAt,
-      totalScore,
-      totalLines,
-      rank,
-      blockedByThem,
+      matchCount,
+      totalLines: Number(result?.totalLines ?? 0),
+      totalScore: matchCount > 0 ? Number(result?.totalScore ?? 0) : null,
+    }
+  }
+
+  private async getPlayerRank({
+    matchCount,
+    totalScore,
+  }: PlayerStats): Promise<number | null> {
+    if (matchCount === 0 || totalScore === null) return null
+
+    const higherRankedPlayers = await this.matchResultsRepo
+      .createQueryBuilder('result')
+      .select('result.userId')
+      .groupBy('result.userId')
+      .having('SUM(result.score) > :totalScore', { totalScore })
+      .getRawMany()
+
+    return higherRankedPlayers.length + 1
+  }
+
+  private async isBlockedByUser(
+    userId: string,
+    requesterId: string,
+  ): Promise<boolean> {
+    if (userId === requesterId) return false
+
+    return this.userBlocksRepo.exists({
+      where: { blockerId: userId, blockedId: requesterId },
+    })
+  }
+
+  private async getHeadToHeadStats(
+    userId: string,
+    requesterId: string,
+  ): Promise<HeadToHeadStats> {
+    if (userId === requesterId) return this.emptyHeadToHeadStats()
+
+    const [
       sharedMatchCount,
-      sharedPoints,
-      requesterTotalPoints,
+      sharedPointsResult,
+      requesterPointsResult,
       winsAgainstThem,
+    ] = await Promise.all([
+      this.createSharedMatchesQuery(userId, requesterId).getCount(),
+      this.createSharedMatchesQuery(userId, requesterId)
+        .select('SUM(r1.score)', 'total')
+        .getRawOne<{ total: string | null }>(),
+      this.getTotalPoints(requesterId),
+      this.createSharedMatchesQuery(userId, requesterId)
+        .andWhere((queryBuilder) => {
+          const highestScoreQuery = queryBuilder
+            .subQuery()
+            .select('MAX(r3.score)')
+            .from(MatchResult, 'r3')
+            .where('r3.matchId = r1.matchId')
+            .getQuery()
+          return `r1.score = ${highestScoreQuery}`
+        })
+        .getCount(),
+    ])
+
+    return {
+      sharedMatchCount,
+      sharedPoints: Number(sharedPointsResult?.total ?? 0),
+      requesterTotalPoints: Number(requesterPointsResult?.total ?? 0),
+      winsAgainstThem,
+    }
+  }
+
+  private createSharedMatchesQuery(
+    userId: string,
+    requesterId: string,
+  ): SelectQueryBuilder<MatchResult> {
+    return this.matchResultsRepo
+      .createQueryBuilder('r1')
+      .innerJoin(
+        MatchResult,
+        'r2',
+        'r1.matchId = r2.matchId AND r2.userId = :userId',
+        { userId },
+      )
+      .where('r1.userId = :requesterId', { requesterId })
+  }
+
+  private getTotalPoints(userId: string) {
+    return this.matchResultsRepo
+      .createQueryBuilder('result')
+      .select('SUM(result.score)', 'total')
+      .where('result.userId = :userId', { userId })
+      .getRawOne<{ total: string | null }>()
+  }
+
+  private emptyHeadToHeadStats(): HeadToHeadStats {
+    return {
+      sharedMatchCount: 0,
+      sharedPoints: 0,
+      requesterTotalPoints: 0,
+      winsAgainstThem: 0,
     }
   }
 
@@ -356,7 +407,7 @@ export class UsersService {
         .map((result, index) => ({
           userId: result.userId,
           username: result.user.username,
-          profilePictureId: result.user.profilePictureId ?? null,
+          profilePictureId: result.user.profilePictureId,
           score: result.score,
           lines: result.lines,
           level: result.state.level,
@@ -411,6 +462,281 @@ export class UsersService {
       wins: Number(ranking.wins),
       matchesPlayed: Number(ranking.matchesPlayed),
     }))
+  }
+
+  async getUserAchievements(userId: string) {
+    const [matchCount, scoreResult, linesResult, winCount, friendCount, higherRankedUsers] =
+      await Promise.all([
+        this.matchResultsRepo.count({ where: { userId } }),
+        this.matchResultsRepo
+          .createQueryBuilder('r')
+          .select('SUM(r.score)', 'total')
+          .where('r.userId = :userId', { userId })
+          .getRawOne<{ total: string | null }>(),
+        this.matchResultsRepo
+          .createQueryBuilder('r')
+          .select('SUM(r.lines)', 'total')
+          .where('r.userId = :userId', { userId })
+          .getRawOne<{ total: string | null }>(),
+        this.matchResultsRepo
+          .createQueryBuilder('r1')
+          .where('r1.userId = :userId', { userId })
+          .andWhere((qb) => {
+            const sub = qb
+              .subQuery()
+              .select('MAX(r2.score)')
+              .from(MatchResult, 'r2')
+              .where('r2.matchId = r1.matchId')
+              .getQuery()
+            return `r1.score = ${sub}`
+          })
+          .getCount(),
+        this.friendshipsRepo
+          .createQueryBuilder('f')
+          .where('f.userLowId = :userId OR f.userHighId = :userId', { userId })
+          .getCount(),
+        // Count users with strictly higher total score to derive rank
+        (() => {
+          const myScoreSub = this.matchResultsRepo
+            .createQueryBuilder('r2')
+            .select('COALESCE(SUM(r2.score), 0)', 'myScore')
+            .where('r2.userId = :userId', { userId })
+          return this.matchResultsRepo
+            .createQueryBuilder('r')
+            .select('r.userId', 'userId')
+            .groupBy('r.userId')
+            .having(`SUM(r.score) > (${myScoreSub.getQuery()})`)
+            .setParameters(myScoreSub.getParameters())
+            .getRawMany<{ userId: string }>()
+        })(),
+      ])
+
+    const matches = matchCount
+    const score = Number(scoreResult?.total ?? 0)
+    const lines = Number(linesResult?.total ?? 0)
+    const wins = winCount
+    const friends = friendCount
+    const rank = matches > 0 ? higherRankedUsers.length + 1 : 0
+    const level = Math.floor(lines / 10) + 1
+
+    // Compute best domination: max games against a single opponent where user won ALL of them
+    let bestDomination = 0
+    if (matches > 0) {
+      const userResults = await this.matchResultsRepo.find({
+        where: { userId },
+        select: ['matchId', 'score'],
+      })
+      const matchIds = [...new Set(userResults.map((r) => r.matchId))]
+      const allResults = await this.matchResultsRepo.find({
+        where: { matchId: In(matchIds) },
+        select: ['matchId', 'userId', 'score'],
+      })
+      const matchMaxScore = new Map<string, number>()
+      for (const r of allResults) {
+        if ((r.score ?? 0) > (matchMaxScore.get(r.matchId) ?? 0))
+          matchMaxScore.set(r.matchId, r.score ?? 0)
+      }
+      const userWonMatches = new Set(
+        userResults
+          .filter((r) => (r.score ?? 0) === matchMaxScore.get(r.matchId))
+          .map((r) => r.matchId),
+      )
+      const opponentStats = new Map<string, { total: number; wins: number }>()
+      for (const r of allResults) {
+        if (r.userId === userId) continue
+        const s = opponentStats.get(r.userId) ?? { total: 0, wins: 0 }
+        s.total++
+        if (userWonMatches.has(r.matchId)) s.wins++
+        opponentStats.set(r.userId, s)
+      }
+      bestDomination = Math.max(
+        0,
+        ...Array.from(opponentStats.values())
+          .filter((s) => s.wins === s.total)
+          .map((s) => s.total),
+      )
+    }
+
+    const baseAchievements = [
+        {
+          id: 'first_match',
+          label: 'First Match',
+          description: 'Play your first match',
+          unlocked: matches >= 1,
+        },
+        {
+          id: 'matches_10',
+          label: 'Getting Started',
+          description: 'Play 10 matches',
+          unlocked: matches >= 10,
+        },
+        {
+          id: 'matches_50',
+          label: 'Dedicated Player',
+          description: 'Play 50 matches',
+          unlocked: matches >= 50,
+        },
+        {
+          id: 'matches_100',
+          label: 'Centurion',
+          description: 'Play 100 matches',
+          unlocked: matches >= 100,
+        },
+        {
+          id: 'score_1k',
+          label: 'Point Collector',
+          description: 'Score 1,000 total points',
+          unlocked: score >= 1000,
+        },
+        {
+          id: 'score_10k',
+          label: 'High Scorer',
+          description: 'Score 10,000 total points',
+          unlocked: score >= 10000,
+        },
+        {
+          id: 'score_100k',
+          label: 'Legend',
+          description: 'Score 100,000 total points',
+          unlocked: score >= 100000,
+        },
+        {
+          id: 'lines_100',
+          label: 'Line Clearer',
+          description: 'Clear 100 total lines',
+          unlocked: lines >= 100,
+        },
+        {
+          id: 'lines_500',
+          label: 'Wrecking Ball',
+          description: 'Clear 500 total lines',
+          unlocked: lines >= 500,
+        },
+        {
+          id: 'lines_1000',
+          label: 'Line Destroyer',
+          description: 'Clear 1,000 total lines',
+          unlocked: lines >= 1000,
+        },
+        {
+          id: 'first_win',
+          label: 'Winner',
+          description: 'Win your first match',
+          unlocked: wins >= 1,
+        },
+        {
+          id: 'wins_10',
+          label: 'Seasoned Victor',
+          description: 'Win 10 matches',
+          unlocked: wins >= 10,
+        },
+        {
+          id: 'wins_50',
+          label: 'Champion',
+          description: 'Win 50 matches',
+          unlocked: wins >= 50,
+        },
+        {
+          id: 'first_friend',
+          label: 'Social Butterfly',
+          description: 'Make your first friend',
+          unlocked: friends >= 1,
+        },
+        {
+          id: 'friends_5',
+          label: 'Popular',
+          description: 'Have 5 friends',
+          unlocked: friends >= 5,
+        },
+        {
+          id: 'level_5',
+          label: 'Getting Warmed Up',
+          description: 'Reach level 5',
+          unlocked: level >= 5,
+        },
+        {
+          id: 'level_10',
+          label: 'Seasoned',
+          description: 'Reach level 10',
+          unlocked: level >= 10,
+        },
+        {
+          id: 'level_25',
+          label: 'Veteran',
+          description: 'Reach level 25',
+          unlocked: level >= 25,
+        },
+        {
+          id: 'level_50',
+          label: 'Elite',
+          description: 'Reach level 50',
+          unlocked: level >= 50,
+        },
+        {
+          id: 'rank_top10',
+          label: 'Rising Star',
+          description: 'Reach top 10 on the leaderboard',
+          unlocked: rank > 0 && rank <= 10,
+        },
+        {
+          id: 'rank_top3',
+          label: 'Podium Finish',
+          description: 'Reach top 3 on the leaderboard',
+          unlocked: rank > 0 && rank <= 3,
+        },
+        {
+          id: 'rank_1',
+          label: 'King of the Board',
+          description: 'Reach #1 on the leaderboard',
+          unlocked: rank === 1,
+        },
+        {
+          id: 'domination_3',
+          label: 'Bully',
+          description: 'Beat the same opponent in 3 matches without ever losing to them',
+          unlocked: bestDomination >= 3,
+        },
+        {
+          id: 'domination_5',
+          label: 'Dominator',
+          description: 'Beat the same opponent in 5 matches without ever losing to them',
+          unlocked: bestDomination >= 5,
+        },
+        {
+          id: 'domination_10',
+          label: 'Their Nightmare',
+          description: 'Beat the same opponent in 10 matches without ever losing to them',
+          unlocked: bestDomination >= 10,
+        },
+    ]
+
+    const baseUnlocked = baseAchievements.filter((a) => a.unlocked).length
+
+    const metaAchievements = [
+      {
+        id: 'collector_1',
+        label: 'First Step',
+        description: 'Unlock your first achievement',
+        unlocked: baseUnlocked >= 1,
+      },
+      {
+        id: 'collector_5',
+        label: 'Collector',
+        description: 'Unlock 5 achievements',
+        unlocked: baseUnlocked >= 5,
+      },
+      {
+        id: 'collector_all',
+        label: 'Completionist',
+        description: 'Unlock all achievements',
+        unlocked: baseUnlocked >= baseAchievements.length,
+      },
+    ]
+
+    return {
+      stats: { matches, score, lines, wins, friends, rank, level, bestDomination, baseUnlocked, totalBaseAchievements: baseAchievements.length },
+      achievements: [...baseAchievements, ...metaAchievements],
+    }
   }
 
   async existUserProfilePictureInFs(

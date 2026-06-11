@@ -26,7 +26,9 @@ export function useSendFriendRequest() {
   return useMutation({
     mutationFn: sendFriendRequest,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS })
+      await queryClient.invalidateQueries({
+        queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS,
+      })
     },
   })
 }
@@ -36,7 +38,9 @@ export function useCancelFriendRequest() {
   return useMutation({
     mutationFn: cancelFriendRequest,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS })
+      await queryClient.invalidateQueries({
+        queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS,
+      })
     },
   })
 }
@@ -50,7 +54,9 @@ export function useBlockUser() {
   return useMutation({
     mutationFn: blockUser,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.INCOMING_REQUESTS })
+      await queryClient.invalidateQueries({
+        queryKey: FRIENDS_QUERY_KEYS.INCOMING_REQUESTS,
+      })
     },
   })
 }

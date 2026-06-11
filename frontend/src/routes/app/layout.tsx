@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Navbar } from '@/components/app/navbar.tsx'
 import { userStore } from '@/store/userStore.ts'
 import { FriendsOverlay } from '@/components/app/friends/friendsOverlay.tsx'
+import { AchievementNotificationOverlay } from '@/components/app/achievementNotification.tsx'
 import { RealtimeMount } from '@/realtime'
 import { useMyPresence } from '@/presence/useMyPresence'
 
@@ -46,6 +47,7 @@ const AppLayout = () => {
     <div className="h-screen min-h-0 flex flex-col overflow-hidden bg-background">
       <RealtimeMount />
       <FriendsOverlay />
+      <AchievementNotificationOverlay />
       <Navbar />
       <div className="flex-1 min-h-0 overflow-hidden">
         <Outlet />

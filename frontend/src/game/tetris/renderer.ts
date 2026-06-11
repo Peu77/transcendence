@@ -459,21 +459,6 @@ export class TetrisRenderer {
     gl.bindVertexArray(null)
   }
 
-  getLayout() {
-    const boardOffX = (this.canvasWidth - this.boardPixelWidth) / 2
-    const boardOffY = (this.canvasHeight - this.boardPixelHeight) / 2
-    const previewY = boardOffY + 10
-    const holdSlotX = boardOffX - this.previewSize - 20
-    return {
-      holdX: holdSlotX + (this.previewSize - this.holdPreviewSize) / 2,
-      holdY: previewY,
-      holdPanelSize: this.holdPreviewSize,
-      nextX: boardOffX + this.boardPixelWidth + 20,
-      nextY: previewY,
-      nextPanelSize: this.nextPreviewSize,
-    }
-  }
-
   destroy() {
     const gl = this.gl
     gl.deleteBuffer(this.posBuf)

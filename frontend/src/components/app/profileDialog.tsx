@@ -14,6 +14,7 @@ import { FriendshipRing } from '@/components/app/friendshipRing.tsx'
 import { SharedPointsPie } from '@/components/app/sharedPointsPie.tsx'
 import { WinRatePie } from '@/components/app/winRatePie.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
+import { CrownIcon } from 'lucide-react'
 
 const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
   const level = Math.floor(profile.totalLines / 10) + 1
@@ -26,6 +27,9 @@ const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
       <div className="flex items-center gap-3">
         <ProfileImage profilePictureId={profile.profilePictureId} />
         <h2 className="text-2xl font-bold">{profile.username}</h2>
+        {profile.rank === 1 && (
+          <CrownIcon className="size-5 text-yellow-500" />
+        )}
       </div>
       <div className="flex gap-4">
         <StatCard value={rank} label="Rank" size="sm" />
@@ -83,7 +87,10 @@ export const ProfileDialog = ({
           <>
             <ProfileContent profile={profile} />
             <div className="flex justify-center mt-2">
-              <AddFriendButton userId={userId} blockedByThem={profile.blockedByThem} />
+              <AddFriendButton
+                userId={userId}
+                blockedByThem={profile.blockedByThem}
+              />
             </div>
           </>
         )}

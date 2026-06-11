@@ -28,6 +28,7 @@ import { format } from 'date-fns'
 import {
   ArrowLeftIcon,
   ChartNoAxesColumnIncreasingIcon,
+  CrownIcon,
   HistoryIcon,
   MedalIcon,
   TrophyIcon,
@@ -190,7 +191,7 @@ const RankingRow = ({
     <div
       className={`flex size-9 items-center justify-center rounded-md font-bold ${rankClassName(rank)}`}
     >
-      {rank <= 3 ? <MedalIcon className="size-5" /> : rank}
+      {rank === 1 ? <CrownIcon className="size-5" /> : rank <= 3 ? <MedalIcon className="size-5" /> : rank}
     </div>
     <button
       onClick={onPlayerClick}

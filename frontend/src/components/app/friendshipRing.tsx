@@ -6,7 +6,11 @@ const RADIUS = (SIZE - STROKE_WIDTH) / 2 - 2
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 const CENTER = SIZE / 2
 
-export function FriendshipRing({ sharedMatchCount }: { sharedMatchCount: number }) {
+export function FriendshipRing({
+  sharedMatchCount,
+}: {
+  sharedMatchCount: number
+}) {
   const level = Math.floor(sharedMatchCount / GAMES_PER_FRIENDSHIP_LEVEL) + 1
   const gamesIntoLevel = sharedMatchCount % GAMES_PER_FRIENDSHIP_LEVEL
   const progress = gamesIntoLevel / GAMES_PER_FRIENDSHIP_LEVEL
@@ -15,11 +19,7 @@ export function FriendshipRing({ sharedMatchCount }: { sharedMatchCount: number 
   return (
     <div className="flex flex-col items-center gap-1">
       <div className="relative" style={{ width: SIZE, height: SIZE }}>
-        <svg
-          width={SIZE}
-          height={SIZE}
-          style={{ transform: 'rotate(-90deg)' }}
-        >
+        <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)' }}>
           <circle
             cx={CENTER}
             cy={CENTER}

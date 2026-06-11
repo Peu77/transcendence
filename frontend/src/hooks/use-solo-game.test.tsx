@@ -105,7 +105,7 @@ describe('useSoloGame', () => {
 
     expect(createdSettings).toHaveLength(1)
     expect(createdSettings[0]).toMatchObject({
-      gravity: 1,
+      gravity: 0.02,
       garbage: { enabled: true, delayMs: 0, cancel: 'none' },
     })
 

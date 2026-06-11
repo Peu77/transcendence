@@ -10,7 +10,7 @@ import { SharedPointsPie } from '@/components/app/sharedPointsPie.tsx'
 import { WinRatePie } from '@/components/app/winRatePie.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 import { Button } from '@/components/ui/button.tsx'
-import { ArrowLeftIcon } from 'lucide-react'
+import { ArrowLeftIcon, CrownIcon } from 'lucide-react'
 
 function ProfileContent({ profile }: { profile: PublicProfile }) {
   const level = Math.floor(profile.totalLines / 10) + 1
@@ -23,7 +23,12 @@ function ProfileContent({ profile }: { profile: PublicProfile }) {
       <div className="w-32 h-32 rounded-full overflow-hidden">
         <ProfileImage profilePictureId={profile.profilePictureId} />
       </div>
-      <h2 className="text-4xl font-bold">{profile.username}</h2>
+      <div className="flex items-center gap-2">
+        <h2 className="text-4xl font-bold">{profile.username}</h2>
+        {profile.rank === 1 && (
+          <CrownIcon className="size-7 text-yellow-500" />
+        )}
+      </div>
 
       <div className="flex gap-6">
         <StatCard value={rank} label="Rank" />
@@ -82,7 +87,10 @@ function ProfilePage() {
         <>
           <ProfileContent profile={profile} />
           <div className="flex justify-center mt-6">
-            <AddFriendButton userId={userId} blockedByThem={profile.blockedByThem} />
+            <AddFriendButton
+              userId={userId}
+              blockedByThem={profile.blockedByThem}
+            />
           </div>
         </>
       )}

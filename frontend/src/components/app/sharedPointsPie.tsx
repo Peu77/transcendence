@@ -18,11 +18,7 @@ export function SharedPointsPie({
   return (
     <div className="flex flex-col items-center gap-1">
       <div className="relative" style={{ width: SIZE, height: SIZE }}>
-        <svg
-          width={SIZE}
-          height={SIZE}
-          style={{ transform: 'rotate(-90deg)' }}
-        >
+        <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)' }}>
           <circle
             cx={CENTER}
             cy={CENTER}

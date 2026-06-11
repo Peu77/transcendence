@@ -1,8 +1,17 @@
+import { useCallback, useRef } from 'react'
 import { createRoute, Link } from '@tanstack/react-router'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { Button } from '@/components/ui/button.tsx'
 
 const Index = () => {
+  const hoverSoundRef = useRef<HTMLAudioElement | null>(null)
+  const onMenuHover = useCallback(() => {
+    if (!hoverSoundRef.current) {
+      hoverSoundRef.current = new Audio('/sounds/menu_hover.mp3')
+    }
+    hoverSoundRef.current.currentTime = 0
+    hoverSoundRef.current.play().catch(() => {})
+  }, [])
   const items: {
     label: string
     description: string
@@ -36,6 +45,14 @@ const Index = () => {
       textColor: 'text-orange-50',
     },
     {
+      label: 'achievements',
+      description: 'Track your milestones and unlock rewards.',
+      path: '/app/achievements',
+      color: 'bg-violet-400',
+      borderColor: 'bg-violet-600',
+      textColor: 'text-violet-50',
+    },
+    {
       label: 'settings',
       description: 'Customize your experience and preferences.',
       path: '/app/settings',
@@ -59,6 +76,7 @@ const Index = () => {
         {items.map((item) => (
           <div
             key={item.label}
+            onMouseEnter={onMenuHover}
             className={`pb-1 pr-1 ${item.borderColor} clip-pixel-corners-btn translate-x-48 hover:translate-x-40 transition-transform w-[calc(100%+12rem)] overflow-hidden`}
           >
             <Button

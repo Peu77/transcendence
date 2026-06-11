@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button.tsx'
 import { Loader2 } from 'lucide-react'
@@ -11,11 +11,11 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs.tsx'
 import {
+  type MatchSettings,
+  type Room,
   RoomType,
   updateMatchSettings,
   updateRoomSettings,
-  type MatchSettings,
-  type Room,
 } from '@/api/room.ts'
 import { userStore } from '@/store/userStore'
 import { type RoomSettingsValues } from '@/routes/app/room.settings.ts'
@@ -40,6 +40,7 @@ export function RoomLobbyPhase({
   const me = userStore.state
   const queryClient = useQueryClient()
   const [isStarting, setIsStarting] = useState(false)
+  const gameStartSoundRef = useRef<HTMLAudioElement | null>(null)
 
   const updateMatchMutation = useMutation({
     mutationFn: (settings: MatchSettings) =>
@@ -85,9 +86,17 @@ export function RoomLobbyPhase({
               <Button
                 type="button"
                 size="lg"
+                silent
                 disabled={isStarting}
                 className="flex min-w-56 gap-2 bg-green-600 font-bold uppercase tracking-wide text-white hover:bg-green-700 disabled:opacity-80"
                 onClick={() => {
+                  if (!gameStartSoundRef.current) {
+                    gameStartSoundRef.current = new Audio(
+                      '/sounds/game_start.mp3',
+                    )
+                  }
+                  gameStartSoundRef.current.currentTime = 0
+                  gameStartSoundRef.current.play().catch(() => {})
                   setIsStarting(true)
                   onStartGame()
                 }}

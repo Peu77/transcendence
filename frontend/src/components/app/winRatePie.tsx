@@ -4,13 +4,7 @@ const RADIUS = (SIZE - STROKE_WIDTH) / 2 - 2
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 const CENTER = SIZE / 2
 
-export function WinRatePie({
-  wins,
-  total,
-}: {
-  wins: number
-  total: number
-}) {
+export function WinRatePie({ wins, total }: { wins: number; total: number }) {
   const ratio = total > 0 ? wins / total : 0
   const dashOffset = CIRCUMFERENCE * (1 - ratio)
   const displayPct = total > 0 ? Math.round(ratio * 100) : 0
@@ -18,11 +12,7 @@ export function WinRatePie({
   return (
     <div className="flex flex-col items-center gap-1">
       <div className="relative" style={{ width: SIZE, height: SIZE }}>
-        <svg
-          width={SIZE}
-          height={SIZE}
-          style={{ transform: 'rotate(-90deg)' }}
-        >
+        <svg width={SIZE} height={SIZE} style={{ transform: 'rotate(-90deg)' }}>
           <circle
             cx={CENTER}
             cy={CENTER}

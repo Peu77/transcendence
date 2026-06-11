@@ -1,10 +1,10 @@
 import ReactDOM from 'react-dom/client'
 import {
-  Outlet,
-  RouterProvider,
   createRootRoute,
   createRoute,
   createRouter,
+  Outlet,
+  RouterProvider,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
@@ -15,6 +15,8 @@ import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
 
 import { Toaster } from '@/components/ui/sonner.tsx'
+import { AudioPreloader } from '@/components/app/audio-preloader.tsx'
+import { ScreenSupportGate } from '@/components/app/screen-support-gate.tsx'
 import Login from '@/routes/auth/login.tsx'
 import Register from '@/routes/auth/register.tsx'
 import Home from '@/routes/home.tsx'
@@ -29,12 +31,15 @@ import { AboutRoute } from '@/routes/app/about.tsx'
 import { ProfilePageRoute } from '@/routes/app/profile.$userId.tsx'
 import { NotFound } from '@/routes/notFound.tsx'
 import { StatisticsRoute } from '@/routes/app/statistics.tsx'
+import { AchievementsRoute } from '@/routes/app/achievements.tsx'
 
 export const rootRoute = createRootRoute<unknown>({
   component: () => (
     <>
       <Toaster />
-      <Outlet />
+      <ScreenSupportGate>
+        <Outlet />
+      </ScreenSupportGate>
       <TanStackRouterDevtools />
     </>
   ),
@@ -69,6 +74,7 @@ const routeTree = rootRoute.addChildren([
   AboutRoute,
   ProfilePageRoute,
   StatisticsRoute,
+  AchievementsRoute,
 ])
 
 const TanStackQueryProviderContext = getQueryContext()
@@ -94,9 +100,11 @@ const rootElement = document.getElementById('app')
 if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
-    <TanStackQueryProvider.Provider {...TanStackQueryProviderContext}>
-      <RouterProvider router={router} />
-    </TanStackQueryProvider.Provider>,
+    <AudioPreloader>
+      <TanStackQueryProvider.Provider {...TanStackQueryProviderContext}>
+        <RouterProvider router={router} />
+      </TanStackQueryProvider.Provider>
+    </AudioPreloader>,
   )
 }
 
