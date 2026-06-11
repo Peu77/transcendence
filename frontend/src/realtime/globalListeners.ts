@@ -1,11 +1,7 @@
 import { useLiveEvent } from '@/realtime/hooks.ts'
 import { FRIENDS_QUERY_KEYS } from '@/api/friends.ts'
 import { USER_QUERY_KEYS } from '@/api/user.ts'
-import {
-  type AchievementsResponse,
-  getAchievements,
-} from '@/api/achievements.ts'
-import { queueAchievementNotifications, gameActiveState } from '@/store/achievementNotificationStore.ts'
+import { gameActiveState } from '@/store/achievementNotificationStore.ts'
 import { toast } from 'sonner'
 import { userStore } from '@/store/userStore.ts'
 import { useQueryClient } from '@tanstack/react-query'
