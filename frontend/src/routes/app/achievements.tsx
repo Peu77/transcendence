@@ -368,7 +368,7 @@ function AchievementsPage() {
   const totalCount = data?.achievements.length ?? 0
 
   return (
-    <div className="container mx-auto flex h-full max-w-2xl flex-col p-6">
+    <div className="container mx-auto flex h-full max-w-2xl flex-col overflow-y-auto p-6">
       <div className="mb-8 flex items-center gap-2">
         <Button
           variant="ghost"
