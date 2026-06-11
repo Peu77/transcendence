@@ -295,9 +295,10 @@ export class RealtimeGateway
         settings: room.settings,
       }
 
+      const seed = Math.floor(Math.random() * 0xffffffff)
       for (const user of room.users) {
         session.players.set(user.id, {
-          game: new TetrisGame(room.settings),
+          game: new TetrisGame(room.settings, seed),
           tickTimer: null,
           lastSeq: 0,
           placement: null,

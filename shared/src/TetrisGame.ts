@@ -56,9 +56,11 @@ export class TetrisGame {
   private lastRotated = false
   private b2bChain = 0
   private readonly gameStartTime = Date.now()
+  private readonly rng: () => number
 
-  constructor(settings: Partial<MatchSettings> = {}) {
+  constructor(settings: Partial<MatchSettings> = {}, seed?: number) {
     this.settings = this.createSettings(settings)
+    this.rng = this.createRng(seed ?? Math.floor(Math.random() * 0xffffffff))
     this.board = this.createEmptyBoard()
     this.refillNextTypes()
     this.currentPiece = this.spawnPiece(this.takeNextType(true))
@@ -280,14 +282,25 @@ export class TetrisGame {
     return this.settings.height + this.settings.hiddenRows
   }
 
+  private createRng(seed: number): () => number {
+    let s = seed >>> 0
+    return () => {
+      s += 0x6d2b79f5
+      let z = s
+      z = Math.imul(z ^ (z >>> 15), z | 1)
+      z ^= z + Math.imul(z ^ (z >>> 7), z | 61)
+      return ((z ^ (z >>> 14)) >>> 0) / 0x100000000
+    }
+  }
+
   private randomType(): TetrominoType {
-    return PIECE_TYPES[Math.floor(Math.random() * PIECE_TYPES.length)]
+    return PIECE_TYPES[Math.floor(this.rng() * PIECE_TYPES.length)]
   }
 
   private randomBag(): TetrominoType[] {
     const bag = [...PIECE_TYPES]
     for (let i = bag.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
+      const j = Math.floor(this.rng() * (i + 1))
       ;[bag[i], bag[j]] = [bag[j], bag[i]]
     }
     return bag
