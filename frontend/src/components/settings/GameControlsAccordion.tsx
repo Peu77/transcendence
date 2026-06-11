@@ -57,6 +57,15 @@ export const GameControlsAccordion = ({
   const handleKeyDown =
     (action: GameControlAction) => (e: React.KeyboardEvent) => {
       e.preventDefault()
+      const conflictingAction = CONTROL_ACTIONS.find(
+        (a) => a !== action && draftControls[a] === e.key,
+      )
+      if (conflictingAction) {
+        toast.error(
+          `Already used by "${CONTROL_LABELS[conflictingAction]}"`,
+        )
+        return
+      }
       setDraftControls((current) => ({
         ...current,
         [action]: e.key,

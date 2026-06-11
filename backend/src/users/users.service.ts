@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { In, Repository, SelectQueryBuilder } from 'typeorm'
 import {
@@ -174,6 +174,10 @@ export class UsersService {
     controls: Partial<GameControls>,
   ): Promise<GameControls> {
     const gameControls = this.normalizeGameControls(controls)
+    const values = Object.values(gameControls)
+    if (new Set(values).size !== values.length) {
+      throw new BadRequestException('Each keybind must be unique')
+    }
     await this.usersRepo.update({ id: userId }, { gameControls })
     return gameControls
   }
