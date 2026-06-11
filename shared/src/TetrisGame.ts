@@ -3,17 +3,12 @@ import {
   BOARD_COLS,
   BOARD_ROWS,
   type InputAction,
-  TETROMINOES,
   type TetrisPiece,
   type TetrisState,
+  TETROMINOES,
   TetrominoType,
 } from './tetris-types'
-import {
-  GarbageCancel,
-  type MatchSettings,
-  PieceRandomizer,
-  RotationSystem,
-} from './match-settings'
+import {GarbageCancel, type MatchSettings, PieceRandomizer, RotationSystem,} from './match-settings'
 
 const PIECE_TYPES = Object.values(TetrominoType)
 
@@ -46,6 +41,7 @@ export class TetrisGame {
   lines = 0
   level = 1
   gameOver = false
+    piecesPlaced = 0
   private combo = -1
   private backToBack = false
   private outgoingGarbage = 0
@@ -173,6 +169,7 @@ export class TetrisGame {
       gameOver: this.gameOver,
       combo: this.combo,
       b2bChain: this.b2bChain,
+        piecesPlaced: this.piecesPlaced,
     }
   }
 
@@ -188,6 +185,7 @@ export class TetrisGame {
     this.lines = state.lines
     this.level = state.level
     this.gameOver = state.gameOver
+      this.piecesPlaced = state.piecesPlaced
     // Private state resets — corrected on next reconciliation
     this.combo = -1
     this.backToBack = false
@@ -398,6 +396,7 @@ export class TetrisGame {
         this.board[r][c] = this.currentPiece.type
       }
     }
+      this.piecesPlaced++
   }
 
   private clearLines(): void {
