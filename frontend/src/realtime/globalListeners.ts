@@ -1,9 +1,11 @@
+import { useEffect } from 'react'
 import { useLiveEvent } from '@/realtime/hooks.ts'
 import { FRIENDS_QUERY_KEYS } from '@/api/friends.ts'
 import { USER_QUERY_KEYS } from '@/api/user.ts'
 import {
   checkAndQueueNewAchievements,
   gameActiveState,
+  initAchievementBaseline,
 } from '@/store/achievementNotificationStore.ts'
 import { toast } from 'sonner'
 import { userStore } from '@/store/userStore.ts'
@@ -25,6 +27,10 @@ function getFriendRequestSound() {
 
 export function useGlobalListeners() {
   const qc = useQueryClient()
+
+  useEffect(() => {
+    initAchievementBaseline(qc)
+  }, [qc])
 
   useLiveEvent('dm.created', (event) => {
     if (event.senderId === userStore.state?.id) return
