@@ -113,15 +113,15 @@ export class TetrisGame {
         break
 
       case 'rotateCW':
-        if (this.tryRotate(1) && this.tryResetLockDelay()) this.lockAndSpawn()
+        this.doRotate(1)
         break
 
       case 'rotateCCW':
-        if (this.tryRotate(-1) && this.tryResetLockDelay()) this.lockAndSpawn()
+        this.doRotate(-1)
         break
 
       case 'rotate180':
-        if (this.tryRotate(2) && this.tryResetLockDelay()) this.lockAndSpawn()
+        this.doRotate(2)
         break
 
       case 'softDrop':
@@ -702,6 +702,8 @@ export class TetrisGame {
     log(
       `Locking piece ${this.currentPiece.type} at row=${this.currentPiece.row} col=${this.currentPiece.col}`,
     )
+    this.lockDelayStart = null
+    this.lockResetCount = 0
     this.lockPiece()
     this.clearLines()
     this.applyDueGarbage()
@@ -722,6 +724,11 @@ export class TetrisGame {
     const key = `${from}>${to}`
     if (type === TetrominoType.I) return this.I_KICKS[key] ?? [[0, 0]]
     return this.JLSTZ_KICKS[key] ?? [[0, 0]]
+  }
+
+  private doRotate(delta: number): void {
+    if (!this.tryRotate(delta)) return
+    if (this.tryResetLockDelay()) this.lockAndSpawn()
   }
 
   private tryRotate(delta: number): boolean {

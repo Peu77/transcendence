@@ -29,6 +29,10 @@ export const buildKeyMap = (
     (keyMap, [action, key]) => {
       if (!VALID_INPUT_ACTIONS.has(action as InputAction)) return keyMap
       keyMap[key] = action as InputAction
+      if (key.length === 1) {
+        keyMap[key.toLowerCase()] = action as InputAction
+        keyMap[key.toUpperCase()] = action as InputAction
+      }
       return keyMap
     },
     {},

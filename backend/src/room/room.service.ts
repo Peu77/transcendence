@@ -193,7 +193,7 @@ export class RoomService {
       garbageTargetK: 5,
       garbage: {
         enabled: true,
-        delayMs: 1000,
+        delayMs: 500,
         cancel: GarbageCancel.PARTIAL,
         holeCount: 1,
         messiness: 0,
