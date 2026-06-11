@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { TetrisGame } from '@transcendence/shared'
 import type { InputAction, TetrisState } from '@transcendence/shared'
+import { TetrisGame } from '@transcendence/shared'
 import { useStore } from '@tanstack/react-store'
 import { isGameInputElement, RESTART_SOLO_KEY } from '@/game/keyboard.ts'
 import {
@@ -11,7 +11,15 @@ import {
   type SoloMatchSettings,
 } from '@/game/solo-settings.ts'
 import { useTetrisInput } from '@/hooks/use-tetris-input.ts'
+import { playBlockPlacedSound } from '@/hooks/use-block-placed-sound.ts'
+import { useGameMusic } from '@/hooks/use-game-music.ts'
 import { userStore } from '@/store/userStore.ts'
+
+let gameStartSound: HTMLAudioElement | null = null
+function getGameStartSound() {
+  if (!gameStartSound) gameStartSound = new Audio('/sounds/game_start.mp3')
+  return gameStartSound
+}
 
 export type SoloPhase = 'countdown' | 'playing' | 'finished'
 
@@ -27,7 +35,10 @@ export function useSoloGame() {
     DEFAULT_SOLO_MATCH_SETTINGS,
   )
 
+  useGameMusic(phase === 'playing')
+
   const gameRef = useRef<TetrisGame | null>(null)
+  const lastPiecesPlacedRef = useRef(0)
   const tickTimerRef = useRef<number | null>(null)
   const phaseRef = useRef<SoloPhase>('countdown')
   const lastLevelRef = useRef(1)
@@ -67,6 +78,7 @@ export function useSoloGame() {
     const game = new TetrisGame(createSoloMatchSettings(settingsRef.current))
     gameRef.current = game
     lastLevelRef.current = 1
+    lastPiecesPlacedRef.current = 0
     blowbackCarryRef.current = 0
     setGameState(game.getState())
     return game
@@ -99,12 +111,16 @@ export function useSoloGame() {
     lastLevelRef.current = game.level
 
     tickTimerRef.current = window.setInterval(() => {
+      const prevPlaced = game.piecesPlaced
       const alive = game.tick()
       applyBlowbackGarbage()
       updateState()
 
+      if (game.piecesPlaced > prevPlaced) playBlockPlacedSound()
+
       if (!alive) {
         clearTick()
+        new Audio('/sounds/loose.mp3').play().catch(() => {})
         phaseRef.current = 'finished'
         setPhase('finished')
         return
@@ -133,6 +149,11 @@ export function useSoloGame() {
     clearCountdown()
     clearScheduledRestart()
     createGame()
+
+    const sound = getGameStartSound()
+    sound.currentTime = 0
+    sound.play().catch(() => {})
+
     phaseRef.current = 'countdown'
     setPhase('countdown')
     setCountdown(3)
@@ -174,11 +195,13 @@ export function useSoloGame() {
   )
 
   const quit = useCallback(() => {
+    const sound = new Audio('/sounds/game-effects/cancel_game.mp3')
+    sound.play().catch(() => {})
     clearTick()
     clearCountdown()
     clearScheduledRestart()
     gameRef.current = null
-    navigate({ to: '/app' })
+    setTimeout(() => navigate({ to: '/app' }), 150)
   }, [clearTick, clearCountdown, clearScheduledRestart, navigate])
 
   const emitInput = useCallback(
@@ -186,9 +209,12 @@ export function useSoloGame() {
       const game = gameRef.current
       if (!game || game.gameOver) return
 
+      const prevPlaced = game.piecesPlaced
       game.processInput(action)
       applyBlowbackGarbage()
       setGameState(game.getState())
+
+      if (game.piecesPlaced > prevPlaced) playBlockPlacedSound()
     },
     [applyBlowbackGarbage],
   )

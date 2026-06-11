@@ -38,7 +38,11 @@ const Solo = () => {
               <span>Level: {gameState.level}</span>
             </div>
             <div className="flex gap-4">
-              <Button onClick={restart} className="h-auto px-8 py-3 text-lg">
+              <Button
+                silent
+                onClick={restart}
+                className="h-auto px-8 py-3 text-lg"
+              >
                 PLAY AGAIN
               </Button>
               <Button

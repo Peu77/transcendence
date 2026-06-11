@@ -2,14 +2,26 @@ import { useCallback, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
+  type Friend,
   getDirectMessages,
   sendDirectMessage,
-  type Friend,
 } from '@/api/friends.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { Input } from '@/components/ui/input.tsx'
 import { useDmRoom, useLiveEvent } from '@/realtime/hooks.ts'
+import { userStore } from '@/store/userStore.ts'
+
+let dmSendSound: HTMLAudioElement | null = null
+let dmReceiveSound: HTMLAudioElement | null = null
+function getDmSendSound() {
+  if (!dmSendSound) dmSendSound = new Audio('/sounds/message_send.mp3')
+  return dmSendSound
+}
+function getDmReceiveSound() {
+  if (!dmReceiveSound) dmReceiveSound = new Audio('/sounds/message_receive.mp3')
+  return dmReceiveSound
+}
 
 export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
   const qc = useQueryClient()
@@ -97,6 +109,9 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
     onSuccess: async (msg) => {
       if (!msg) return
       setInput('')
+      const sound = getDmSendSound()
+      sound.currentTime = 0
+      sound.play().catch(() => {})
       await qc.invalidateQueries({ queryKey })
     },
     onError: (e: any) => {
@@ -151,6 +166,12 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
           },
         }
       })
+
+      if (msg.senderId !== userStore.state?.id) {
+        const sound = getDmReceiveSound()
+        sound.currentTime = 0
+        sound.play().catch(() => {})
+      }
 
       setNewestCursor((c) => c ?? msg.id)
       setOldestCursor((c) => c ?? msg.id)
