@@ -52,6 +52,7 @@ interface PlayerStats {
   matchCount: number
   totalLines: number
   totalScore: number | null
+  wins: number
 }
 
 interface HeadToHeadStats {
@@ -267,20 +268,24 @@ export class UsersService {
       matchCount,
       totalLines: Number(result?.totalLines ?? 0),
       totalScore: matchCount > 0 ? Number(result?.totalScore ?? 0) : null,
+      wins: Number(result?.wins ?? 0),
     }
   }
 
   private async getPlayerRank({
     matchCount,
-    totalScore,
+    wins,
   }: PlayerStats): Promise<number | null> {
-    if (matchCount === 0 || totalScore === null) return null
+    if (matchCount === 0) return null
 
     const higherRankedPlayers = await this.matchResultsRepo
       .createQueryBuilder('result')
       .select('result.userId')
       .groupBy('result.userId')
-      .having('SUM(result.score) > :totalScore', { totalScore })
+      .having(
+        'SUM(CASE WHEN result.placement = 1 THEN 1 ELSE 0 END) > :wins',
+        { wins },
+      )
       .getRawMany()
 
     return higherRankedPlayers.length + 1
@@ -315,15 +320,7 @@ export class UsersService {
         .getRawOne<{ total: string | null }>(),
       this.getTotalPoints(requesterId),
       this.createSharedMatchesQuery(userId, requesterId)
-        .andWhere((queryBuilder) => {
-          const highestScoreQuery = queryBuilder
-            .subQuery()
-            .select('MAX(r3.score)')
-            .from(MatchResult, 'r3')
-            .where('r3.matchId = r1.matchId')
-            .getQuery()
-          return `r1.score = ${highestScoreQuery}`
-        })
+        .andWhere('r1.placement = 1')
         .getCount(),
     ])
 
@@ -481,15 +478,7 @@ export class UsersService {
         this.matchResultsRepo
           .createQueryBuilder('r1')
           .where('r1.userId = :userId', { userId })
-          .andWhere((qb) => {
-            const sub = qb
-              .subQuery()
-              .select('MAX(r2.score)')
-              .from(MatchResult, 'r2')
-              .where('r2.matchId = r1.matchId')
-              .getQuery()
-            return `r1.score = ${sub}`
-          })
+          .andWhere('r1.placement = 1')
           .getCount(),
         this.friendshipsRepo
           .createQueryBuilder('f')
@@ -524,21 +513,16 @@ export class UsersService {
     if (matches > 0) {
       const userResults = await this.matchResultsRepo.find({
         where: { userId },
-        select: ['matchId', 'score'],
+        select: ['matchId', 'score', 'placement'],
       })
       const matchIds = [...new Set(userResults.map((r) => r.matchId))]
       const allResults = await this.matchResultsRepo.find({
         where: { matchId: In(matchIds) },
         select: ['matchId', 'userId', 'score'],
       })
-      const matchMaxScore = new Map<string, number>()
-      for (const r of allResults) {
-        if ((r.score ?? 0) > (matchMaxScore.get(r.matchId) ?? 0))
-          matchMaxScore.set(r.matchId, r.score ?? 0)
-      }
       const userWonMatches = new Set(
         userResults
-          .filter((r) => (r.score ?? 0) === matchMaxScore.get(r.matchId))
+          .filter((r) => r.placement === 1)
           .map((r) => r.matchId),
       )
       const opponentStats = new Map<string, { total: number; wins: number }>()
