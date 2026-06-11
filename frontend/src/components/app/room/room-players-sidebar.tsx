@@ -3,6 +3,8 @@ import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import type { RoomPlayersSidebarProps } from './types.ts'
 import { ProfileDialog } from '@/components/app/profileDialog.tsx'
+import { useGetFriends } from '@/api/friends.ts'
+import { HeartIcon } from 'lucide-react'
 
 export function RoomPlayersSidebar({
   room,
@@ -10,6 +12,8 @@ export function RoomPlayersSidebar({
   onLeaveRoom,
 }: RoomPlayersSidebarProps) {
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
+  const { data: friends } = useGetFriends()
+  const friendIds = new Set(friends?.map((f) => f.id) ?? [])
 
   return (
     <aside className="flex h-full min-h-0 flex-col bg-background/80 px-7 pt-4 text-card-foreground">
@@ -37,7 +41,14 @@ export function RoomPlayersSidebar({
               onClick={() => setProfileUserId(user.id)}
               className="flex items-center gap-3 rounded-md border border-border/60 bg-card/60 p-3 shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
             >
-              <ProfileImage profilePictureId={user.profilePictureId} />
+              <div className="relative shrink-0">
+                <ProfileImage profilePictureId={user.profilePictureId} />
+                {friendIds.has(user.id) && (
+                  <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-background">
+                    <HeartIcon className="h-3 w-3 fill-pink-500 text-pink-500" />
+                  </span>
+                )}
+              </div>
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">

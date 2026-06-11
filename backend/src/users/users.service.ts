@@ -224,10 +224,11 @@ export class UsersService {
   }
 
   async getPublicProfile(userId: string, requesterId: string) {
-    const [user, playerStats, blockedByThem] = await Promise.all([
+    const [user, playerStats, blockedByThem, iBlockedThem] = await Promise.all([
       this.usersRepo.findOneOrFail({ where: { id: userId } }),
       this.getPlayerStats(userId),
       this.isBlockedByUser(userId, requesterId),
+      this.isBlockedByUser(requesterId, userId),
     ])
     const [rank, headToHeadStats] = await Promise.all([
       this.getPlayerRank(playerStats),
@@ -243,6 +244,7 @@ export class UsersService {
       totalLines: playerStats.totalLines,
       rank,
       blockedByThem,
+      iBlockedThem,
       ...headToHeadStats,
     }
   }

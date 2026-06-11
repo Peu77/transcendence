@@ -200,6 +200,22 @@ export class FriendsService {
     })
   }
 
+  async getBlockedUsers(blockerId: string) {
+    const blocks = await this.userBlocksRepo.find({
+      where: { blockerId },
+      relations: ['blocked'],
+    })
+    return blocks.map((b) => ({
+      id: b.blockedId,
+      username: b.blocked.username,
+      profilePictureId: b.blocked.profilePictureId ?? null,
+    }))
+  }
+
+  async unblockUser(blockerId: string, blockedId: string): Promise<void> {
+    await this.userBlocksRepo.delete({ blockerId, blockedId })
+  }
+
   async blockUser(blockerId: string, blockedId: string): Promise<void> {
     if (blockerId === blockedId)
       throw new BadRequestException('Cannot block yourself')

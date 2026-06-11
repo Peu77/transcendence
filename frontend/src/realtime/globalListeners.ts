@@ -2,10 +2,9 @@ import { useLiveEvent } from '@/realtime/hooks.ts'
 import { FRIENDS_QUERY_KEYS } from '@/api/friends.ts'
 import { USER_QUERY_KEYS } from '@/api/user.ts'
 import {
-  type AchievementsResponse,
-  getAchievements,
-} from '@/api/achievements.ts'
-import { queueAchievementNotifications } from '@/store/achievementNotificationStore.ts'
+  checkAndQueueNewAchievements,
+  gameActiveState,
+} from '@/store/achievementNotificationStore.ts'
 import { toast } from 'sonner'
 import { userStore } from '@/store/userStore.ts'
 import { useQueryClient } from '@tanstack/react-query'
@@ -49,12 +48,14 @@ export function useGlobalListeners() {
     })
   })
 
-  // Keep AddFriendButton in sync when the other person accepts or denies your request
+  // Keep AddFriendButton in sync when the other person accepts your request, and
+  // check for newly unlocked social/collection achievements
   useLiveEvent('friend_request.accepted', async () => {
     await qc.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.FRIENDS })
     await qc.invalidateQueries({
       queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS,
     })
+    await checkAndQueueNewAchievements(qc)
   })
 
   useLiveEvent('friend_request.denied', async () => {
@@ -79,24 +80,13 @@ export function useGlobalListeners() {
     await qc.invalidateQueries({ queryKey: ['rooms'] })
   })
 
-  // Detect newly unlocked achievements after a multiplayer match ends
+  // Track game lifecycle so achievement popups are suppressed during play
+  useLiveEvent('game.countdown', () => {
+    gameActiveState.set(true)
+  })
+
   useLiveEvent('game.finished', async () => {
-    const prev = qc.getQueryData<AchievementsResponse>(['achievements'])
-    const prevUnlocked = new Set(
-      prev?.achievements.filter((a) => a.unlocked).map((a) => a.id) ?? [],
-    )
-
-    const next = await qc.fetchQuery({
-      queryKey: ['achievements'],
-      queryFn: getAchievements,
-      staleTime: 0,
-    })
-
-    const newly = next.achievements.filter(
-      (a) => a.unlocked && !prevUnlocked.has(a.id),
-    )
-    if (newly.length > 0) {
-      queueAchievementNotifications(newly)
-    }
+    gameActiveState.set(false)
+    await checkAndQueueNewAchievements(qc)
   })
 }
