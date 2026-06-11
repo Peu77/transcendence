@@ -5,11 +5,13 @@ import { toast } from 'sonner'
 import { useLiveEvent } from '@/realtime/hooks.ts'
 import { useLiveSocket } from '@/realtime/useRealtimeStore.ts'
 import type { User } from '@/api/user.ts'
-import type { TetrisState, MatchSettings } from '@transcendence/shared'
+import type { MatchSettings, TetrisState } from '@transcendence/shared'
 import type { GamePlayerResult } from '@/realtime/events'
 import { usePrediction } from '@/game/tetris/prediction.ts'
 import { useTetrisInput } from '@/hooks/use-tetris-input.ts'
-import { normalizeGameControls, type GamePhase } from './room-game.ts'
+import { playBlockPlacedSound } from '@/hooks/use-block-placed-sound.ts'
+import { useGameMusic } from '@/hooks/use-game-music.ts'
+import { type GamePhase, normalizeGameControls } from './room-game.ts'
 
 export function useRoomGame(
   roomId: string,
@@ -30,6 +32,9 @@ export function useRoomGame(
   const prediction = usePrediction(matchSettings)
   const predictionRef = useRef(prediction)
   predictionRef.current = prediction
+  useGameMusic(gamePhase === 'playing')
+  const lastPiecesPlacedRef = useRef(0)
+
   const [isChatOpen, setIsChatOpen] = useState(false)
   const isChatOpenRef = useRef(false)
 
@@ -39,9 +44,11 @@ export function useRoomGame(
   }, [])
 
   const quitRoom = useCallback(() => {
+    const sound = new Audio('/sounds/game-effects/cancel_game.mp3')
+    sound.play().catch(() => {})
     socket?.emit('room.leave', { roomId })
     setChatOpen(false)
-    navigate({ to: '/app/room' }).catch(console.error)
+    setTimeout(() => navigate({ to: '/app/room' }).catch(console.error), 150)
   }, [socket, roomId, navigate, setChatOpen])
 
   const setPhase = useCallback((phase: GamePhase) => {
@@ -73,6 +80,15 @@ export function useRoomGame(
       )
     }
 
+    // Play sound for gravity locks detected via server state
+    if (myUserId && data.players[myUserId]) {
+      const serverPlaced = data.players[myUserId].piecesPlaced
+      if (serverPlaced > lastPiecesPlacedRef.current) {
+        playBlockPlacedSound()
+        lastPiecesPlacedRef.current = serverPlaced
+      }
+    }
+
     // Build combined state: predicted for local player, server for opponents
     const predicted = prediction.predictedState.current.predictedState
     if (myUserId && predicted) {
@@ -84,6 +100,10 @@ export function useRoomGame(
 
   useLiveEvent('game.finished', (data) => {
     if (data.roomId !== roomId) return
+    const won = data.results.length > 0 && data.results[0].userId === myUserId
+    new Audio(won ? '/sounds/win.mp3' : '/sounds/loose.mp3')
+      .play()
+      .catch(() => {})
     setPhase('finished')
     setResults(data.results)
   })
@@ -106,6 +126,10 @@ export function useRoomGame(
       const predicted =
         predictionRef.current.predictedState.current.predictedState
       if (myUserId && predicted) {
+        if (predicted.piecesPlaced > lastPiecesPlacedRef.current) {
+          playBlockPlacedSound()
+          lastPiecesPlacedRef.current = predicted.piecesPlaced
+        }
         setPlayerStates((prev) => ({ ...prev, [myUserId]: predicted }))
       }
     },
@@ -133,6 +157,7 @@ export function useRoomGame(
     setResults(null)
     setCountdown(null)
     setChatOpen(false)
+    lastPiecesPlacedRef.current = 0
     prediction.reset()
     queryClient.invalidateQueries({ queryKey: ['room', roomId] })
   }, [setPhase, setChatOpen, prediction, queryClient, roomId])
