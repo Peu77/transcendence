@@ -190,6 +190,7 @@ export class RoomService {
       width: 10,
       height: 20,
       hiddenRows: 0,
+      garbageTargetK: 5,
       garbage: {
         enabled: true,
         delayMs: 1000,

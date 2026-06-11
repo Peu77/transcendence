@@ -214,6 +214,17 @@ export function MatchSettingsForm({
           <h3 className="border-b border-border pb-2 text-lg font-bold">
             Garbage
           </h3>
+          <form.AppField name="garbageTargetK">
+            {(field) => (
+              <field.Slider
+                label="Attacks per Target"
+                min={0}
+                max={20}
+                step={1}
+                disabled={!isHost}
+              />
+            )}
+          </form.AppField>
           <form.AppField name="garbage.enabled">
             {(field) => (
               <field.Switch label="Enable Garbage" disabled={!isHost} />

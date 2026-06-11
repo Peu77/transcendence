@@ -247,6 +247,7 @@ export class TetrisGame {
       width: BOARD_COLS,
       height: BOARD_ROWS,
       hiddenRows: 0,
+      garbageTargetK: 5,
       ...settings,
       garbage: {
         enabled: settings.garbage?.enabled ?? true,

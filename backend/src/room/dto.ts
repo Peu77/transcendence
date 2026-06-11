@@ -180,6 +180,11 @@ export class UpdateMatchSettingsDto {
   @Max(20)
   hiddenRows!: number
 
+  @IsNumber()
+  @Min(0)
+  @Max(20)
+  garbageTargetK!: number
+
   @IsObject()
   @ValidateNested()
   @Type(() => GarbageSettingsDto)

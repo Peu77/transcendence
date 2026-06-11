@@ -104,6 +104,12 @@ export type MatchSettings = {
   hiddenRows: number
 
   /**
+   * Number of garbage attacks sent to the same target before a new target is selected.
+   * Only counts attacks that deliver at least one line. Set to 0 to re-roll on every attack.
+   */
+  garbageTargetK: number
+
+  /**
    * Garbage attack and defense behavior in versus modes.
    */
   garbage: {

@@ -22,6 +22,7 @@ export const matchSettingsSchema = z.object({
   width: z.number().min(4).max(20),
   height: z.number().min(10).max(40),
   hiddenRows: z.number().min(0),
+  garbageTargetK: z.number().min(0).max(20),
   garbage: z.object({
     enabled: z.boolean(),
     delayMs: z.number().min(0),
