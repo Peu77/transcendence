@@ -1,16 +1,24 @@
 import { createRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { Input } from '@/components/ui/input.tsx'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { getRooms, createRoom } from '@/api/room.ts'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { createRoom, getRooms } from '@/api/room.ts'
 import { toast } from 'sonner'
 import { ArrowLeftIcon } from 'lucide-react'
 
 const Multiplayer = () => {
   const navigate = useNavigate()
   const [roomIdInput, setRoomIdInput] = useState('')
+  const hoverSoundRef = useRef<HTMLAudioElement | null>(null)
+  const onMenuHover = useCallback(() => {
+    if (!hoverSoundRef.current) {
+      hoverSoundRef.current = new Audio('/sounds/menu_hover.mp3')
+    }
+    hoverSoundRef.current.currentTime = 0
+    hoverSoundRef.current.play().catch(() => {})
+  }, [])
   const { data: rooms, isLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: getRooms,
@@ -109,6 +117,7 @@ const Multiplayer = () => {
         {menuItems.map((item) => (
           <div
             key={item.path ?? item.label}
+            onMouseEnter={onMenuHover}
             className={`pb-1 pr-1 ${item.borderColor} clip-pixel-corners-btn translate-x-48 hover:translate-x-40 transition-transform w-[calc(100%+12rem)] overflow-hidden`}
           >
             <Button

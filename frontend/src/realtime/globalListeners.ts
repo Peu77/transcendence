@@ -1,11 +1,28 @@
 import { useLiveEvent } from '@/realtime/hooks.ts'
 import { FRIENDS_QUERY_KEYS } from '@/api/friends.ts'
 import { USER_QUERY_KEYS } from '@/api/user.ts'
-import { getAchievements, type AchievementsResponse } from '@/api/achievements.ts'
+import {
+  type AchievementsResponse,
+  getAchievements,
+} from '@/api/achievements.ts'
 import { queueAchievementNotifications } from '@/store/achievementNotificationStore.ts'
 import { toast } from 'sonner'
 import { userStore } from '@/store/userStore.ts'
 import { useQueryClient } from '@tanstack/react-query'
+
+let globalReceiveSound: HTMLAudioElement | null = null
+function getGlobalReceiveSound() {
+  if (!globalReceiveSound)
+    globalReceiveSound = new Audio('/sounds/message_receive.mp3')
+  return globalReceiveSound
+}
+
+let friendRequestSound: HTMLAudioElement | null = null
+function getFriendRequestSound() {
+  if (!friendRequestSound)
+    friendRequestSound = new Audio('/sounds/friend_request.mp3')
+  return friendRequestSound
+}
 
 export function useGlobalListeners() {
   const qc = useQueryClient()
@@ -13,12 +30,20 @@ export function useGlobalListeners() {
   useLiveEvent('dm.created', (event) => {
     if (event.senderId === userStore.state?.id) return
 
+    const sound = getGlobalReceiveSound()
+    sound.currentTime = 0
+    sound.play().catch(() => {})
+
     toast.info('New direct message received', {
       description: `Message from user ${event.senderInfo.username}: "${event.content}"`,
     })
   })
 
   useLiveEvent('friend_request.created', (event) => {
+    const sound = getFriendRequestSound()
+    sound.currentTime = 0
+    sound.play().catch(() => {})
+
     toast.info('New friend request', {
       description: `You have a new friend request from ${event.senderInfo.username}`,
     })
