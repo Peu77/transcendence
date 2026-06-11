@@ -134,6 +134,7 @@ export type PublicProfile = {
   totalLines: number
   rank: number | null
   blockedByThem: boolean
+  iBlockedThem: boolean
   sharedMatchCount: number
   sharedPoints: number
   requesterTotalPoints: number

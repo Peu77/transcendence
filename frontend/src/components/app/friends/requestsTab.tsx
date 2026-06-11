@@ -14,6 +14,7 @@ import {
 import { RequestRow } from '@/components/app/friends/requestRow.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { useLiveEvent } from '@/realtime/hooks.ts'
+import { checkAndQueueNewAchievements } from '@/store/achievementNotificationStore.ts'
 
 export const RequestsTab = (props: { isOpen: boolean }) => {
   const qc = useQueryClient()
@@ -68,6 +69,7 @@ export const RequestsTab = (props: { isOpen: boolean }) => {
         qc.invalidateQueries({ queryKey: ['friends', 'requests', 'incoming'] }),
       ])
       toast.success('Friend request accepted')
+      await checkAndQueueNewAchievements(qc)
     },
     onError: (e: any) =>
       toast.error(e?.response?.data?.message ?? 'Failed to accept request'),
