@@ -29,6 +29,9 @@ export class MatchResult {
   })
   user!: User
 
+  @Column({ type: 'int', nullable: true })
+  placement!: number | null
+
   @Column({ type: 'int' })
   score!: number
 

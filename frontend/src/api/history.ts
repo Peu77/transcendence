@@ -27,7 +27,7 @@ export interface GlobalRankingItem {
   userId: string
   username: string
   profilePictureId: string | null
-  score: number
+  wins: number
   matchesPlayed: number
 }
 

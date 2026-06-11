@@ -43,7 +43,7 @@ export interface GlobalRankingItem {
   userId: string
   username: string
   profilePictureId: string | null
-  score: number
+  wins: number
   matchesPlayed: number
 }
 
@@ -214,17 +214,20 @@ export class UsersService {
       .select('SUM(result.score)', 'totalScore')
       .addSelect('SUM(result.lines)', 'totalLines')
       .addSelect('COUNT(result.id)', 'matchCount')
+      .addSelect('SUM(CASE WHEN result.placement = 1 THEN 1 ELSE 0 END)', 'wins')
       .where('result.userId = :userId', { userId })
       .getRawOne<{
         totalScore: string | null
         totalLines: string | null
         matchCount: string
+        wins: string
       }>()
 
     const matchCount = Number(statsResult?.matchCount ?? 0)
     const totalLines = Number(statsResult?.totalLines ?? 0)
     const totalScore =
       matchCount > 0 ? Number(statsResult?.totalScore ?? 0) : null
+    const wins = Number(statsResult?.wins ?? 0)
 
     let rank: number | null = null
     if (matchCount > 0) {
@@ -232,7 +235,10 @@ export class UsersService {
         .createQueryBuilder('result')
         .select('result.userId')
         .groupBy('result.userId')
-        .having('SUM(result.score) > :totalScore', { totalScore })
+        .having(
+          'SUM(CASE WHEN result.placement = 1 THEN 1 ELSE 0 END) > :wins',
+          { wins },
+        )
         .getRawMany()
 
       rank = higherRanked.length + 1
@@ -284,15 +290,7 @@ export class UsersService {
               { userId },
             )
             .where('r1.userId = :requesterId', { requesterId })
-            .andWhere(qb => {
-              const sub = qb
-                .subQuery()
-                .select('MAX(r3.score)')
-                .from(MatchResult, 'r3')
-                .where('r3.matchId = r1.matchId')
-                .getQuery()
-              return `r1.score = ${sub}`
-            })
+            .andWhere('r1.placement = 1')
             .getCount(),
         ])
 
@@ -349,7 +347,12 @@ export class UsersService {
 
     return userResults.map((userResult) => {
       const players = (resultsByMatch.get(userResult.matchId) ?? [])
-        .sort((a, b) => b.score - a.score || b.lines - a.lines)
+        .sort((a, b) => {
+          const pa = a.placement ?? Infinity
+          const pb = b.placement ?? Infinity
+          if (pa !== pb) return pa - pb
+          return b.score - a.score || b.lines - a.lines
+        })
         .map((result, index) => ({
           userId: result.userId,
           username: result.user.username,
@@ -357,7 +360,7 @@ export class UsersService {
           score: result.score,
           lines: result.lines,
           level: result.state.level,
-          placement: index + 1,
+          placement: result.placement ?? index + 1,
         }))
 
       return {
@@ -365,7 +368,9 @@ export class UsersService {
         roomId: userResult.roomId,
         playedAt: userResult.createdAt,
         placement:
-          players.find((player) => player.userId === userId)?.placement ?? 1,
+          userResult.placement ??
+          players.find((player) => player.userId === userId)?.placement ??
+          1,
         playerCount: players.length,
         score: userResult.score,
         lines: userResult.lines,
@@ -382,25 +387,28 @@ export class UsersService {
       .select('user.id', 'userId')
       .addSelect('user.username', 'username')
       .addSelect('user.profilePictureId', 'profilePictureId')
-      .addSelect('SUM(result.score)', 'score')
+      .addSelect(
+        'SUM(CASE WHEN result.placement = 1 THEN 1 ELSE 0 END)',
+        'wins',
+      )
       .addSelect('COUNT(result.id)', 'matchesPlayed')
       .groupBy('user.id')
       .addGroupBy('user.username')
       .addGroupBy('user.profilePictureId')
-      .orderBy('SUM(result.score)', 'DESC')
+      .orderBy('SUM(CASE WHEN result.placement = 1 THEN 1 ELSE 0 END)', 'DESC')
       .addOrderBy('COUNT(result.id)', 'DESC')
       .addOrderBy('user.username', 'ASC')
       .getRawMany<{
         userId: string
         username: string
         profilePictureId: string | null
-        score: string
+        wins: string
         matchesPlayed: string
       }>()
 
     return rankings.map((ranking) => ({
       ...ranking,
-      score: Number(ranking.score),
+      wins: Number(ranking.wins),
       matchesPlayed: Number(ranking.matchesPlayed),
     }))
   }

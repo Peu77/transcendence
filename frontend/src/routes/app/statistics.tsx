@@ -209,9 +209,9 @@ const RankingRow = ({
       </div>
     </button>
     <div className="text-right">
-      <p className="text-lg font-bold">{player.score.toLocaleString()}</p>
+      <p className="text-lg font-bold">{(player.wins ?? 0).toLocaleString()}</p>
       <p className="text-xs uppercase tracking-wider text-muted-foreground">
-        points
+        {player.wins === 1 ? 'win' : 'wins'}
       </p>
     </div>
   </div>
