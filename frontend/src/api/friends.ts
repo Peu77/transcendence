@@ -88,7 +88,10 @@ export function useUnblockUser() {
   return useMutation({
     mutationFn: unblockUser,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['friends', 'blocked'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['friends', 'blocked'] }),
+        queryClient.invalidateQueries({ queryKey: ['publicProfile'] }),
+      ])
     },
   })
 }

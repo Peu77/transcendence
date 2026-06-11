@@ -90,6 +90,7 @@ export const ProfileDialog = ({
               <AddFriendButton
                 userId={userId}
                 blockedByThem={profile.blockedByThem}
+                iBlockedThem={profile.iBlockedThem}
               />
             </div>
           </>

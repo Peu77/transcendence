@@ -90,6 +90,7 @@ function ProfilePage() {
             <AddFriendButton
               userId={userId}
               blockedByThem={profile.blockedByThem}
+              iBlockedThem={profile.iBlockedThem}
             />
           </div>
         </>
