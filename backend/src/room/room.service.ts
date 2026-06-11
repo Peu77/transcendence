@@ -178,10 +178,10 @@ export class RoomService {
       gravity: 0.02,
       gincrease: 0.0025,
       gmargin: 3600,
-      lockDelayMs: 500,
+      lockDelayMs: 300,
       lockResetLimit: 15,
-      areMs: 0,
-      lineClearDelayMs: 500,
+
+
       rotationSystem: RotationSystem.SRS,
       hold: true,
       nextCount: 5,
@@ -196,7 +196,7 @@ export class RoomService {
         delayMs: 1000,
         cancel: GarbageCancel.PARTIAL,
         holeCount: 1,
-        messiness: 0.42,
+        messiness: 0,
       },
       damage: {
         table: {

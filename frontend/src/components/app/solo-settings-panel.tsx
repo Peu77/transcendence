@@ -21,7 +21,7 @@ type NumericSettingKey =
   | 'gincrease'
   | 'gmargin'
   | 'lockDelayMs'
-  | 'lineClearDelayMs'
+
   | 'nextCount'
   | 'blowbackPercent'
 
@@ -73,16 +73,6 @@ const NUMERIC_SETTINGS: NumericSetting[] = [
       'How long a grounded piece can still be adjusted before it locks.',
     min: 0,
     max: 1500,
-    step: 50,
-    formatValue: (value) => `${value} ms`,
-  },
-  {
-    key: 'lineClearDelayMs',
-    label: 'Line clear delay',
-    description:
-      'Pause after clearing lines before the next piece starts moving.',
-    min: 0,
-    max: 1000,
     step: 50,
     formatValue: (value) => `${value} ms`,
   },

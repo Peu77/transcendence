@@ -6,7 +6,7 @@ export type SoloMatchSettings = Pick<
   | 'gincrease'
   | 'gmargin'
   | 'lockDelayMs'
-  | 'lineClearDelayMs'
+
   | 'hold'
   | 'nextCount'
   | 'forbidInitialSZ'
@@ -18,8 +18,8 @@ export const DEFAULT_SOLO_MATCH_SETTINGS: SoloMatchSettings = {
   gravity: 0.02,
   gincrease: 0.0025,
   gmargin: 3600,
-  lockDelayMs: 500,
-  lineClearDelayMs: 500,
+  lockDelayMs: 300,
+
   hold: true,
   nextCount: 5,
   forbidInitialSZ: false,
@@ -39,7 +39,7 @@ export const createSoloMatchSettings = (
       delayMs: 0,
       cancel: GarbageCancel.NONE,
       holeCount: 1,
-      messiness: 0.42,
+      messiness: 0,
     },
   }
 }
@@ -52,7 +52,7 @@ export const areSoloMatchSettingsEqual = (
   left.gincrease === right.gincrease &&
   left.gmargin === right.gmargin &&
   left.lockDelayMs === right.lockDelayMs &&
-  left.lineClearDelayMs === right.lineClearDelayMs &&
+
   left.hold === right.hold &&
   left.nextCount === right.nextCount &&
   left.forbidInitialSZ === right.forbidInitialSZ &&

@@ -235,10 +235,10 @@ export class TetrisGame {
       gravity: 0.02,
       gincrease: 0.0025,
       gmargin: 3600,
-      lockDelayMs: 500,
+      lockDelayMs: 300,
       lockResetLimit: 15,
-      areMs: 0,
-      lineClearDelayMs: 500,
+
+
       rotationSystem: RotationSystem.SRS,
       hold: true,
       nextCount: 5,
@@ -254,7 +254,7 @@ export class TetrisGame {
         delayMs: settings.garbage?.delayMs ?? 1000,
         cancel: settings.garbage?.cancel ?? GarbageCancel.PARTIAL,
         holeCount: settings.garbage?.holeCount ?? 1,
-        messiness: settings.garbage?.messiness ?? 0.42,
+        messiness: settings.garbage?.messiness ?? 0,
       },
       damage: {
         table: {
@@ -540,15 +540,18 @@ export class TetrisGame {
     }
 
     const now = Date.now()
-    let lines = 0
+    const due: PendingGarbage[] = []
     this.pendingGarbage = this.pendingGarbage.filter((item) => {
       if (item.applyAt > now) return true
-      lines += item.lines
+      due.push(item)
       return false
     })
 
-    for (let i = 0; i < lines; i++) {
-      this.addGarbageLine()
+    for (const item of due) {
+      this.garbageHoleCol = -1
+      for (let i = 0; i < item.lines; i++) {
+        this.addGarbageLine()
+      }
     }
   }
 

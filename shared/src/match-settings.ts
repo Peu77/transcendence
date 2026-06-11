@@ -46,18 +46,6 @@ export type MatchSettings = {
   lockResetLimit: number
 
   /**
-   * Delay in milliseconds before the next piece spawns
-   * after the previous piece locks.
-   */
-  areMs: number
-
-  /**
-   * Pause in milliseconds after clearing lines.
-   * Competitive modes typically use 0.
-   */
-  lineClearDelayMs: number
-
-  /**
    * Rotation system used by the game.
    * Currently only modern SRS is supported.
    */

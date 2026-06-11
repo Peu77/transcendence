@@ -100,28 +100,6 @@ export function MatchSettingsForm({
               />
             )}
           </form.AppField>
-          <form.AppField name="areMs">
-            {(field) => (
-              <field.Slider
-                label="ARE (ms)"
-                min={0}
-                max={1000}
-                step={10}
-                disabled={!isHost}
-              />
-            )}
-          </form.AppField>
-          <form.AppField name="lineClearDelayMs">
-            {(field) => (
-              <field.Slider
-                label="Line Clear Delay (ms)"
-                min={0}
-                max={1000}
-                step={10}
-                disabled={!isHost}
-              />
-            )}
-          </form.AppField>
         </div>
 
         <div className="flex flex-col gap-6 rounded-xl border border-border/50 bg-background/40 p-4">

@@ -138,16 +138,6 @@ export class UpdateMatchSettingsDto {
   @Max(30)
   lockResetLimit!: number
 
-  @IsNumber()
-  @Min(0)
-  @Max(1000)
-  areMs!: number
-
-  @IsNumber()
-  @Min(0)
-  @Max(1000)
-  lineClearDelayMs!: number
-
   @IsEnum(RotationSystem)
   rotationSystem!: RotationSystem
 
