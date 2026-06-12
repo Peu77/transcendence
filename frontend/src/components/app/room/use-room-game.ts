@@ -141,12 +141,13 @@ export function useRoomGame(
     },
   })
 
-  const handleStartGame = useCallback(() => {
+  const handleStartGame = useCallback((onError?: () => void) => {
     if (!socket) return
 
     socket.emit('game.start', { roomId }, (res) => {
       if (!res.ok) {
         toast.error(res.error || 'Failed to start game')
+        onError?.()
       }
     })
   }, [socket, roomId])

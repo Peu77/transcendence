@@ -18,9 +18,9 @@ export function useLiveEvent<K extends keyof LiveEventMap>(
       handlerRef.current(payload)
     }) as unknown as (...args: any[]) => void
 
-    ;(socket as any).on(event as string, fn)
+    (socket as any).on(event as string, fn)
     return () => {
-      ;(socket as any).off(event as string, fn)
+      (socket as any).off(event as string, fn)
     }
   }, [socket, event])
 }
@@ -33,9 +33,9 @@ export function useDmRoom(friendUserId: string | null) {
       return
     }
 
-    ;(socket as any).emit('dm.join', { withUserId: friendUserId })
+    (socket as any).emit('dm.join', { withUserId: friendUserId })
     return () => {
-      ;(socket as any).emit('dm.leave', { withUserId: friendUserId })
+      (socket as any).emit('dm.leave', { withUserId: friendUserId })
     }
   }, [socket, friendUserId])
 }

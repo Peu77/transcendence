@@ -7,6 +7,7 @@ export type SoloMatchSettings = Pick<
   | 'gmargin'
   | 'lockDelayMs'
   | 'hold'
+  | 'infiniteHold'
   | 'nextCount'
   | 'forbidInitialSZ'
 > & {
@@ -20,6 +21,7 @@ export const DEFAULT_SOLO_MATCH_SETTINGS: SoloMatchSettings = {
   lockDelayMs: 300,
 
   hold: true,
+  infiniteHold: false,
   nextCount: 5,
   forbidInitialSZ: false,
   blowbackPercent: 0,
@@ -52,6 +54,7 @@ export const areSoloMatchSettingsEqual = (
   left.gmargin === right.gmargin &&
   left.lockDelayMs === right.lockDelayMs &&
   left.hold === right.hold &&
+  left.infiniteHold === right.infiniteHold &&
   left.nextCount === right.nextCount &&
   left.forbidInitialSZ === right.forbidInitialSZ &&
   left.blowbackPercent === right.blowbackPercent
