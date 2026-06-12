@@ -12,8 +12,8 @@ import {GarbageCancel, type MatchSettings, PieceRandomizer, RotationSystem,} fro
 
 const PIECE_TYPES = Object.values(TetrominoType)
 
-const log = (msg: string, data?: unknown) =>
-  console.log(`[TetrisGame] ${msg}`, data ?? '')
+const log = (_msg: string, _data?: unknown) => {
+}
 
 const LINES_PER_LEVEL = 10
 
@@ -533,19 +533,8 @@ export class TetrisGame {
       3: [0, 2],
     }
 
-    const backPairs: Record<number, [number, number]> = {
-      0: [2, 3],
-      1: [0, 2],
-      2: [0, 1],
-      3: [1, 3],
-    }
-
     const [fi, fj] = frontPairs[rotation] ?? [0, 1]
-    const [bi, bj] = backPairs[rotation] ?? [2, 3]
-
     const frontBothFilled = filled[fi] && filled[fj]
-    const backBothFilled = filled[bi] && filled[bj]
-
     const isMiniShape = !frontBothFilled
 
     if (!isMiniShape) {

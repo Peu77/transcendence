@@ -11,10 +11,10 @@ import { toast } from 'sonner'
 import {
   type DirectMessage,
   type Friend,
+  FRIENDS_QUERY_KEYS,
   getDirectMessages,
   markDirectMessagesSeen,
   sendDirectMessage,
-  FRIENDS_QUERY_KEYS,
 } from '@/api/friends.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { Button } from '@/components/ui/button.tsx'
@@ -25,6 +25,7 @@ import { userStore } from '@/store/userStore.ts'
 import { useNavigate } from '@tanstack/react-router'
 import { Gamepad2Icon } from 'lucide-react'
 import { useMatchInvite } from '@/hooks/use-match-invite.ts'
+import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
 
 let dmSendSound: HTMLAudioElement | null = null
 let dmReceiveSound: HTMLAudioElement | null = null
@@ -36,7 +37,6 @@ function getDmReceiveSound() {
   if (!dmReceiveSound) dmReceiveSound = new Audio('/sounds/message_receive.mp3')
   return dmReceiveSound
 }
-import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
 
 function dedupeById<T extends { id: string }>(items: T[]): T[] {
   const seen = new Set<string>()
@@ -418,6 +418,7 @@ export const DMPanel = (props: {
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          maxLength={500}
           placeholder="Type a message…"
         />
         <Button
