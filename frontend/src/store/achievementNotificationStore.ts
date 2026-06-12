@@ -44,7 +44,9 @@ function saveNotified(ids: string[]): void {
     const current = loadNotified()
     ids.forEach((id) => current.add(id))
     localStorage.setItem(NOTIFIED_KEY, JSON.stringify([...current]))
-  } catch {}
+  } catch {
+    // Notifications remain usable when localStorage is unavailable.
+  }
 }
 
 function isBaselineSet(): boolean {
@@ -54,7 +56,9 @@ function isBaselineSet(): boolean {
 function markBaselineSet(): void {
   try {
     localStorage.setItem(INITIALIZED_KEY, 'true')
-  } catch {}
+  } catch {
+    // The baseline can be retried on a later startup.
+  }
 }
 
 // Call once on app startup. Marks all currently-unlocked achievements as
@@ -69,7 +73,9 @@ export async function initAchievementBaseline(qc: QueryClient): Promise<void> {
     })
     saveNotified(data.achievements.filter((a) => a.unlocked).map((a) => a.id))
     markBaselineSet()
-  } catch {}
+  } catch {
+    // Achievement notifications must not block app startup.
+  }
 }
 
 export async function checkAndQueueNewAchievements(
