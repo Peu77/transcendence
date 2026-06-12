@@ -188,9 +188,9 @@ export class TetrisGame {
     this.level = state.level
     this.gameOver = state.gameOver
       this.piecesPlaced = state.piecesPlaced
-    // Private state resets — corrected on next reconciliation
-    this.combo = -1
-    this.backToBack = false
+    this.combo = state.combo
+    this.b2bChain = state.b2bChain
+    this.backToBack = state.b2bChain > 0
     this.outgoingGarbage = 0
     this.pendingGarbage = []
   }
@@ -475,9 +475,9 @@ export class TetrisGame {
     const comboBonus = comboTable[Math.min(this.combo, comboTable.length - 1)] ?? 0
     const allClearBonus = isAllClear ? table.allClear : 0
 
-    if (isHardClear) {
+    if (isHardClear && this.backToBack) {
       this.b2bChain++
-    } else {
+    } else if (!isHardClear) {
       this.b2bChain = 0
     }
     this.backToBack = isHardClear

@@ -392,6 +392,32 @@ code {
   }
 }
 
+@keyframes combo-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.55);
+  }
+  15% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.12);
+  }
+  30% {
+    transform: translateX(-50%) scale(1);
+  }
+  65% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.88);
+  }
+}
+
+.combo-pop {
+  animation: combo-pop 1.5s ease-out forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .crt-flicker {
     animation: none;
