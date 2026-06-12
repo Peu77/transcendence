@@ -3,6 +3,7 @@ import { Server } from 'socket.io'
 import { dmRoom, userRoom } from './realtime.constants'
 import {
   DirectMessageCreatedEvent,
+  DmSeenEvent,
   FriendRequestCreatedEvent,
   FriendRequestResolvedEvent,
   FriendshipDeletedEvent,
@@ -90,5 +91,13 @@ export class RealtimeService {
     this.server.to(userRoom(a)).emit('dm.created', payload)
     this.server.to(userRoom(b)).emit('dm.created', payload)
     this.server.to(dmRoom(a, b)).emit('dm.created', payload)
+  }
+
+  emitDmSeen(userIds: [string, string], payload: DmSeenEvent) {
+    if (!this.server) return
+    const [a, b] = userIds
+    this.server.to(userRoom(a)).emit('dm.seen', payload)
+    this.server.to(userRoom(b)).emit('dm.seen', payload)
+    this.server.to(dmRoom(a, b)).emit('dm.seen', payload)
   }
 }
