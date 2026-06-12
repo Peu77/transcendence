@@ -26,6 +26,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { Gamepad2Icon } from 'lucide-react'
 import { useMatchInvite } from '@/hooks/use-match-invite.ts'
 import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
+import { useDmTypingIndicator } from '@/hooks/use-typing-indicator.ts'
 
 let dmSendSound: HTMLAudioElement | null = null
 let dmReceiveSound: HTMLAudioElement | null = null
@@ -58,6 +59,9 @@ export const DMPanel = (props: {
   const navigate = useNavigate()
 
   useDmRoom(props.friend.id)
+  const { isTyping: friendIsTyping, emitTyping } = useDmTypingIndicator(
+    props.friend.id,
+  )
 
   const goToRoom = useCallback(
     async (roomId: string) => {
@@ -290,6 +294,17 @@ export const DMPanel = (props: {
     }
   }, [messages])
 
+  const lastSeenMessageId = useMemo(() => {
+    const myId = userStore.state?.id
+    if (!myId) return null
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i]
+      if (m.senderId === myId && m.seen) return m.id
+      if (m.senderId === myId && !m.seen) return null
+    }
+    return null
+  }, [messages])
+
   const messagesContent = (() => {
     if (dmQuery.isLoading)
       return <div className="text-muted-foreground">Loading…</div>
@@ -331,6 +346,11 @@ export const DMPanel = (props: {
               </div>
             ) : (
               <div className="break-words">{m.content}</div>
+            )}
+            {m.id === lastSeenMessageId && (
+              <div className="text-[10px] text-muted-foreground text-right">
+                Seen
+              </div>
             )}
           </div>
         ))}
@@ -374,6 +394,24 @@ export const DMPanel = (props: {
 
   useLiveEvent('dm.created', handleDmCreated)
 
+  const handleDmSeen = useCallback(
+    (event: { byUserId: string; friendUserId: string }) => {
+      if (event.byUserId !== props.friend.id) return
+      qc.setQueryData(queryKey, (prev: any) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          messages: (prev.messages ?? []).map((m: DirectMessage) =>
+            m.senderId === userStore.state?.id ? { ...m, seen: true } : m,
+          ),
+        }
+      })
+    },
+    [props.friend.id, qc, queryKey],
+  )
+
+  useLiveEvent('dm.seen', handleDmSeen)
+
   return (
     <div className="h-full flex flex-col p-3 bg-input/20">
       <div className="flex items-center justify-between gap-2">
@@ -408,6 +446,12 @@ export const DMPanel = (props: {
         <div className="p-2">{messagesContent}</div>
       </ScrollArea>
 
+      {friendIsTyping && (
+        <div className="mt-1 text-xs text-muted-foreground animate-pulse">
+          {props.friend.username} is typing...
+        </div>
+      )}
+
       <form
         className="mt-3 flex gap-2"
         onSubmit={(e) => {
@@ -417,7 +461,10 @@ export const DMPanel = (props: {
       >
         <Input
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value)
+            if (e.target.value.trim()) emitTyping()
+          }}
           maxLength={500}
           placeholder="Type a message…"
         />

@@ -591,7 +591,15 @@ export class FriendsService {
       { seen: true },
     )
 
-    return result.affected ?? 0
+    const affected = result.affected ?? 0
+    if (affected > 0) {
+      this.realtime.emitDmSeen([userId, friendUserId], {
+        byUserId: userId,
+        friendUserId,
+      })
+    }
+
+    return affected
   }
 
   private async markConversationMessagesSeen(
