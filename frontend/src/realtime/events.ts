@@ -66,6 +66,9 @@ export type LiveEventMap = {
   'friendship.deleted': FriendshipDeletedEvent
   'presence.updated': PresenceUpdatedEvent
   'dm.created': DirectMessageCreatedEvent
+  'dm.typing': { userId: string }
+  'dm.seen': { byUserId: string; friendUserId: string }
+  'room.chat.typing': { roomId: string; userId: string; username: string }
   'game.countdown': { roomId: string; count: number }
   'game.state': {
     roomId: string
