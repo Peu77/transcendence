@@ -10,8 +10,6 @@ import { RealtimeModule } from './realtime/realtime.module'
 import { RoomModule } from './room/room.module'
 import { MetricsModule } from './metrics/metrics.module'
 import { PublicApiModule } from './public-api/public-api.module'
-import { StatsModule } from './stats/stats.module'
-import { AchievementsModule } from './achievements/achievements.module'
 
 @Module({
   imports: [
@@ -28,7 +26,7 @@ import { AchievementsModule } from './achievements/achievements.module'
         database: config.getOrThrow<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
-        ssl: config.get<string>('DB_SSL') === 'true' ? true : false,
+        ssl: config.get<string>('DB_SSL') === 'true',
         extra:
           config.get<string>('DB_SSL') === 'true'
             ? { ssl: { rejectUnauthorized: false } }
@@ -42,8 +40,6 @@ import { AchievementsModule } from './achievements/achievements.module'
     RoomModule,
     MetricsModule,
     PublicApiModule,
-    StatsModule,
-    AchievementsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
