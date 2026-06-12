@@ -15,6 +15,12 @@ import { SharedPointsPie } from '@/components/app/sharedPointsPie.tsx'
 import { WinRatePie } from '@/components/app/winRatePie.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 import { Button } from '@/components/ui/button.tsx'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip.tsx'
 import { CrownIcon, Gamepad2Icon } from 'lucide-react'
 import { useMutation } from '@tanstack/react-query'
 import { sendMatchInvite, useGetFriends } from '@/api/friends.ts'
@@ -113,25 +119,45 @@ export const ProfileDialog = ({
         ) : (
           <>
             <ProfileContent profile={profile} />
-            <div className="mt-2 flex flex-wrap justify-center gap-2">
-              <AddFriendButton
-                userId={userId}
-                blockedByThem={profile.blockedByThem}
-                iBlockedThem={profile.iBlockedThem}
-              />
-              {currentUserId !== userId && isFriend && (
-                <Button
-                  type="button"
-                  onClick={() => inviteMutation.mutate()}
-                  disabled={inviteMutation.isPending}
-                >
-                  <Gamepad2Icon data-icon="inline-start" />
-                  {inviteMutation.isPending
-                    ? 'Sending invite...'
-                    : 'Invite to match'}
-                </Button>
-              )}
-            </div>
+            {currentUserId !== userId && (
+              <TooltipProvider>
+                <div className="mt-2 flex justify-center gap-2.5 border-t border-border/60 pt-4">
+                  {isFriend && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex">
+                          <Button
+                            type="button"
+                            size="icon-lg"
+                            aria-label="Invite to match"
+                            onClick={() => inviteMutation.mutate()}
+                            disabled={inviteMutation.isPending}
+                            className="size-11 border border-primary/40 shadow-[0_6px_18px_-8px_var(--primary)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md"
+                          >
+                            <Gamepad2Icon
+                              className={`size-5 ${
+                                inviteMutation.isPending ? 'animate-pulse' : ''
+                              }`}
+                            />
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {inviteMutation.isPending
+                          ? 'Sending invite…'
+                          : 'Invite to match'}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  <AddFriendButton
+                    userId={userId}
+                    blockedByThem={profile.blockedByThem}
+                    iBlockedThem={profile.iBlockedThem}
+                    compact
+                  />
+                </div>
+              </TooltipProvider>
+            )}
           </>
         )}
       </DialogContent>

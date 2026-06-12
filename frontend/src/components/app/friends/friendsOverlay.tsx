@@ -219,7 +219,11 @@ export const FriendsOverlay = () => {
 
         {activeDmFriend && (
           <div className="flex-1 border-l border-sidebar-border overflow-hidden flex flex-col min-w-0">
-            <DMPanel friend={activeDmFriend} onClose={closeDm} />
+            <DMPanel
+              friend={activeDmFriend}
+              onClose={closeDm}
+              onOpenProfile={() => setProfileFriend(activeDmFriend)}
+            />
           </div>
         )}
       </div>
