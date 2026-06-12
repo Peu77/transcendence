@@ -525,7 +525,7 @@ export class UsersService {
           .createQueryBuilder('f')
           .where('f.userLowId = :userId OR f.userHighId = :userId', { userId })
           .getCount(),
-        this.getHigherRankedUsersCountByScore(userId),
+        this.getHigherRankedUsersCountByWins(userId),
       ])
 
     const matches = matchCount
@@ -549,20 +549,20 @@ export class UsersService {
     }
   }
 
-  private async getHigherRankedUsersCountByScore(
+  private async getHigherRankedUsersCountByWins(
     userId: string,
   ): Promise<number> {
-    const myScoreSub = this.matchResultsRepo
+    const myWinsSub = this.matchResultsRepo
       .createQueryBuilder('r2')
-      .select('COALESCE(SUM(r2.score), 0)', 'myScore')
+      .select('COALESCE(SUM(CASE WHEN r2.placement = 1 THEN 1 ELSE 0 END), 0)', 'myWins')
       .where('r2.userId = :userId', { userId })
 
     const higherRankedUsers = await this.matchResultsRepo
       .createQueryBuilder('r')
       .select('r.userId', 'userId')
       .groupBy('r.userId')
-      .having(`SUM(r.score) > (${myScoreSub.getQuery()})`)
-      .setParameters(myScoreSub.getParameters())
+      .having(`SUM(CASE WHEN r.placement = 1 THEN 1 ELSE 0 END) > (${myWinsSub.getQuery()})`)
+      .setParameters(myWinsSub.getParameters())
       .getRawMany<{ userId: string }>()
 
     return higherRankedUsers.length
