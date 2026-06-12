@@ -7,15 +7,11 @@ import { UserPresence } from '../friends/entities/user-presence.entity'
 import { Friendship } from '../friends/entities/friendship.entity'
 import { RoomModule } from '../room/room.module'
 import { MatchResult } from '../users/match-result.entity'
-import { StatsModule } from '../stats/stats.module'
-import { AchievementsModule } from '../achievements/achievements.module'
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserPresence, Friendship, MatchResult]),
-    forwardRef(() => RoomModule),
-    StatsModule,
-    AchievementsModule,
+    forwardRef(() => RoomModule)
   ],
   providers: [RealtimeGateway, RealtimeService, RealtimePresenceService],
   exports: [RealtimeService, RealtimePresenceService],
