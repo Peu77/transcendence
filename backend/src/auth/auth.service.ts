@@ -80,13 +80,6 @@ export class AuthService {
       return false
     }
 
-    console.log(
-      'Validating 2FA token for user:',
-      userId,
-      token,
-      user.twoFaSecret,
-    )
-
     const isValid = speakeasy.totp.verify({
       secret: user.twoFaSecret,
       encoding: 'base32',
