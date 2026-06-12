@@ -34,7 +34,13 @@ export default function Login() {
   const [otpCode, setOtpCode] = useState('')
 
   useEffect(() => {
-    if (!userQuery.data || userQuery.error || userQuery.isLoading || !userQuery.data.id) return
+    if (
+      !userQuery.data ||
+      userQuery.error ||
+      userQuery.isLoading ||
+      !userQuery.data.id
+    )
+      return
 
     userStore.setState(() => userQuery.data)
     document.documentElement.classList.toggle(

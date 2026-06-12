@@ -90,7 +90,7 @@ export class RealtimeGateway
     private readonly realtimePresence: RealtimePresenceService,
     private readonly roomService: RoomService,
     @InjectRepository(MatchResult)
-    private readonly matchResultsRepository: Repository<MatchResult>
+    private readonly matchResultsRepository: Repository<MatchResult>,
   ) {
     this.jwtSecret = configService.getOrThrow<string>('JWT_SECRET')
   }
@@ -491,7 +491,9 @@ export class RealtimeGateway
       const [newTargetId] = alive[Math.floor(Math.random() * alive.length)]
       attacker.targetId = newTargetId
       attacker.attackEventCount = 0
-      this.logger.log(`[targeting] ${attackerUserId} → new target: ${newTargetId}`)
+      this.logger.log(
+        `[targeting] ${attackerUserId} → new target: ${newTargetId}`,
+      )
     }
 
     const target = session.players.get(attacker.targetId!)
@@ -504,7 +506,10 @@ export class RealtimeGateway
     )
   }
 
-  private retargetPlayersWhoTargeted(session: RoomGameSession, deadUserId: string) {
+  private retargetPlayersWhoTargeted(
+    session: RoomGameSession,
+    deadUserId: string,
+  ) {
     for (const [, pg] of session.players) {
       if (pg.targetId === deadUserId) {
         pg.targetId = null

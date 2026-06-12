@@ -17,7 +17,9 @@ export function dismissFirstAchievementNotification() {
 // Achievement popups are suppressed while this is true.
 let _gameActive = false
 export const gameActiveState = {
-  set: (v: boolean) => { _gameActive = v },
+  set: (v: boolean) => {
+    _gameActive = v
+  },
   get: () => _gameActive,
 }
 
@@ -70,7 +72,9 @@ export async function initAchievementBaseline(qc: QueryClient): Promise<void> {
   } catch {}
 }
 
-export async function checkAndQueueNewAchievements(qc: QueryClient): Promise<void> {
+export async function checkAndQueueNewAchievements(
+  qc: QueryClient,
+): Promise<void> {
   if (_gameActive) return
   // If the baseline hasn't been seeded yet, do nothing — initAchievementBaseline
   // will handle it; we don't want to fire notifications before it's run.
@@ -82,7 +86,9 @@ export async function checkAndQueueNewAchievements(qc: QueryClient): Promise<voi
     queryFn: getAchievements,
     staleTime: 0,
   })
-  const newly = next.achievements.filter((a) => a.unlocked && !notified.has(a.id))
+  const newly = next.achievements.filter(
+    (a) => a.unlocked && !notified.has(a.id),
+  )
   if (newly.length > 0) {
     saveNotified(newly.map((a) => a.id))
     queueAchievementNotifications(newly)

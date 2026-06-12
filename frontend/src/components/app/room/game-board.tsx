@@ -22,8 +22,16 @@ export function GameBoard({
 
   const prevComboRef = useRef(-1)
   const comboKeyRef = useRef(0)
-  const [comboEvent, setComboEvent] = useState<{ count: number; key: number } | null>(null)
-  const [holdLayout, setHoldLayout] = useState<{ x: number; y: number; dim: number; nextX: number } | null>(null)
+  const [comboEvent, setComboEvent] = useState<{
+    count: number
+    key: number
+  } | null>(null)
+  const [holdLayout, setHoldLayout] = useState<{
+    x: number
+    y: number
+    dim: number
+    nextX: number
+  } | null>(null)
 
   useEffect(() => {
     if (!large) return

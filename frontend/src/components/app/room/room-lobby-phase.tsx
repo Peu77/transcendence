@@ -15,7 +15,7 @@ import {
   type Room,
   RoomType,
   updateMatchSettings,
-  updateRoomSettings
+  updateRoomSettings,
 } from '@/api/room.ts'
 import { userStore } from '@/store/userStore'
 import { type RoomSettingsValues } from '@/routes/app/room.settings.ts'

@@ -8,7 +8,9 @@ import { UserBlock } from '../friends/entities/block.entity'
 import { Friendship } from '../friends/entities/friendship.entity'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, MatchResult, UserBlock, Friendship])],
+  imports: [
+    TypeOrmModule.forFeature([User, MatchResult, UserBlock, Friendship]),
+  ],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService],

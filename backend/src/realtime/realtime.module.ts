@@ -11,7 +11,7 @@ import { MatchResult } from '../users/match-result.entity'
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserPresence, Friendship, MatchResult]),
-    forwardRef(() => RoomModule)
+    forwardRef(() => RoomModule),
   ],
   providers: [RealtimeGateway, RealtimeService, RealtimePresenceService],
   exports: [RealtimeService, RealtimePresenceService],

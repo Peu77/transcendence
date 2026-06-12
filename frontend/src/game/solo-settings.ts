@@ -6,7 +6,6 @@ export type SoloMatchSettings = Pick<
   | 'gincrease'
   | 'gmargin'
   | 'lockDelayMs'
-
   | 'hold'
   | 'nextCount'
   | 'forbidInitialSZ'
@@ -52,7 +51,6 @@ export const areSoloMatchSettingsEqual = (
   left.gincrease === right.gincrease &&
   left.gmargin === right.gmargin &&
   left.lockDelayMs === right.lockDelayMs &&
-
   left.hold === right.hold &&
   left.nextCount === right.nextCount &&
   left.forbidInitialSZ === right.forbidInitialSZ &&
