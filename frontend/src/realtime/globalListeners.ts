@@ -109,6 +109,13 @@ export function useGlobalListeners() {
     })
   })
 
+  useLiveEvent('dm.seen', async (event) => {
+    if (event.byUserId !== userStore.state?.id) return
+    await qc.invalidateQueries({
+      queryKey: FRIENDS_QUERY_KEYS.UNREAD_MESSAGES,
+    })
+  })
+
   // Keep the multiplayer room list in sync
   useLiveEvent('rooms.updated', async () => {
     await qc.invalidateQueries({ queryKey: ['rooms'] })
