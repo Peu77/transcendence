@@ -59,6 +59,11 @@ export type MatchSettings = {
   hold: boolean
 
   /**
+   * When true, the player can hold on every piece without waiting for the next spawn.
+   */
+  infiniteHold: boolean
+
+  /**
    * Number of upcoming pieces shown in the preview queue.
    */
   nextCount: number

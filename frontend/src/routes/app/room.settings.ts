@@ -15,6 +15,7 @@ export const matchSettingsSchema = z.object({
 
   rotationSystem: z.enum(RotationSystem),
   hold: z.boolean(),
+  infiniteHold: z.boolean(),
   nextCount: z.number().min(0).max(10),
   bag: z.enum(PieceRandomizer),
   forbidInitialSZ: z.boolean(),

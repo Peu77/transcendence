@@ -183,6 +183,7 @@ export class RoomService {
 
       rotationSystem: RotationSystem.SRS,
       hold: true,
+      infiniteHold: false,
       nextCount: 5,
       bag: PieceRandomizer.SEVEN_BAG,
       forbidInitialSZ: false,

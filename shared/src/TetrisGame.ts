@@ -243,6 +243,7 @@ export class TetrisGame {
 
       rotationSystem: RotationSystem.SRS,
       hold: true,
+      infiniteHold: false,
       nextCount: 5,
       bag: PieceRandomizer.SEVEN_BAG,
       forbidInitialSZ: false,
@@ -663,7 +664,7 @@ export class TetrisGame {
     const nextType = this.heldType ?? this.takeNextType()
     this.heldType = currentType
     this.currentPiece = this.spawnPiece(nextType)
-    this.canHold = false
+    if (!this.settings.infiniteHold) this.canHold = false
     this.lockDelayStart = null
     this.lockResetCount = 0
     this.lastRotated = false
