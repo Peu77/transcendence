@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { useStore } from '@tanstack/react-form'
 
 import { useFieldContext, useFormContext } from '@/hooks/form-context.ts'
@@ -9,6 +10,7 @@ import * as ShadcnSelect from '@/components/ui/select'
 import { Slider as ShadcnSlider } from '@/components/ui/slider'
 import { Switch as ShadcnSwitch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { NumberBadgeInput } from '@/components/ui/number-badge-input'
 
 export function SubscribeButton({ label }: { label: string }) {
   const form = useFormContext()
@@ -182,6 +184,82 @@ export function Slider({
         step={step}
         disabled={disabled}
       />
+      {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
+    </div>
+  )
+}
+
+export function NumberField({
+  label,
+  min,
+  max,
+  step,
+  defaultValue,
+  disabled,
+}: {
+  label: string
+  min?: number
+  max?: number
+  step?: number
+  defaultValue?: number
+  disabled?: boolean
+}) {
+  const field = useFieldContext<number>()
+  const errors = useStore(field.store, (state) => state.meta.errors)
+  const [display, setDisplay] = useState(() => field.state.value?.toString() ?? '')
+  const focusedRef = useRef(false)
+
+  const fieldValue = field.state.value
+  useEffect(() => {
+    if (!focusedRef.current) setDisplay(fieldValue?.toString() ?? '')
+  }, [fieldValue])
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex justify-between items-center gap-3">
+        <Label htmlFor={label} className="font-bold">
+          {label}
+        </Label>
+        <NumberBadgeInput
+          id={label}
+          type="text"
+          inputMode="decimal"
+          value={display}
+          disabled={disabled}
+          onFocus={() => { focusedRef.current = true }}
+          onBlur={(e) => {
+            focusedRef.current = false
+            field.handleBlur()
+            const parsed = parseFloat(display.replace(',', '.'))
+            if (isNaN(parsed) || display.trim() === '') {
+              const fallback = defaultValue ?? fieldValue ?? 0
+              setDisplay(String(fallback))
+              field.handleChange(fallback)
+            } else {
+              setDisplay(String(parsed))
+            }
+          }}
+          onChange={(e) => {
+            const raw = e.target.value
+            setDisplay(raw)
+            if (raw === '' || raw === '.' || raw === '-' || raw === '-.') return
+            const parsed = parseFloat(raw.replace(',', '.'))
+            if (!isNaN(parsed)) field.handleChange(parsed)
+          }}
+          onKeyDown={(e) => {
+            if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
+            e.preventDefault()
+            const current = field.state.value ?? 0
+            const s = step ?? 1
+            const dec = (String(s).split('.')[1] ?? '').length
+            const raw = e.key === 'ArrowUp' ? current + s : current - s
+            const clamped = Math.max(min ?? -Infinity, Math.min(max ?? Infinity, raw))
+            const next = parseFloat(clamped.toFixed(dec))
+            field.handleChange(next)
+            setDisplay(String(next))
+          }}
+        />
+      </div>
       {field.state.meta.isTouched && <ErrorMessages errors={errors} />}
     </div>
   )

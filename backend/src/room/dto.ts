@@ -120,7 +120,7 @@ export class UpdateMatchSettingsDto {
 
   @IsNumber()
   @Min(0)
-  @Max(20)
+  @Max(0.5)
   gincrease!: number
   
   @IsNumber()

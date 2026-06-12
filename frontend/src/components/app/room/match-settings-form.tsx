@@ -1,8 +1,49 @@
-import { PieceRandomizer, RotationSystem } from '@/api/room.ts'
+import { GarbageCancel, PieceRandomizer, RotationSystem } from '@/api/room.ts'
 import { Button } from '@/components/ui/button.tsx'
 import { useAppForm } from '@/hooks/form.ts'
 import { matchSettingsSchema } from '@/routes/app/room.settings.ts'
 import type { MatchSettingsFormProps } from './types.ts'
+
+const DEFAULT_MATCH_SETTINGS = {
+  gravity: 0.02,
+  gincrease: 0.0025,
+  gmargin: 3600,
+  lockDelayMs: 300,
+  lockResetLimit: 15,
+  rotationSystem: RotationSystem.SRS,
+  hold: true,
+  nextCount: 5,
+  bag: PieceRandomizer.SEVEN_BAG,
+  forbidInitialSZ: false,
+  width: 10,
+  height: 20,
+  hiddenRows: 0,
+  garbageTargetK: 5,
+  garbage: {
+    enabled: true,
+    delayMs: 500,
+    cancel: GarbageCancel.PARTIAL,
+    holeCount: 1,
+    messiness: 0,
+  },
+  damage: {
+    table: {
+      single: 0,
+      double: 1,
+      triple: 2,
+      tetris: 4,
+      tSpinMiniSingle: 0,
+      tSpinMiniDouble: 1,
+      tSpinSingle: 2,
+      tSpinDouble: 4,
+      tSpinTriple: 6,
+      allClear: 10,
+    },
+    comboTable: [0, 0, 1, 1, 1, 2, 2, 3, 3, 4],
+    backToBackBonus: 1,
+    garbageCap: 8,
+  },
+}
 
 export function MatchSettingsForm({
   room,
@@ -28,15 +69,25 @@ export function MatchSettingsForm({
     >
       <div className="flex items-center justify-end gap-4 pb-4 sticky top-0 z-10 pr-5">
         {isHost && (
-          <Button
-            type="submit"
-            size="sm"
-            disabled={form.state.isSubmitting || isSaving}
-          >
-            {form.state.isSubmitting || isSaving
-              ? 'Saving...'
-              : 'Save Settings'}
-          </Button>
+          <>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => form.reset(DEFAULT_MATCH_SETTINGS)}
+              disabled={form.state.isSubmitting || isSaving}
+            >
+              Reset
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={form.state.isSubmitting || isSaving}
+            >
+              {form.state.isSubmitting || isSaving
+                ? 'Saving...'
+                : 'Save Settings'}
+            </Button>
+          </>
         )}
       </div>
 
@@ -47,22 +98,24 @@ export function MatchSettingsForm({
           </h3>
           <form.AppField name="gravity">
             {(field) => (
-              <field.Slider
+              <field.NumberField
                 label="Gravity"
                 min={0}
                 max={20}
-                step={0.1}
+                step={0.01}
+                defaultValue={0.02}
                 disabled={!isHost}
               />
             )}
           </form.AppField>
           <form.AppField name="gincrease">
             {(field) => (
-              <field.Slider
+              <field.NumberField
                 label="Gravity Increase"
                 min={0}
-                max={20}
-                step={0.001}
+                max={0.5}
+                step={0.0001}
+                defaultValue={0.0025}
                 disabled={!isHost}
               />
             )}

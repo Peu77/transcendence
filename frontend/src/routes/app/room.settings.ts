@@ -7,8 +7,8 @@ import {
 } from '@/api/room.ts'
 
 export const matchSettingsSchema = z.object({
-  gravity: z.number().min(0),
-  gincrease: z.number().min(0),
+  gravity: z.number().min(0).max(20),
+  gincrease: z.number().min(0).max(0.5),
   gmargin: z.number().min(0),
   lockDelayMs: z.number().min(0),
   lockResetLimit: z.number().min(0),

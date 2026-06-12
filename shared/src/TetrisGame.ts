@@ -204,6 +204,7 @@ export class TetrisGame {
   getTickInterval(): number {
     const g = this.getEffectiveGravity()
     if (g >= 20) return 1
+    if (g <= 0) return 60000
     // Use level-based curve only when gravity is default and gincrease is off.
     if (this.settings.gincrease === 0 && this.settings.gravity === 1) {
       return Math.max(100, 800 - (this.level - 1) * 70)

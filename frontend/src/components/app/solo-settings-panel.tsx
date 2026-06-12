@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import {
   CardContent,
   CardDescription,
@@ -7,8 +8,10 @@ import { Label } from '@/components/ui/label.tsx'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { Slider } from '@/components/ui/slider.tsx'
 import { Switch } from '@/components/ui/switch.tsx'
-import { type SoloMatchSettings } from '@/game/solo-settings.ts'
+import { DEFAULT_SOLO_MATCH_SETTINGS, type SoloMatchSettings } from '@/game/solo-settings.ts'
 import { RESTART_SOLO_KEY } from '@/game/keyboard.ts'
+import { NumberBadgeInput } from '@/components/ui/number-badge-input'
+import { Button } from '@/components/ui/button.tsx'
 
 type SoloSettingsPanelProps = {
   settings: SoloMatchSettings
@@ -33,6 +36,8 @@ type NumericSetting = {
   max: number
   step: number
   formatValue: (value: number) => string
+  useInput?: boolean
+  defaultValue?: number
 }
 
 const NUMERIC_SETTINGS: NumericSetting[] = [
@@ -45,6 +50,8 @@ const NUMERIC_SETTINGS: NumericSetting[] = [
     max: 20,
     step: 0.01,
     formatValue: (value) => `${value}`,
+    useInput: true,
+    defaultValue: 0.02,
   },
   {
     key: 'gincrease',
@@ -52,9 +59,11 @@ const NUMERIC_SETTINGS: NumericSetting[] = [
     description:
       'Amount of gravity increase per second. Set to 0 to keep gravity constant throughout the run.',
     min: 0,
-    max: 0.05,
+    max: 0.5,
     step: 0.001,
     formatValue: (value) => `${value}`,
+    useInput: true,
+    defaultValue: 0.0025,
   },
   {
     key: 'gmargin',
@@ -97,6 +106,70 @@ const NUMERIC_SETTINGS: NumericSetting[] = [
     formatValue: (value) => `${value}%`,
   },
 ]
+
+function stepDecimals(step: number) {
+  return (String(step).split('.')[1] ?? '').length
+}
+
+function NumericSettingInput({
+  value,
+  min,
+  max,
+  step,
+  defaultValue,
+  onChange,
+}: {
+  value: number
+  min: number
+  max: number
+  step: number
+  defaultValue?: number
+  onChange: (val: number) => void
+}) {
+  const [display, setDisplay] = useState(() => String(value))
+  const focusedRef = useRef(false)
+
+  useEffect(() => {
+    if (!focusedRef.current) setDisplay(String(value))
+  }, [value])
+
+  return (
+    <NumberBadgeInput
+      type="text"
+      inputMode="decimal"
+      value={display}
+      className="w-20 h-7 px-2 text-xs"
+      onFocus={() => { focusedRef.current = true }}
+      onBlur={() => {
+        focusedRef.current = false
+        const parsed = parseFloat(display.replace(',', '.'))
+        if (isNaN(parsed) || display.trim() === '') {
+          const fallback = defaultValue ?? value
+          setDisplay(String(fallback))
+          onChange(fallback)
+        } else {
+          setDisplay(String(parsed))
+        }
+      }}
+      onChange={(e) => {
+        const raw = e.target.value
+        setDisplay(raw)
+        if (raw === '' || raw === '.' || raw === '-' || raw === '-.') return
+        const parsed = parseFloat(raw.replace(',', '.'))
+        if (!isNaN(parsed)) onChange(parsed)
+      }}
+      onKeyDown={(e) => {
+        if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
+        e.preventDefault()
+        const dec = stepDecimals(step)
+        const raw = e.key === 'ArrowUp' ? value + step : value - step
+        const next = parseFloat(Math.max(min, Math.min(max, raw)).toFixed(dec))
+        onChange(next)
+        setDisplay(String(next))
+      }}
+    />
+  )
+}
 
 export function SoloSettingsPanel({
   settings,
@@ -141,25 +214,34 @@ export function SoloSettingsPanel({
                         <Label className="text-sm font-medium text-foreground">
                           {setting.label}
                         </Label>
-                        <span className="clip-pixel-corners-btn bg-primary/12 px-2.5 py-1 text-xs font-semibold text-primary">
-                          {setting.formatValue(settings[setting.key])}
-                        </span>
+                        {setting.useInput ? (
+                          <NumericSettingInput
+                            value={settings[setting.key]}
+                            min={setting.min}
+                            max={setting.max}
+                            step={setting.step}
+                            defaultValue={setting.defaultValue}
+                            onChange={(val) => onChange({ ...settings, [setting.key]: val })}
+                          />
+                        ) : (
+                          <span className="clip-pixel-corners-btn bg-primary/12 px-2.5 py-1 text-xs font-semibold text-primary">
+                            {setting.formatValue(settings[setting.key])}
+                          </span>
+                        )}
                       </div>
-                      <Slider
-                        min={setting.min}
-                        max={setting.max}
-                        step={setting.step}
-                        value={[settings[setting.key]]}
-                        onValueChange={(value) => {
-                          const nextValue = value[0]
-                          if (nextValue === undefined) return
-
-                          onChange({
-                            ...settings,
-                            [setting.key]: nextValue,
-                          })
-                        }}
-                      />
+                      {!setting.useInput && (
+                        <Slider
+                          min={setting.min}
+                          max={setting.max}
+                          step={setting.step}
+                          value={[settings[setting.key]]}
+                          onValueChange={(value) => {
+                            const nextValue = value[0]
+                            if (nextValue === undefined) return
+                            onChange({ ...settings, [setting.key]: nextValue })
+                          }}
+                        />
+                      )}
                       <p className="text-xs leading-5 text-muted-foreground">
                         {setting.description}
                       </p>
@@ -201,6 +283,14 @@ export function SoloSettingsPanel({
                       />
                     </div>
                   </div>
+
+                  <Button
+                    type="button"
+                    className="w-full"
+                    onClick={() => onChange(DEFAULT_SOLO_MATCH_SETTINGS)}
+                  >
+                    Reset
+                  </Button>
                 </CardContent>
               </ScrollArea>
             </div>
