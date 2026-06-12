@@ -5,6 +5,7 @@ export const FRIENDS_QUERY_KEYS = {
   FRIENDS: ['friends'],
   OUTGOING_REQUESTS: ['friends', 'requests', 'outgoing'],
   INCOMING_REQUESTS: ['friends', 'requests', 'incoming'],
+  BLOCKED_USERS: ['friends', 'blocked'],
 }
 
 export function useGetFriends() {
@@ -45,42 +46,11 @@ export function useCancelFriendRequest() {
   })
 }
 
-export type BlockedUser = {
-  id: string
-  username: string
-  profilePictureId: string | null
-}
-
-export async function getBlockedUsers(): Promise<BlockedUser[]> {
-  const res = await axios.get<{ blocked: BlockedUser[] }>('/friends/blocked')
-  return res.data.blocked
-}
-
 export function useGetBlockedUsers() {
   return useQuery({
-    queryKey: ['friends', 'blocked'],
+    queryKey: FRIENDS_QUERY_KEYS.BLOCKED_USERS,
     queryFn: getBlockedUsers,
   })
-}
-
-export async function blockUser(blockedId: string): Promise<void> {
-  await axios.post(`/friends/block/${blockedId}`)
-}
-
-export function useBlockUser() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: blockUser,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: FRIENDS_QUERY_KEYS.INCOMING_REQUESTS,
-      })
-    },
-  })
-}
-
-export async function unblockUser(blockedId: string): Promise<void> {
-  await axios.delete(`/friends/block/${blockedId}`)
 }
 
 export function useUnblockUser() {
@@ -89,7 +59,48 @@ export function useUnblockUser() {
     mutationFn: unblockUser,
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['friends', 'blocked'] }),
+        queryClient.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.BLOCKED_USERS,
+        }),
+        queryClient.invalidateQueries({ queryKey: ['publicProfile'] }),
+      ])
+    },
+  })
+}
+
+export function useBlockUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: blockUser,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.FRIENDS,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.INCOMING_REQUESTS,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.BLOCKED_USERS,
+        }),
+        queryClient.invalidateQueries({ queryKey: ['publicProfile'] }),
+      ])
+    },
+  })
+}
+
+export function useDeleteFriend() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteFriend,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.FRIENDS,
+        }),
         queryClient.invalidateQueries({ queryKey: ['publicProfile'] }),
       ])
     },

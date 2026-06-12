@@ -19,6 +19,7 @@ import { UserBlock } from './entities/block.entity'
 import { isUUID } from 'class-validator'
 import { RealtimeService } from '../realtime/realtime.service'
 import { UsersService } from '../users/users.service'
+import { RoomService } from '../room/room.service'
 
 @Injectable()
 export class FriendsService {
@@ -81,27 +82,24 @@ export class FriendsService {
     })
     if (alreadyFriends) throw new ConflictException('Already friends')
 
+    const reverseRequest = await this.friendRequestsRepo.findOne({
+      where: {
+        fromUserId: toUser.id,
+        toUserId: fromUserId,
+        status: FriendRequestStatus.PENDING,
+      },
+    })
+    if (reverseRequest) {
+      await this.acceptRequest(reverseRequest.id, fromUserId)
+      reverseRequest.status = FriendRequestStatus.ACCEPTED
+      return reverseRequest
+    }
+
     const alreadySendRequest = await this.friendRequestsRepo.exists({
       where: { fromUserId, toUserId: toUser.id },
     })
     if (alreadySendRequest)
       throw new ConflictException('Friend request already sent')
-
-    const existing = await this.friendRequestsRepo.findOne({
-      where: [
-        {
-          fromUserId,
-          toUserId: toUser.id,
-          status: FriendRequestStatus.PENDING,
-        },
-        {
-          fromUserId: toUser.id,
-          toUserId: fromUserId,
-          status: FriendRequestStatus.PENDING,
-        },
-      ],
-    })
-    if (existing) throw new ConflictException('Friend request already pending')
 
     const request = this.friendRequestsRepo.create({
       fromUserId,
@@ -196,8 +194,8 @@ export class FriendsService {
       throw new BadRequestException('Friend request is not pending')
     if (req.toUserId !== userId) throw new ForbiddenException('Not allowed')
 
-    req.status = FriendRequestStatus.DENIED
-    await this.friendRequestsRepo.save(req)
+    await this.blockUser(userId, req.fromUserId)
+    await this.friendRequestsRepo.delete({ id: req.id })
 
     const resolvedAt = new Date().toISOString()
     this.realtime.emitFriendRequestDenied(req.fromUserId, {
@@ -597,7 +595,9 @@ export class FriendsService {
     await this.blocksRepo.delete({ blockerId, blockedId })
   }
 
-  async listBlocked(userId: string): Promise<
+  async listBlocked(
+    userId: string,
+  ): Promise<
     Array<{ id: string; username: string; profilePictureId: string | null }>
   > {
     const blocks = await this.blocksRepo.find({
@@ -608,6 +608,20 @@ export class FriendsService {
 
     return blocks.map((b) => ({
       id: b.blocked.id,
+      username: b.blocked.username,
+      profilePictureId: b.blocked.profilePictureId,
+    }))
+  }
+
+  async getBlockedUsers(blockerId: string) {
+    const blocks = await this.blocksRepo.find({
+      where: { blockerId },
+      relations: {
+        blocked: true,
+      },
+    })
+    return blocks.map((b) => ({
+      id: b.blockedId,
       username: b.blocked.username,
       profilePictureId: b.blocked.profilePictureId,
     }))

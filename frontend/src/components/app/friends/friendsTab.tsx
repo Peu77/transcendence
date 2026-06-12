@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-import { blockUser, deleteFriend, getFriends, sendFriendRequest, type Friend } from '@/api/friends.ts'
+import { getFriends, sendFriendRequest, type Friend } from '@/api/friends.ts'
 import { Button } from '@/components/ui/button.tsx'
 import { Input } from '@/components/ui/input.tsx'
 import { FriendRow } from '@/components/app/friends/friendRow.tsx'
@@ -13,6 +13,7 @@ export const FriendsTab = (props: {
   isOpen: boolean
   activeDmFriend: Friend | null
   onOpenDM: (friend: Friend) => void
+  onOpenProfile: (friend: Friend) => void
   onCloseDM: () => void
 }) => {
   const qc = useQueryClient()
@@ -91,28 +92,7 @@ export const FriendsTab = (props: {
     },
   })
 
-  const deleteFriendMutation = useMutation({
-    mutationFn: (friendUserId: string) => deleteFriend(friendUserId),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['friends'] })
-      toast.success('Friend removed')
-    },
-    onError: (e: any) =>
-      toast.error(e?.response?.data?.message ?? 'Failed to remove friend'),
-  })
-
-  const blockFriendMutation = useMutation({
-    mutationFn: (friendUserId: string) => blockUser(friendUserId),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['friends'] })
-      await qc.invalidateQueries({ queryKey: ['friends', 'blocked'] })
-      toast.success('User blocked')
-    },
-    onError: (e: any) =>
-      toast.error(e?.response?.data?.message ?? 'Failed to block user'),
-  })
-
-  const friends = friendsQuery.data ?? []
+  const friends = useMemo(() => friendsQuery.data ?? [], [friendsQuery.data])
 
   // If the active DM friend is removed from the list, close the panel.
   useEffect(() => {
@@ -147,8 +127,7 @@ export const FriendsTab = (props: {
             key={friend.id}
             friend={friend}
             onOpenDM={() => onOpenDM(friend)}
-            onDelete={() => deleteFriendMutation.mutate(friend.id)}
-            onBlock={() => blockFriendMutation.mutate(friend.id)}
+            onOpenProfile={() => props.onOpenProfile(friend)}
           />
         ))}
       </div>

@@ -3,7 +3,7 @@ import {
   friendsOverlayStore,
   setFriendsOverlayIsOpen,
 } from '@/store/friendsOverlayStore.tsx'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Tabs,
   TabsContent,
@@ -12,11 +12,17 @@ import {
 } from '@/components/ui/tabs.tsx'
 import { FriendsTab } from '@/components/app/friends/friendsTab.tsx'
 import { RequestsTab } from '@/components/app/friends/requestsTab.tsx'
-import { useGetBlockedUsers, useUnblockUser } from '@/api/friends.ts'
+import {
+  type Friend,
+  useGetBlockedUsers,
+  useUnblockUser,
+} from '@/api/friends.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { ChevronUpIcon } from 'lucide-react'
 import { toast } from 'sonner'
+import { DMPanel } from '@/components/app/friends/dmPanel.tsx'
+import { ProfileDialog } from '@/components/app/profileDialog.tsx'
 
 function BlockedDrawer() {
   const [expanded, setExpanded] = useState(false)
@@ -26,7 +32,9 @@ function BlockedDrawer() {
   return (
     <div className="border-t border-sidebar-border">
       <button
+        type="button"
         onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
         className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
       >
         <span>Blocked{blocked.length > 0 ? ` (${blocked.length})` : ''}</span>
@@ -37,14 +45,16 @@ function BlockedDrawer() {
 
       <div
         className="overflow-hidden transition-all duration-300 ease-in-out"
-        style={{ maxHeight: expanded ? `${Math.max(blocked.length, 1) * 56 + 16}px` : '0px' }}
+        style={{ maxHeight: expanded ? '18rem' : '0px' }}
       >
-        <div className="flex flex-col gap-1 px-3 pb-3">
+        <div className="flex max-h-72 flex-col gap-1 overflow-y-auto px-3 pb-3">
           {isLoading && (
             <p className="px-1 py-2 text-xs text-muted-foreground">Loading…</p>
           )}
           {!isLoading && blocked.length === 0 && (
-            <p className="px-1 py-2 text-xs text-muted-foreground">No blocked users.</p>
+            <p className="px-1 py-2 text-xs text-muted-foreground">
+              No blocked users.
+            </p>
           )}
           {blocked.map((user) => (
             <div
@@ -55,7 +65,9 @@ function BlockedDrawer() {
                 profilePictureId={user.profilePictureId}
                 className="size-8 shrink-0"
               />
-              <span className="flex-1 truncate text-sm font-medium">{user.username}</span>
+              <span className="flex-1 truncate text-sm font-medium">
+                {user.username}
+              </span>
               <Button
                 size="sm"
                 variant="outline"
@@ -63,7 +75,8 @@ function BlockedDrawer() {
                 disabled={unblockMutation.isPending}
                 onClick={() =>
                   unblockMutation.mutate(user.id, {
-                    onSuccess: () => toast.success(`Unblocked ${user.username}`),
+                    onSuccess: () =>
+                      toast.success(`Unblocked ${user.username}`),
                     onError: () => toast.error('Failed to unblock'),
                   })
                 }
@@ -81,6 +94,7 @@ function BlockedDrawer() {
 export const FriendsOverlay = () => {
   const isOpen = useStore(friendsOverlayStore, (s) => s.isOpen)
   const [activeDmFriend, setActiveDmFriend] = useState<Friend | null>(null)
+  const [profileFriend, setProfileFriend] = useState<Friend | null>(null)
 
   useEffect(() => {
     const cancelSignal = new AbortController()
@@ -88,6 +102,8 @@ export const FriendsOverlay = () => {
     globalThis.addEventListener(
       'keydown',
       (e) => {
+        if (profileFriend) return
+
         if (e.key === 'Escape' && isOpen) {
           e.preventDefault()
           setFriendsOverlayIsOpen(false)
@@ -105,10 +121,17 @@ export const FriendsOverlay = () => {
     return () => {
       cancelSignal.abort()
     }
-  }, [isOpen])
+  }, [isOpen, profileFriend])
 
   return (
     <>
+      <ProfileDialog
+        userId={profileFriend?.id ?? ''}
+        open={profileFriend !== null}
+        onOpenChange={(open) => {
+          if (!open) setProfileFriend(null)
+        }}
+      />
       <button
         type="button"
         aria-label="Close friends overlay"
@@ -121,45 +144,54 @@ export const FriendsOverlay = () => {
       <div
         className={`fixed z-50 top-1/2 -translate-y-1/2 flex bg-sidebar border-r border-sidebar-border shadow-2xl transition-all duration-300 ease-in-out clip-pixel-corners-btn ${
           isOpen
-            ? `translate-x-0 left-5 h-[calc(100dvh-2rem)] ${activeDmFriend ? 'w-[760px]' : 'w-[380px]'}`
+            ? `translate-x-0 left-5 h-[calc(100dvh-2rem)] ${
+                activeDmFriend
+                  ? 'w-[calc(100vw-2.5rem)] max-w-[1120px]'
+                  : 'w-[380px]'
+              }`
             : 'left-0 h-[calc(100dvh/2)] -translate-x-full w-[380px]'
         }`}
       >
-        <div className="w-[380px] shrink-0 flex flex-col overflow-y-auto">
+        <div className="flex w-[380px] shrink-0 flex-col overflow-hidden">
           <h2 className="p-4 font-bold text-lg border-b border-sidebar-border shrink-0">
             Friends
           </h2>
 
-          <Tabs className="w-full mt-2" defaultValue={'friends'}>
+          <Tabs
+            className="mt-2 flex min-h-0 w-full flex-1 flex-col"
+            defaultValue="friends"
+          >
             <TabsList className="flex w-full">
-              <TabsTrigger className="w-full" value={'friends'}>
+              <TabsTrigger className="w-full" value="friends">
                 Friends
               </TabsTrigger>
-              <TabsTrigger className="w-full" value={'requests'}>
+              <TabsTrigger className="w-full" value="requests">
                 Requests
-              </TabsTrigger>
-              <TabsTrigger className="w-full" value={'blocked'}>
-                Blocked
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value={'friends'}>
+            <TabsContent
+              className="min-h-0 flex-1 overflow-y-auto"
+              value="friends"
+            >
               <FriendsTab
                 isOpen={isOpen}
                 activeDmFriend={activeDmFriend}
                 onOpenDM={setActiveDmFriend}
+                onOpenProfile={setProfileFriend}
                 onCloseDM={() => setActiveDmFriend(null)}
               />
             </TabsContent>
 
-            <TabsContent value={'requests'}>
+            <TabsContent
+              className="min-h-0 flex-1 overflow-y-auto"
+              value="requests"
+            >
               <RequestsTab isOpen={isOpen} />
             </TabsContent>
-
-            <TabsContent value={'blocked'}>
-              <BlockedTab isOpen={isOpen} />
-            </TabsContent>
           </Tabs>
+
+          <BlockedDrawer />
         </div>
 
         {activeDmFriend && (
