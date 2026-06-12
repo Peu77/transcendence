@@ -4,11 +4,19 @@ import {
   useGetOutgoingFriendRequests,
   useSendFriendRequest,
   useCancelFriendRequest,
+  useBlockUser,
+  useDeleteFriend,
   useUnblockUser,
 } from '@/api/friends.ts'
 import { userStore } from '@/store/userStore.ts'
 import { useStore } from '@tanstack/react-store'
-import { UserPlusIcon, ClockIcon, BanIcon, ShieldOffIcon } from 'lucide-react'
+import {
+  UserPlusIcon,
+  ClockIcon,
+  BanIcon,
+  ShieldOffIcon,
+  UserMinusIcon,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 export function AddFriendButton({
@@ -25,6 +33,8 @@ export function AddFriendButton({
   const outgoingQuery = useGetOutgoingFriendRequests()
   const sendRequest = useSendFriendRequest()
   const cancelRequest = useCancelFriendRequest()
+  const block = useBlockUser()
+  const deleteFriend = useDeleteFriend()
   const unblock = useUnblockUser()
 
   if (currentUserId === userId) return null
@@ -60,7 +70,38 @@ export function AddFriendButton({
   const outgoing = outgoingQuery.data?.find((r) => r.toUser.id === userId)
 
   if (friendsQuery.isPending || outgoingQuery.isPending) return null
-  if (isFriend) return null
+  if (isFriend) {
+    return (
+      <div className="flex flex-wrap justify-center gap-2">
+        <Button
+          variant="outline"
+          onClick={() =>
+            deleteFriend.mutate(userId, {
+              onSuccess: () => toast.success('Friend removed'),
+              onError: () => toast.error('Failed to remove friend'),
+            })
+          }
+          disabled={deleteFriend.isPending || block.isPending}
+        >
+          <UserMinusIcon className="mr-2 size-4" />
+          {deleteFriend.isPending ? 'Removing…' : 'Remove Friend'}
+        </Button>
+        <Button
+          variant="destructive"
+          onClick={() =>
+            block.mutate(userId, {
+              onSuccess: () => toast.success('User blocked'),
+              onError: () => toast.error('Failed to block user'),
+            })
+          }
+          disabled={deleteFriend.isPending || block.isPending}
+        >
+          <BanIcon className="mr-2 size-4" />
+          {block.isPending ? 'Blocking…' : 'Block'}
+        </Button>
+      </div>
+    )
+  }
 
   if (outgoing) {
     return (
