@@ -21,7 +21,7 @@ import {
 } from '@/api/friends.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { Button } from '@/components/ui/button.tsx'
-import { ChevronUpIcon } from 'lucide-react'
+import { ChevronUpIcon, XIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { DMPanel } from '@/components/app/friends/dmPanel.tsx'
 import { ProfileDialog } from '@/components/app/profileDialog.tsx'
@@ -182,10 +182,20 @@ export const FriendsOverlay = () => {
               : 'left-0 h-[calc(100dvh/2)] w-full sm:w-95 -translate-x-full'
         }`}
       >
-        <div className={`shrink-0 flex-col overflow-hidden w-full sm:w-95 ${activeDmFriend && !isDmClosing ? 'hidden sm:flex' : 'flex'}`}>
-          <h2 className="p-4 font-bold text-lg border-b border-sidebar-border shrink-0">
-            Friends
-          </h2>
+        <div
+          className={`shrink-0 flex-col overflow-hidden w-full sm:w-95 ${activeDmFriend && !isDmClosing ? 'hidden sm:flex' : 'flex'}`}
+        >
+          <div className="flex items-center justify-between p-4 border-b border-sidebar-border shrink-0">
+            <h2 className="font-bold text-lg">Friends</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="sm:hidden size-7"
+              onClick={() => setFriendsOverlayIsOpen(false)}
+            >
+              <XIcon className="size-4" />
+            </Button>
+          </div>
 
           <Tabs
             className="mt-2 flex min-h-0 w-full flex-1 flex-col"
