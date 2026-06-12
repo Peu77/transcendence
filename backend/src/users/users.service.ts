@@ -55,6 +55,26 @@ interface PlayerStats {
   wins: number
 }
 
+export interface AchievementStats {
+  matches: number
+  score: number
+  lines: number
+  wins: number
+  friends: number
+  rank: number
+  level: number
+  bestDomination: number
+  baseUnlocked?: number
+  totalBaseAchievements?: number
+}
+
+export interface Achievement {
+  id: string
+  label: string
+  description: string
+  unlocked: boolean
+}
+
 interface HeadToHeadStats {
   sharedMatchCount: number
   sharedPoints: number
@@ -470,90 +490,133 @@ export class UsersService {
   }
 
   async getUserAchievements(userId: string) {
-    const [
-      matchCount,
-      scoreResult,
-      linesResult,
-      winCount,
-      friendCount,
-      higherRankedUsers,
-    ] = await Promise.all([
-      this.matchResultsRepo.count({ where: { userId } }),
-      this.matchResultsRepo
-        .createQueryBuilder('r')
-        .select('SUM(r.score)', 'total')
-        .where('r.userId = :userId', { userId })
-        .getRawOne<{ total: string | null }>(),
-      this.matchResultsRepo
-        .createQueryBuilder('r')
-        .select('SUM(r.lines)', 'total')
-        .where('r.userId = :userId', { userId })
-        .getRawOne<{ total: string | null }>(),
-      this.matchResultsRepo
-        .createQueryBuilder('r1')
-        .where('r1.userId = :userId', { userId })
-        .andWhere('r1.placement = 1')
-        .getCount(),
-      this.friendshipsRepo
-        .createQueryBuilder('f')
-        .where('f.userLowId = :userId OR f.userHighId = :userId', { userId })
-        .getCount(),
-      // Count users with strictly higher total score to derive rank
-      (() => {
-        const myScoreSub = this.matchResultsRepo
-          .createQueryBuilder('r2')
-          .select('COALESCE(SUM(r2.score), 0)', 'myScore')
-          .where('r2.userId = :userId', { userId })
-        return this.matchResultsRepo
+    const stats = await this.getAchievementStats(userId)
+    const baseAchievements = this.getBaseAchievements(stats)
+    const baseUnlocked = baseAchievements.filter((a) => a.unlocked).length
+    const metaAchievements = this.getMetaAchievements(
+      baseUnlocked,
+      baseAchievements.length,
+    )
+
+    return {
+      stats: {
+        ...stats,
+        baseUnlocked,
+        totalBaseAchievements: baseAchievements.length,
+      },
+      achievements: [...baseAchievements, ...metaAchievements],
+    }
+  }
+
+  private async getAchievementStats(userId: string): Promise<AchievementStats> {
+    const [matchCount, totals, winCount, friendCount, higherRankedUsersCount] =
+      await Promise.all([
+        this.matchResultsRepo.count({ where: { userId } }),
+        this.matchResultsRepo
           .createQueryBuilder('r')
-          .select('r.userId', 'userId')
-          .groupBy('r.userId')
-          .having(`SUM(r.score) > (${myScoreSub.getQuery()})`)
-          .setParameters(myScoreSub.getParameters())
-          .getRawMany<{ userId: string }>()
-      })(),
-    ])
+          .select('SUM(r.score)', 'score')
+          .addSelect('SUM(r.lines)', 'lines')
+          .where('r.userId = :userId', { userId })
+          .getRawOne<{ score: string | null; lines: string | null }>(),
+        this.matchResultsRepo.count({
+          where: { userId, placement: 1 },
+        }),
+        this.friendshipsRepo
+          .createQueryBuilder('f')
+          .where('f.userLowId = :userId OR f.userHighId = :userId', { userId })
+          .getCount(),
+        this.getHigherRankedUsersCountByScore(userId),
+      ])
 
     const matches = matchCount
-    const score = Number(scoreResult?.total ?? 0)
-    const lines = Number(linesResult?.total ?? 0)
+    const score = Number(totals?.score ?? 0)
+    const lines = Number(totals?.lines ?? 0)
     const wins = winCount
     const friends = friendCount
-    const rank = matches > 0 ? higherRankedUsers.length + 1 : 0
+    const rank = matches > 0 ? higherRankedUsersCount + 1 : 0
     const level = Math.floor(lines / 10) + 1
+    const bestDomination = await this.calculateBestDomination(userId, matches)
 
-    // Compute best domination: max games against a single opponent where user won ALL of them
-    let bestDomination = 0
-    if (matches > 0) {
-      const userResults = await this.matchResultsRepo.find({
-        where: { userId },
-        select: ['matchId', 'score', 'placement'],
-      })
-      const matchIds = [...new Set(userResults.map((r) => r.matchId))]
-      const allResults = await this.matchResultsRepo.find({
-        where: { matchId: In(matchIds) },
-        select: ['matchId', 'userId', 'score'],
-      })
-      const userWonMatches = new Set(
-        userResults.filter((r) => r.placement === 1).map((r) => r.matchId),
-      )
-      const opponentStats = new Map<string, { total: number; wins: number }>()
-      for (const r of allResults) {
-        if (r.userId === userId) continue
-        const s = opponentStats.get(r.userId) ?? { total: 0, wins: 0 }
-        s.total++
-        if (userWonMatches.has(r.matchId)) s.wins++
-        opponentStats.set(r.userId, s)
-      }
-      bestDomination = Math.max(
-        0,
-        ...Array.from(opponentStats.values())
-          .filter((s) => s.wins === s.total)
-          .map((s) => s.total),
-      )
+    return {
+      matches,
+      score,
+      lines,
+      wins,
+      friends,
+      rank,
+      level,
+      bestDomination,
+    }
+  }
+
+  private async getHigherRankedUsersCountByScore(
+    userId: string,
+  ): Promise<number> {
+    const myScoreSub = this.matchResultsRepo
+      .createQueryBuilder('r2')
+      .select('COALESCE(SUM(r2.score), 0)', 'myScore')
+      .where('r2.userId = :userId', { userId })
+
+    const higherRankedUsers = await this.matchResultsRepo
+      .createQueryBuilder('r')
+      .select('r.userId', 'userId')
+      .groupBy('r.userId')
+      .having(`SUM(r.score) > (${myScoreSub.getQuery()})`)
+      .setParameters(myScoreSub.getParameters())
+      .getRawMany<{ userId: string }>()
+
+    return higherRankedUsers.length
+  }
+
+  private async calculateBestDomination(
+    userId: string,
+    matches: number,
+  ): Promise<number> {
+    if (matches === 0) return 0
+
+    const userResults = await this.matchResultsRepo.find({
+      where: { userId },
+      select: ['matchId', 'placement'],
+    })
+
+    const matchIds = [...new Set(userResults.map((r) => r.matchId))]
+    const allResults = await this.matchResultsRepo.find({
+      where: { matchId: In(matchIds) },
+      select: ['matchId', 'userId'],
+    })
+
+    const userWonMatches = new Set(
+      userResults.filter((r) => r.placement === 1).map((r) => r.matchId),
+    )
+
+    const opponentStats = new Map<string, { total: number; wins: number }>()
+    for (const r of allResults) {
+      if (r.userId === userId) continue
+      const s = opponentStats.get(r.userId) ?? { total: 0, wins: 0 }
+      s.total++
+      if (userWonMatches.has(r.matchId)) s.wins++
+      opponentStats.set(r.userId, s)
     }
 
-    const baseAchievements = [
+    const dominations = Array.from(opponentStats.values())
+      .filter((s) => s.wins === s.total)
+      .map((s) => s.total)
+
+    return dominations.length > 0 ? Math.max(...dominations) : 0
+  }
+
+  private getBaseAchievements(stats: AchievementStats): Achievement[] {
+    const {
+      matches,
+      score,
+      lines,
+      wins,
+      friends,
+      level,
+      rank,
+      bestDomination,
+    } = stats
+    return [
       {
         id: 'first_match',
         label: 'First Match',
@@ -708,10 +771,13 @@ export class UsersService {
         unlocked: bestDomination >= 10,
       },
     ]
+  }
 
-    const baseUnlocked = baseAchievements.filter((a) => a.unlocked).length
-
-    const metaAchievements = [
+  private getMetaAchievements(
+    baseUnlocked: number,
+    totalBase: number,
+  ): Achievement[] {
+    return [
       {
         id: 'collector_1',
         label: 'First Step',
@@ -728,25 +794,9 @@ export class UsersService {
         id: 'collector_all',
         label: 'Completionist',
         description: 'Unlock all achievements',
-        unlocked: baseUnlocked >= baseAchievements.length,
+        unlocked: baseUnlocked >= totalBase,
       },
     ]
-
-    return {
-      stats: {
-        matches,
-        score,
-        lines,
-        wins,
-        friends,
-        rank,
-        level,
-        bestDomination,
-        baseUnlocked,
-        totalBaseAchievements: baseAchievements.length,
-      },
-      achievements: [...baseAchievements, ...metaAchievements],
-    }
   }
 
   async existUserProfilePictureInFs(
