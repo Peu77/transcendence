@@ -14,7 +14,18 @@ import { FriendshipRing } from '@/components/app/friendshipRing.tsx'
 import { SharedPointsPie } from '@/components/app/sharedPointsPie.tsx'
 import { WinRatePie } from '@/components/app/winRatePie.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
-import { CrownIcon } from 'lucide-react'
+import { Button } from '@/components/ui/button.tsx'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip.tsx'
+import { CrownIcon, Gamepad2Icon } from 'lucide-react'
+import { useGetFriends } from '@/api/friends.ts'
+import { useStore } from '@tanstack/react-store'
+import { userStore } from '@/store/userStore.ts'
+import { useMatchInvite } from '@/hooks/use-match-invite.ts'
 
 const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
   const level = Math.floor(profile.totalLines / 10) + 1
@@ -27,9 +38,7 @@ const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
       <div className="flex items-center gap-3">
         <ProfileImage profilePictureId={profile.profilePictureId} />
         <h2 className="text-2xl font-bold">{profile.username}</h2>
-        {profile.rank === 1 && (
-          <CrownIcon className="size-5 text-yellow-500" />
-        )}
+        {profile.rank === 1 && <CrownIcon className="size-5 text-yellow-500" />}
       </div>
       <div className="flex gap-4">
         <StatCard value={rank} label="Rank" size="sm" />
@@ -69,6 +78,10 @@ export const ProfileDialog = ({
   onOpenChange: (open: boolean) => void
 }) => {
   const { data: profile, isLoading } = useGetPublicProfile(userId, open)
+  const currentUserId = useStore(userStore, (user) => user?.id)
+  const friendsQuery = useGetFriends()
+  const isFriend = friendsQuery.data?.some((friend) => friend.id === userId)
+  const inviteMutation = useMatchInvite(userId)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -86,13 +99,45 @@ export const ProfileDialog = ({
         ) : (
           <>
             <ProfileContent profile={profile} />
-            <div className="flex justify-center mt-2">
-              <AddFriendButton
-                userId={userId}
-                blockedByThem={profile.blockedByThem}
-                iBlockedThem={profile.iBlockedThem}
-              />
-            </div>
+            {currentUserId !== userId && (
+              <TooltipProvider>
+                <div className="mt-2 flex justify-center gap-2.5 border-t border-border/60 pt-4">
+                  {isFriend && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex">
+                          <Button
+                            type="button"
+                            size="icon-lg"
+                            aria-label="Invite to match"
+                            onClick={() => inviteMutation.mutate()}
+                            disabled={inviteMutation.isPending}
+                            className="size-11 border border-primary/40 shadow-[0_6px_18px_-8px_var(--primary)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md"
+                          >
+                            <Gamepad2Icon
+                              className={`size-5 ${
+                                inviteMutation.isPending ? 'animate-pulse' : ''
+                              }`}
+                            />
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {inviteMutation.isPending
+                          ? 'Sending invite…'
+                          : 'Invite to match'}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  <AddFriendButton
+                    userId={userId}
+                    blockedByThem={profile.blockedByThem}
+                    iBlockedThem={profile.iBlockedThem}
+                    compact
+                  />
+                </div>
+              </TooltipProvider>
+            )}
           </>
         )}
       </DialogContent>

@@ -24,7 +24,6 @@ type NumericSettingKey =
   | 'gincrease'
   | 'gmargin'
   | 'lockDelayMs'
-
   | 'nextCount'
   | 'blowbackPercent'
 
@@ -44,8 +43,7 @@ const NUMERIC_SETTINGS: NumericSetting[] = [
   {
     key: 'gravity',
     label: 'Gravity',
-    description:
-      'Starting gravity (how fast pieces fall). Higher is faster.',
+    description: 'Starting gravity (how fast pieces fall). Higher is faster.',
     min: 0,
     max: 3,
     step: 0.01,

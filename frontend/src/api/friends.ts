@@ -5,6 +5,7 @@ export const FRIENDS_QUERY_KEYS = {
   FRIENDS: ['friends'],
   OUTGOING_REQUESTS: ['friends', 'requests', 'outgoing'],
   INCOMING_REQUESTS: ['friends', 'requests', 'incoming'],
+  BLOCKED_USERS: ['friends', 'blocked'],
 }
 
 export function useGetFriends() {
@@ -45,42 +46,11 @@ export function useCancelFriendRequest() {
   })
 }
 
-export type BlockedUser = {
-  id: string
-  username: string
-  profilePictureId: string | null
-}
-
-export async function getBlockedUsers(): Promise<BlockedUser[]> {
-  const res = await axios.get<{ blocked: BlockedUser[] }>('/friends/blocked')
-  return res.data.blocked
-}
-
 export function useGetBlockedUsers() {
   return useQuery({
-    queryKey: ['friends', 'blocked'],
+    queryKey: FRIENDS_QUERY_KEYS.BLOCKED_USERS,
     queryFn: getBlockedUsers,
   })
-}
-
-export async function blockUser(blockedId: string): Promise<void> {
-  await axios.post(`/friends/block/${blockedId}`)
-}
-
-export function useBlockUser() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: blockUser,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: FRIENDS_QUERY_KEYS.INCOMING_REQUESTS,
-      })
-    },
-  })
-}
-
-export async function unblockUser(blockedId: string): Promise<void> {
-  await axios.delete(`/friends/block/${blockedId}`)
 }
 
 export function useUnblockUser() {
@@ -89,7 +59,48 @@ export function useUnblockUser() {
     mutationFn: unblockUser,
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['friends', 'blocked'] }),
+        queryClient.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.BLOCKED_USERS,
+        }),
+        queryClient.invalidateQueries({ queryKey: ['publicProfile'] }),
+      ])
+    },
+  })
+}
+
+export function useBlockUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: blockUser,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.FRIENDS,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.INCOMING_REQUESTS,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.OUTGOING_REQUESTS,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.BLOCKED_USERS,
+        }),
+        queryClient.invalidateQueries({ queryKey: ['publicProfile'] }),
+      ])
+    },
+  })
+}
+
+export function useDeleteFriend() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteFriend,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.FRIENDS,
+        }),
         queryClient.invalidateQueries({ queryKey: ['publicProfile'] }),
       ])
     },
@@ -221,11 +232,15 @@ export async function updateMyPresence(
   return res.data
 }
 
+export type DirectMessageType = 'text' | 'match_invite'
+
 export type DirectMessage = {
   id: string
   senderId: string
   recipientId: string
   content: string
+  type: DirectMessageType
+  roomId: string | null
   createdAt: string
 }
 
@@ -238,6 +253,17 @@ export async function sendDirectMessage(
   const res = await axios.post<DirectMessage>(
     `/dm/${friendUserId}/messages`,
     values,
+  )
+  return res.data
+}
+
+export async function sendMatchInvite(
+  friendUserId: string,
+  roomId?: string,
+): Promise<DirectMessage> {
+  const res = await axios.post<DirectMessage>(
+    `/dm/${friendUserId}/invite`,
+    roomId ? { roomId } : {},
   )
   return res.data
 }
@@ -269,4 +295,29 @@ export async function getDirectMessages(
     { params },
   )
   return res.data
+}
+
+export type BlockedUser = {
+  id: string
+  username: string
+  profilePictureId: string | null
+}
+
+export type GetBlockedUsersResponse = {
+  blocked: BlockedUser[]
+}
+
+export async function blockUser(userId: string): Promise<{}> {
+  const res = await axios.post(`/friends/block/${userId}`)
+  return res.data
+}
+
+export async function unblockUser(userId: string): Promise<{}> {
+  const res = await axios.delete(`/friends/block/${userId}`)
+  return res.data
+}
+
+export async function getBlockedUsers(): Promise<BlockedUser[]> {
+  const res = await axios.get<GetBlockedUsersResponse>('/friends/blocked')
+  return res.data.blocked
 }

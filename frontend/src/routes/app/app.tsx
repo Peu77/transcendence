@@ -37,8 +37,9 @@ const Index = () => {
       textColor: 'text-green-50',
     },
     {
-      label: 'statistics',
-      description: 'Review match results and the global ranking.',
+      label: 'stats',
+      description:
+        'Your stats, achievements, match history and the global ranking.',
       path: '/app/statistics',
       color: 'bg-orange-400',
       borderColor: 'bg-orange-600',
@@ -56,9 +57,9 @@ const Index = () => {
       label: 'settings',
       description: 'Customize your experience and preferences.',
       path: '/app/settings',
-      color: 'bg-purple-400',
-      borderColor: 'bg-purple-600',
-      textColor: 'text-purple-50',
+      color: 'bg-blue-400',
+      borderColor: 'bg-blue-600',
+      textColor: 'text-blue-50',
     },
     {
       label: 'about',

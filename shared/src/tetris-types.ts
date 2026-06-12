@@ -30,6 +30,28 @@ export interface TetrisPiece {
   rotation: number
 }
 
+export interface GameMetrics {
+  piecesPlaced: number
+  singles: number
+  doubles: number
+  triples: number
+  tetrises: number
+  maxCombo: number
+  holds: number
+}
+
+export function createEmptyGameMetrics(): GameMetrics {
+  return {
+    piecesPlaced: 0,
+    singles: 0,
+    doubles: 0,
+    triples: 0,
+    tetrises: 0,
+    maxCombo: 0,
+    holds: 0,
+  }
+}
+
 export interface TetrisState {
   /** 20 rows x 10 cols.  0 = empty, otherwise a TetrominoType char code */
   board: (string | 0)[][]

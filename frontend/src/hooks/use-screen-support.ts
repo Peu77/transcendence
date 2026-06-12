@@ -26,7 +26,7 @@ const getViewportSize = () => {
 export const getScreenSupportStatus = (): ScreenSupportStatus => {
   const { width, height } = getViewportSize()
   const userAgent =
-    typeof navigator === 'undefined' ? '' : navigator.userAgent ?? ''
+    typeof navigator === 'undefined' ? '' : (navigator.userAgent ?? '')
   const isMobileDevice = MOBILE_USER_AGENT_PATTERN.test(userAgent)
   const isTooSmall =
     width < MIN_SUPPORTED_SCREEN_WIDTH || height < MIN_SUPPORTED_SCREEN_HEIGHT

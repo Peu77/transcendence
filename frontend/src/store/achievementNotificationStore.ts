@@ -17,7 +17,9 @@ export function dismissFirstAchievementNotification() {
 // Achievement popups are suppressed while this is true.
 let _gameActive = false
 export const gameActiveState = {
-  set: (v: boolean) => { _gameActive = v },
+  set: (v: boolean) => {
+    _gameActive = v
+  },
   get: () => _gameActive,
 }
 
@@ -42,7 +44,9 @@ function saveNotified(ids: string[]): void {
     const current = loadNotified()
     ids.forEach((id) => current.add(id))
     localStorage.setItem(NOTIFIED_KEY, JSON.stringify([...current]))
-  } catch {}
+  } catch {
+    // Notifications remain usable when localStorage is unavailable.
+  }
 }
 
 function isBaselineSet(): boolean {
@@ -52,7 +56,9 @@ function isBaselineSet(): boolean {
 function markBaselineSet(): void {
   try {
     localStorage.setItem(INITIALIZED_KEY, 'true')
-  } catch {}
+  } catch {
+    // The baseline can be retried on a later startup.
+  }
 }
 
 // Call once on app startup. Marks all currently-unlocked achievements as
@@ -67,10 +73,14 @@ export async function initAchievementBaseline(qc: QueryClient): Promise<void> {
     })
     saveNotified(data.achievements.filter((a) => a.unlocked).map((a) => a.id))
     markBaselineSet()
-  } catch {}
+  } catch {
+    // Achievement notifications must not block app startup.
+  }
 }
 
-export async function checkAndQueueNewAchievements(qc: QueryClient): Promise<void> {
+export async function checkAndQueueNewAchievements(
+  qc: QueryClient,
+): Promise<void> {
   if (_gameActive) return
   // If the baseline hasn't been seeded yet, do nothing — initAchievementBaseline
   // will handle it; we don't want to fire notifications before it's run.
@@ -82,7 +92,9 @@ export async function checkAndQueueNewAchievements(qc: QueryClient): Promise<voi
     queryFn: getAchievements,
     staleTime: 0,
   })
-  const newly = next.achievements.filter((a) => a.unlocked && !notified.has(a.id))
+  const newly = next.achievements.filter(
+    (a) => a.unlocked && !notified.has(a.id),
+  )
   if (newly.length > 0) {
     saveNotified(newly.map((a) => a.id))
     queueAchievementNotifications(newly)

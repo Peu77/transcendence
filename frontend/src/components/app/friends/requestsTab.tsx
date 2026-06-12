@@ -3,9 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   acceptFriendRequest,
-  blockUser,
   cancelFriendRequest,
   denyFriendRequest,
+  FRIENDS_QUERY_KEYS,
   getIncomingFriendRequests,
   getOutgoingFriendRequests,
   type IncomingFriendRequest,
@@ -78,34 +78,20 @@ export const RequestsTab = (props: { isOpen: boolean }) => {
   const denyMutation = useMutation({
     mutationFn: (requestId: string) => denyFriendRequest(requestId),
     onSuccess: async () => {
-      await qc.invalidateQueries({
-        queryKey: ['friends', 'requests', 'incoming'],
-      })
-      toast.success('Friend request denied')
+      await Promise.all([
+        qc.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.INCOMING_REQUESTS,
+        }),
+        qc.invalidateQueries({
+          queryKey: FRIENDS_QUERY_KEYS.BLOCKED_USERS,
+        }),
+      ])
+      toast.success('Friend request denied and user blocked')
     },
     onError: (e: any) =>
-      toast.error(e?.response?.data?.message ?? 'Failed to deny request'),
-  })
-
-  const blockMutation = useMutation({
-    mutationFn: async ({
-      requestId,
-      fromUserId,
-    }: {
-      requestId: string
-      fromUserId: string
-    }) => {
-      await denyFriendRequest(requestId)
-      await blockUser(fromUserId)
-    },
-    onSuccess: async () => {
-      await qc.invalidateQueries({
-        queryKey: ['friends', 'requests', 'incoming'],
-      })
-      toast.success('User blocked')
-    },
-    onError: (e: any) =>
-      toast.error(e?.response?.data?.message ?? 'Failed to block user'),
+      toast.error(
+        e?.response?.data?.message ?? 'Failed to deny and block user',
+      ),
   })
 
   const cancelMutation = useMutation({
@@ -152,20 +138,9 @@ export const RequestsTab = (props: { isOpen: boolean }) => {
                   size="sm"
                   variant="destructive"
                   onClick={() => denyMutation.mutate(r.id)}
+                  disabled={denyMutation.isPending}
                 >
-                  Deny
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    blockMutation.mutate({
-                      requestId: r.id,
-                      fromUserId: r.fromUser.id,
-                    })
-                  }
-                >
-                  Block
+                  {denyMutation.isPending ? 'Denying…' : 'Deny'}
                 </Button>
               </>
             }

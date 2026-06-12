@@ -28,10 +28,9 @@ import { SoloRoute } from '@/routes/app/solo.tsx'
 import { RoomLobbyRoute } from '@/routes/app/room.tsx'
 import { RoomRoute } from '@/routes/app/room.$roomId.tsx'
 import { AboutRoute } from '@/routes/app/about.tsx'
-import { ProfilePageRoute } from '@/routes/app/profile.$userId.tsx'
 import { NotFound } from '@/routes/notFound.tsx'
-import { StatisticsRoute } from '@/routes/app/statistics.tsx'
 import { AchievementsRoute } from '@/routes/app/achievements.tsx'
+import { StatsRoute } from '@/routes/app/stats.tsx'
 
 export const rootRoute = createRootRoute<unknown>({
   component: () => (
@@ -72,8 +71,7 @@ const routeTree = rootRoute.addChildren([
   RoomLobbyRoute,
   RoomRoute,
   AboutRoute,
-  ProfilePageRoute,
-  StatisticsRoute,
+  StatsRoute,
   AchievementsRoute,
 ])
 

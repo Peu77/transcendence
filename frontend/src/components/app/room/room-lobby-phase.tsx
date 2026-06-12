@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
+import { useState, useRef } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button.tsx'
 import { Loader2 } from 'lucide-react'
@@ -77,11 +77,9 @@ export function RoomLobbyPhase({
       <section className="flex min-h-0 flex-col border-x border-border/70 px-8  xl:px-10">
         <div className="border-b border-border/70 pb-8">
           <div className="flex flex-wrap items-start justify-center gap-4 sm:justify-between">
-            <div className="flex items-center gap-2">
-              <h2 className="text-3xl font-bold uppercase tracking-wide xl:text-4xl">
-                Room: {room.id}
-              </h2>
-            </div>
+            <h2 className="text-3xl font-bold uppercase tracking-wide xl:text-4xl">
+              Room: {room.id}
+            </h2>
             {isHost && (
               <Button
                 type="button"

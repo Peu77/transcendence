@@ -61,9 +61,7 @@ export const GameControlsAccordion = ({
         (a) => a !== action && draftControls[a] === e.key,
       )
       if (conflictingAction) {
-        toast.error(
-          `Already used by "${CONTROL_LABELS[conflictingAction]}"`,
-        )
+        toast.error(`Already used by "${CONTROL_LABELS[conflictingAction]}"`)
         return
       }
       setDraftControls((current) => ({

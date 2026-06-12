@@ -8,6 +8,8 @@ import {
 } from 'typeorm'
 import { User } from '../../users/user.entity'
 
+export type DirectMessageType = 'text' | 'match_invite'
+
 @Entity({ name: 'direct_messages' })
 @Index(['senderId', 'recipientId', 'createdAt'])
 export class DirectMessage {
@@ -28,6 +30,12 @@ export class DirectMessage {
 
   @Column({ type: 'text' })
   content!: string
+
+  @Column({ type: 'text', default: 'text' })
+  type!: DirectMessageType
+
+  @Column({ type: 'text', nullable: true })
+  roomId!: string | null
 
   @CreateDateColumn()
   createdAt!: Date

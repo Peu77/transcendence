@@ -30,19 +30,17 @@ const loginSchema = z.object({
 export default function Login() {
   const navigate = useNavigate()
   const userQuery = useGetUser()
+  const { data: user, error: userError, isLoading: isUserLoading } = userQuery
   const [twoFaData, setTwoFaData] = useState<LoginResponse | null>(null)
   const [otpCode, setOtpCode] = useState('')
 
   useEffect(() => {
-    if (!userQuery.data) return
+    if (!user || userError || isUserLoading || !user.id) return
 
-    userStore.setState(userQuery.data)
-    document.documentElement.classList.toggle(
-      'dark',
-      userQuery.data.theme === 'dark',
-    )
+    userStore.setState(() => user)
+    document.documentElement.classList.toggle('dark', user.theme === 'dark')
     navigate({ to: '/app' }).catch(console.error)
-  }, [navigate, userQuery.data])
+  }, [isUserLoading, navigate, user, userError])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

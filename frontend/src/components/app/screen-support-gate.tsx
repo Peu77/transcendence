@@ -56,7 +56,9 @@ export function ScreenSupportGate({ children }: ScreenSupportGateProps) {
 
           <ul className="list-disc space-y-2 pl-5">
             {isMobileDevice ? <li>Mobile devices are not supported.</li> : null}
-            {isTooSmall ? <li>Your viewport is below the supported size.</li> : null}
+            {isTooSmall ? (
+              <li>Your viewport is below the supported size.</li>
+            ) : null}
           </ul>
         </CardContent>
       </Card>
