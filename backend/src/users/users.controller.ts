@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Body,
   UploadedFile,
@@ -20,6 +21,8 @@ import * as speakeasy from 'speakeasy'
 import { UsersService } from './users.service'
 import { AuthGuard, UserId } from '../auth/auth.guard'
 import {
+  ChangeEmailDto,
+  ChangePasswordDto,
   ProfilePictureDto,
   UpdateGameControlsDto,
   UpdateTetrisHandlingSettingsDto,
@@ -46,6 +49,7 @@ export class UsersController {
       tetrisHandlingSettings: this.usersService.normalizeTetrisHandlingSettings(
         user.tetrisHandlingSettings,
       ),
+      userType: user.userType,
     }
   }
 
@@ -163,6 +167,18 @@ export class UsersController {
     @UserId() requesterId: string,
   ) {
     return this.usersService.getPublicProfile(id, requesterId)
+  }
+
+  @Patch('users/me/email')
+  async changeEmail(@UserId() userId: string, @Body() body: ChangeEmailDto) {
+    await this.usersService.changeEmail(userId, body.newEmail, body.currentPassword)
+    return { message: 'Email updated successfully' }
+  }
+
+  @Patch('users/me/password')
+  async changePassword(@UserId() userId: string, @Body() body: ChangePasswordDto) {
+    await this.usersService.changePassword(userId, body.currentPassword, body.newPassword)
+    return { message: 'Password updated successfully' }
   }
 
   @Post('users/toggleTheme')

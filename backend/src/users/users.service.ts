@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
+import * as bcrypt from 'bcryptjs'
 import { InjectRepository } from '@nestjs/typeorm'
 import { In, Repository, SelectQueryBuilder } from 'typeorm'
 import {
@@ -180,6 +181,27 @@ export class UsersService {
       { id: userId },
       { twoFaEnabled: false, twoFaSecret: null },
     )
+  }
+
+  async changeEmail(userId: string, newEmail: string, currentPassword: string): Promise<void> {
+    const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
+    if (user.userType !== UserType.EMAIL || !user.password)
+      throw new BadRequestException('Email change is only available for email accounts')
+    const valid = await bcrypt.compare(currentPassword, user.password)
+    if (!valid) throw new BadRequestException('Current password is incorrect')
+    const existing = await this.usersRepo.findOne({ where: { email: newEmail } })
+    if (existing) throw new BadRequestException('Email is already in use')
+    await this.usersRepo.update({ id: userId }, { email: newEmail })
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.usersRepo.findOneOrFail({ where: { id: userId } })
+    if (user.userType !== UserType.EMAIL || !user.password)
+      throw new BadRequestException('Password change is only available for email accounts')
+    const valid = await bcrypt.compare(currentPassword, user.password)
+    if (!valid) throw new BadRequestException('Current password is incorrect')
+    const hash = await bcrypt.hash(newPassword, 10)
+    await this.usersRepo.update({ id: userId }, { password: hash })
   }
 
   async toggleTheme(userId: string): Promise<Theme> {

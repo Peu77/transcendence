@@ -1,4 +1,5 @@
 import {
+  IsEmail,
   IsNotEmpty,
   IsNumber,
   IsObject,
@@ -7,6 +8,7 @@ import {
   Max,
   MaxLength,
   Min,
+  MinLength,
   ValidateNested,
 } from 'class-validator'
 import { Type } from 'class-transformer'
@@ -95,4 +97,27 @@ export class UpdateTetrisHandlingSettingsDto {
   @ValidateNested()
   @Type(() => TetrisHandlingSettingsDto)
   settings!: TetrisHandlingSettingsDto
+}
+
+export class ChangeEmailDto {
+  @IsEmail()
+  @MaxLength(255)
+  newEmail!: string
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  currentPassword!: string
+}
+
+export class ChangePasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  currentPassword!: string
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  newPassword!: string
 }

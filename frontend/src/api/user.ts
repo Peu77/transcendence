@@ -55,6 +55,7 @@ export type User = {
   theme: Theme
   gameControls: GameControls
   tetrisHandlingSettings: TetrisHandlingSettings
+  userType: 'email' | 'github'
 }
 
 export const USER_QUERY_KEYS = {
@@ -160,6 +161,16 @@ export function timeAgo(date: Date): string {
 
 export async function toggleTheme() {
   const res = await axios.post<Theme>('/users/toggleTheme')
+  return res.data
+}
+
+export async function changeEmail(newEmail: string, currentPassword: string) {
+  const res = await axios.patch('/users/me/email', { newEmail, currentPassword })
+  return res.data
+}
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  const res = await axios.patch('/users/me/password', { currentPassword, newPassword })
   return res.data
 }
 
