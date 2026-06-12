@@ -297,8 +297,9 @@ export class TetrisGame {
     return PIECE_TYPES[Math.floor(this.rng() * PIECE_TYPES.length)]
   }
 
-  private randomBag(): TetrominoType[] {
-    const bag = [...PIECE_TYPES]
+  private randomBag(copies = 1): TetrominoType[] {
+    const bag: TetrominoType[] = []
+    for (let c = 0; c < copies; c++) bag.push(...PIECE_TYPES)
     for (let i = bag.length - 1; i > 0; i--) {
       const j = Math.floor(this.rng() * (i + 1))
       ;[bag[i], bag[j]] = [bag[j], bag[i]]
@@ -309,11 +310,17 @@ export class TetrisGame {
   private refillNextTypes(): void {
     const minimumSize = Math.max(this.settings.nextCount + 1, 1)
     while (this.nextTypes.length < minimumSize) {
-      this.nextTypes.push(
-        ...(this.settings.bag === PieceRandomizer.SEVEN_BAG
-          ? this.randomBag()
-          : [this.randomType()]),
-      )
+      switch (this.settings.bag) {
+        case PieceRandomizer.SEVEN_BAG:
+          this.nextTypes.push(...this.randomBag())
+          break
+        case PieceRandomizer.FOURTEEN_BAG:
+          this.nextTypes.push(...this.randomBag(2))
+          break
+        case PieceRandomizer.RANDOM:
+          this.nextTypes.push(this.randomType())
+          break
+      }
     }
   }
 

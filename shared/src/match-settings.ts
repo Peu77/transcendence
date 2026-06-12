@@ -10,6 +10,8 @@ export enum GarbageCancel {
 
 export enum PieceRandomizer {
   SEVEN_BAG = '7-bag',
+  FOURTEEN_BAG = '14-bag',
+  RANDOM = 'random',
 }
 
 export type MatchSettings = {

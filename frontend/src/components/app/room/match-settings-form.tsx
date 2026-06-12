@@ -173,7 +173,11 @@ export function MatchSettingsForm({
               <field.Select
                 label="Randomizer"
                 disabled={!isHost}
-                values={[{ label: '7-Bag', value: PieceRandomizer.SEVEN_BAG }]}
+                values={[
+                    { label: '7-Bag', value: PieceRandomizer.SEVEN_BAG },
+                    { label: '14-Bag', value: PieceRandomizer.FOURTEEN_BAG },
+                    { label: 'Random', value: PieceRandomizer.RANDOM },
+                  ]}
               />
             )}
           </form.AppField>
