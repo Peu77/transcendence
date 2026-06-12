@@ -109,7 +109,7 @@ export function RoomChat({
 
       <div
         ref={scrollRef}
-        className="min-h-0 flex-1 space-y-3 overflow-y-auto py-6"
+        className="min-h-0 flex-1 space-y-1.5 overflow-y-auto py-6"
       >
         {messages.length === 0 ? (
           <pre className="flex flex-col h-full items-center justify-center p-4 text-center text-xl uppercase tracking-wide text-muted-foreground">
@@ -122,23 +122,34 @@ export function RoomChat({
             return (
               <div
                 key={message.id}
-                className={cn('flex flex-col gap-1', isMine && 'items-end')}
+                className={cn('flex', isMine ? 'justify-end' : 'justify-start')}
               >
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="font-semibold text-foreground/80">
-                    {message.senderInfo.username}
-                  </span>
-                  <span>{formatMessageTime(message.createdAt)}</span>
-                </div>
                 <div
                   className={cn(
-                    'max-w-[85%] border px-3 py-2 text-sm leading-relaxed shadow-sm text-wrap wrap-break-word clip-pixel-corners-btn',
+                    'relative max-w-[80%] rounded-lg px-3 py-1.5 text-sm shadow-sm',
                     isMine
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-border bg-muted text-foreground',
+                      ? 'bg-primary text-primary-foreground rounded-br-none'
+                      : 'bg-muted text-foreground rounded-bl-none',
                   )}
                 >
-                  {message.content}
+                  {!isMine && (
+                    <div className="mb-0.5 text-[11px] font-semibold text-foreground/70">
+                      {message.senderInfo.username}
+                    </div>
+                  )}
+                  <div className="break-words wrap-break-word">
+                    {message.content}
+                  </div>
+                  <div
+                    className={cn(
+                      'mt-0.5 flex items-center gap-1 text-[10px]',
+                      isMine
+                        ? 'justify-end text-primary-foreground/60'
+                        : 'justify-start text-muted-foreground',
+                    )}
+                  >
+                    <span>{formatMessageTime(message.createdAt)}</span>
+                  </div>
                 </div>
               </div>
             )
