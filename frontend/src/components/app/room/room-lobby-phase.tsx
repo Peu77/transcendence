@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useRef } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button.tsx'
@@ -23,96 +23,6 @@ import { MatchSettingsForm } from './match-settings-form.tsx'
 import { RoomPlayersSidebar } from './room-players-sidebar.tsx'
 import { RoomSettingsForm } from './room-settings-form.tsx'
 import { RoomChat } from './room-chat.tsx'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog.tsx'
-import { getFriends, sendMatchInvite } from '@/api/friends.ts'
-import { ProfileImage } from '@/components/app/profileImage.tsx'
-import { PresencePill } from '@/components/app/friends/presencePill.tsx'
-
-function InviteFriendsDialog({ room }: { room: Room }) {
-  const [open, setOpen] = useState(false)
-  const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set())
-
-  const friendsQuery = useQuery({
-    queryKey: ['friends'],
-    queryFn: getFriends,
-    enabled: open,
-  })
-
-  const inviteMutation = useMutation({
-    mutationFn: (friendId: string) => sendMatchInvite(friendId, room.id),
-    onSuccess: (_data, friendId) => {
-      setInvitedIds((prev) => new Set(prev).add(friendId))
-      toast.success('Invite sent')
-    },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? 'Failed to send invite')
-    },
-  })
-
-  const memberIds = new Set(room.users.map((u) => u.id))
-  const friends = friendsQuery.data ?? []
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button type="button" variant="outline">
-          Invite a friend
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Invite a friend to this match</DialogTitle>
-          <DialogDescription>
-            They'll receive an invite in chat to join room {room.id}.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex max-h-80 flex-col gap-1 overflow-auto">
-          {friendsQuery.isLoading && (
-            <div className="text-sm text-muted-foreground">Loading…</div>
-          )}
-          {!friendsQuery.isLoading && friends.length === 0 && (
-            <div className="text-sm text-muted-foreground">
-              No friends to invite.
-            </div>
-          )}
-          {friends.map((f) => {
-            const inRoom = memberIds.has(f.id)
-            const invited = invitedIds.has(f.id)
-            return (
-              <div
-                key={f.id}
-                className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 hover:bg-accent/40"
-              >
-                <div className="flex min-w-0 items-center gap-2">
-                  <ProfileImage profilePictureId={f.profilePictureId} />
-                  <div className="min-w-0">
-                    <div className="truncate font-medium">{f.username}</div>
-                    <PresencePill friend={f} />
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  disabled={inRoom || invited || inviteMutation.isPending}
-                  onClick={() => inviteMutation.mutate(f.id)}
-                >
-                  {inRoom ? 'In lobby' : invited ? 'Invited' : 'Invite'}
-                </Button>
-              </div>
-            )
-          })}
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 type RoomLobbyPhaseProps = {
   room: Room
@@ -167,12 +77,9 @@ export function RoomLobbyPhase({
       <section className="flex min-h-0 flex-col border-x border-border/70 px-8  xl:px-10">
         <div className="border-b border-border/70 pb-8">
           <div className="flex flex-wrap items-start justify-center gap-4 sm:justify-between">
-            <div className="flex items-center gap-3">
-              <h2 className="text-3xl font-bold uppercase tracking-wide xl:text-4xl">
-                Room: {room.id}
-              </h2>
-              <InviteFriendsDialog room={room} />
-            </div>
+            <h2 className="text-3xl font-bold uppercase tracking-wide xl:text-4xl">
+              Room: {room.id}
+            </h2>
             {isHost && (
               <Button
                 type="button"
