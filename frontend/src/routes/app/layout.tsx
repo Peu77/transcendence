@@ -1,6 +1,6 @@
 import { Spinner } from '@/components/ui/spinner.tsx'
 import { useGetUser } from '@/api/user.ts'
-import { createRoute, Outlet, useNavigate } from '@tanstack/react-router'
+import { createRoute, Link, Outlet, useNavigate, useLocation } from '@tanstack/react-router'
 import { rootRoute } from '@/main.tsx'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
@@ -27,6 +27,9 @@ const AppLayout = () => {
   useMyPresence({ enabled: !!userQuery.data, idleMs: 60_000 })
 
   const navigate = useNavigate()
+  const location = useLocation()
+  const isGameRoute =
+    location.pathname.includes('/room/') || location.pathname.includes('/solo')
 
   useEffect(() => {
     if (userQuery.isError) {
@@ -49,8 +52,24 @@ const AppLayout = () => {
       <FriendsOverlay />
       <AchievementNotificationOverlay />
       <Navbar />
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <Outlet />
+      <div className="flex-1 min-h-0 overflow-hidden relative flex flex-col">
+        <div className="flex-1 min-h-0">
+          <Outlet />
+        </div>
+        {!isGameRoute && (
+          <footer className="p-2 border-t bg-card/50 text-center text-xs text-muted-foreground flex justify-center gap-4">
+            <Link
+              to="/privacy"
+              className="hover:text-foreground transition-colors"
+            >
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="hover:text-foreground transition-colors">
+              Terms of Service
+            </Link>
+            <span>&copy; {new Date().getFullYear()} Transcendence</span>
+          </footer>
+        )}
       </div>
     </div>
   )

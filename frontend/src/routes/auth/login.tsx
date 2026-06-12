@@ -230,6 +230,14 @@ export default function Login() {
           </form>
         </CardContent>
       </Card>
+      <footer className="mt-8 text-gray-400 text-sm flex gap-4">
+        <Link to="/privacy" className="hover:text-foreground transition-colors">
+          Privacy Policy
+        </Link>
+        <Link to="/terms" className="hover:text-foreground transition-colors">
+          Terms of Service
+        </Link>
+      </footer>
     </div>
   )
 }

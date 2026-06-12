@@ -20,6 +20,8 @@ import { ScreenSupportGate } from '@/components/app/screen-support-gate.tsx'
 import Login from '@/routes/auth/login.tsx'
 import Register from '@/routes/auth/register.tsx'
 import Home from '@/routes/home.tsx'
+import PrivacyPolicy from '@/routes/privacy.tsx'
+import TermsOfService from '@/routes/terms.tsx'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { AppIndexRoute } from '@/routes/app/app.tsx'
 import { SettingsRoute } from '@/routes/app/settings.tsx'
@@ -62,6 +64,16 @@ const routeTree = rootRoute.addChildren([
     getParentRoute: () => rootRoute,
     component: Register,
     path: 'register',
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    component: PrivacyPolicy,
+    path: 'privacy',
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    component: TermsOfService,
+    path: 'terms',
   }),
   AppRoute,
   AppIndexRoute,

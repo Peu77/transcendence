@@ -1,8 +1,13 @@
-import { createRoute, useRouter } from '@tanstack/react-router'
+import { createRoute, Link, useRouter } from '@tanstack/react-router'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
-import { ArrowLeftIcon, ExternalLinkIcon, GithubIcon } from 'lucide-react'
+import {
+  ArrowLeftIcon,
+  ExternalLinkIcon,
+  GithubIcon,
+  ShieldCheckIcon,
+} from 'lucide-react'
 
 const TEAM = [
   {
@@ -118,6 +123,41 @@ const About = () => {
               <ExternalLinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
             </a>
           ))}
+        </div>
+
+        {/* Legal links */}
+        <h2 className="mb-4 text-xl font-bold text-foreground">Legal</h2>
+        <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Link
+            to="/privacy"
+            className="flex items-center gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/20">
+              <ShieldCheckIcon className="h-5 w-5 text-blue-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold">Privacy Policy</div>
+              <div className="text-xs text-muted-foreground">
+                How we handle your data
+              </div>
+            </div>
+            <ExternalLinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </Link>
+          <Link
+            to="/terms"
+            className="flex items-center gap-3 rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-500/20">
+              <ShieldCheckIcon className="h-5 w-5 text-green-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold">Terms of Service</div>
+              <div className="text-xs text-muted-foreground">
+                Rules of using our service
+              </div>
+            </div>
+            <ExternalLinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </Link>
         </div>
 
         {/* 42 badge */}

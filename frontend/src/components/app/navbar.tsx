@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button.tsx'
 import {
   LogOutIcon,
   MoonIcon,
+  ShieldCheckIcon,
   SunIcon,
   UserIcon,
   UsersIcon,
@@ -115,6 +116,26 @@ export const Navbar = () => {
                   <UserIcon className="size-4" />
                   Profile
                 </DropdownMenu.Item>
+                <DropdownMenu.Separator className="h-px bg-border my-1" />
+                <DropdownMenu.Item
+                  asChild
+                  className="flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground"
+                >
+                  <Link to="/privacy">
+                    <ShieldCheckIcon className="size-4" />
+                    Privacy Policy
+                  </Link>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  asChild
+                  className="flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground"
+                >
+                  <Link to="/terms">
+                    <ShieldCheckIcon className="size-4" />
+                    Terms of Service
+                  </Link>
+                </DropdownMenu.Item>
+                <DropdownMenu.Separator className="h-px bg-border my-1" />
                 <DropdownMenu.Item
                   className="flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-2 text-sm text-destructive outline-none focus:bg-accent focus:text-destructive"
                   disabled={logoutMutation.isPending}
