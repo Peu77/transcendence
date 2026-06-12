@@ -373,9 +373,9 @@ export const DMPanel = (props: {
                   <span>{formatTime(m.createdAt)}</span>
                   {isMine &&
                     (m.seen ? (
-                      <CheckCheckIcon className="size-3.5 text-sky-300" />
+                      <CheckCheckIcon className="size-3.5 text-primary-foreground" />
                     ) : (
-                      <CheckIcon className="size-3.5" />
+                      <CheckIcon className="size-3.5 text-primary-foreground/80" />
                     ))}
                 </div>
               </div>
