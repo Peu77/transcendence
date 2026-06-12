@@ -50,6 +50,7 @@ export class TetrisGame {
   private lockDelayStart: number | null = null
   private lockResetCount = 0
   private lastRotated = false
+  private lastKickIndex = 0
   private b2bChain = 0
   private readonly gameStartTime = Date.now()
   private readonly rng: () => number
@@ -487,34 +488,68 @@ export class TetrisGame {
     return this.cancelPendingGarbage(Math.min(Math.max(0, raw), garbageCap))
   }
 
+
   private detectTSpin(): 'tspin' | 'mini' | null {
     if (this.currentPiece.type !== TetrominoType.T) return null
     if (!this.lastRotated) return null
 
     const { row, col, rotation } = this.currentPiece
 
-    // 4 diagonal corners relative to T origin: [top-left, top-right, bottom-left, bottom-right]
-    const corners: [number, number][] = [[-1, -1], [-1, 1], [1, -1], [1, 1]]
+    // 4 corners around T center
+    const corners: [number, number][] = [
+      [-1, -1], // 0 top-left
+      [-1,  1], // 1 top-right
+      [ 1, -1], // 2 bottom-left
+      [ 1,  1], // 3 bottom-right
+    ]
+
     const filled = corners.map(([dr, dc]) => {
       const r = row + dr
       const c = col + dc
-      return r < 0 || r >= this.totalRows || c < 0 || c >= this.settings.width || this.board[r][c] !== 0
+      return (
+        r < 0 ||
+        r >= this.totalRows ||
+        c < 0 ||
+        c >= this.settings.width ||
+        this.board[r][c] !== 0
+      )
     })
+
     const filledCount = filled.filter(Boolean).length
 
-    if (filledCount >= 3) return 'tspin'
+    if (filledCount < 3) return null
 
-    // Mini: exactly 2 corners filled and both are on the "front" face (where the spike points)
     const frontPairs: Record<number, [number, number]> = {
-      0: [0, 1], // spike up → top-left and top-right
-      1: [1, 3], // spike right → top-right and bottom-right
-      2: [2, 3], // spike down → bottom-left and bottom-right
-      3: [0, 2], // spike left → top-left and bottom-left
+      0: [0, 1],
+      1: [1, 3],
+      2: [2, 3],
+      3: [0, 2],
     }
-    const [fi, fj] = frontPairs[rotation] ?? [0, 1]
-    if (filledCount === 2 && filled[fi] && filled[fj]) return 'mini'
 
-    return null
+    const backPairs: Record<number, [number, number]> = {
+      0: [2, 3],
+      1: [0, 2],
+      2: [0, 1],
+      3: [1, 3],
+    }
+
+    const [fi, fj] = frontPairs[rotation] ?? [0, 1]
+    const [bi, bj] = backPairs[rotation] ?? [2, 3]
+
+    const frontBothFilled = filled[fi] && filled[fj]
+    const backBothFilled = filled[bi] && filled[bj]
+
+    const isMiniShape = !frontBothFilled
+
+    if (!isMiniShape) {
+      return 'tspin'
+    }
+
+    if (this.lastKickIndex === 4) {
+      return 'tspin'
+    }
+
+    return 'mini'
   }
 
   private cancelPendingGarbage(lines: number): number {
@@ -742,13 +777,15 @@ export class TetrisGame {
     const to = (from + delta + 4) % 4
     const kicks = this.getKickOffsets(piece.type, from, to)
 
-    for (const [dRow, dCol] of kicks) {
+    for (let i = 0; i < kicks.length; i++) {
+      const [dRow, dCol] = kicks[i]
       const test: TetrisPiece = { ...piece, rotation: to, row: piece.row + dRow, col: piece.col + dCol }
       if (!this.collides(test)) {
         piece.rotation = to
         piece.row = test.row
         piece.col = test.col
         this.lastRotated = true
+        this.lastKickIndex = i
         return true
       }
     }
