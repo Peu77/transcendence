@@ -23,7 +23,7 @@ import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { useDmRoom, useLiveEvent } from '@/realtime/hooks.ts'
 import { userStore } from '@/store/userStore.ts'
 import { useNavigate } from '@tanstack/react-router'
-import { Gamepad2Icon } from 'lucide-react'
+import { CheckCheckIcon, CheckIcon, Gamepad2Icon, SendIcon } from 'lucide-react'
 import { useMatchInvite } from '@/hooks/use-match-invite.ts'
 import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
 import { useDmTypingIndicator } from '@/hooks/use-typing-indicator.ts'
@@ -294,66 +294,94 @@ export const DMPanel = (props: {
     }
   }, [messages])
 
-  const lastSeenMessageId = useMemo(() => {
-    const myId = userStore.state?.id
-    if (!myId) return null
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const m = messages[i]
-      if (m.senderId === myId && m.seen) return m.id
-      if (m.senderId === myId && !m.seen) return null
-    }
-    return null
-  }, [messages])
+  const formatTime = (date: string) =>
+    new Intl.DateTimeFormat(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date))
 
   const messagesContent = (() => {
+    const myId = userStore.state?.id
     if (dmQuery.isLoading)
-      return <div className="text-muted-foreground">Loading…</div>
+      return (
+        <div className="flex h-full items-center justify-center text-muted-foreground">
+          Loading…
+        </div>
+      )
     if (messages.length === 0)
-      return <div className="text-muted-foreground">No messages yet.</div>
+      return (
+        <div className="flex h-full items-center justify-center text-muted-foreground">
+          No messages yet.
+        </div>
+      )
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         {loadOlderMutation.isPending && (
           <div className="text-center text-xs text-muted-foreground">
             Loading older messages…
           </div>
         )}
-        {messages.map((m) => (
-          <div key={m.id} className="flex flex-col">
-            <div className="text-xs text-muted-foreground">
-              {new Date(m.createdAt).toLocaleString()}
-            </div>
-            {m.type === 'match_invite' ? (
-              <div className="flex flex-col gap-2 rounded-md border border-sidebar-border/70 bg-background/40 p-2">
-                <div className="wrap-break-word font-medium">{m.content}</div>
-                {m.senderId === props.friend.id ? (
-                  <Button
-                    size="sm"
-                    disabled={!m.roomId}
-                    onClick={() => m.roomId && goToRoom(m.roomId)}
-                  >
-                    Join match
-                  </Button>
+        {messages.map((m) => {
+          const isMine = m.senderId === myId
+          return (
+            <div
+              key={m.id}
+              className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`relative max-w-[80%] rounded-lg px-3 py-1.5 text-sm shadow-sm ${
+                  isMine
+                    ? 'bg-primary text-primary-foreground rounded-br-none'
+                    : 'bg-muted text-foreground rounded-bl-none'
+                }`}
+              >
+                {m.type === 'match_invite' ? (
+                  <div className="flex flex-col gap-1.5">
+                    <div className="wrap-break-word font-medium">
+                      {m.content}
+                    </div>
+                    {m.senderId === props.friend.id ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={!m.roomId}
+                        onClick={() => m.roomId && goToRoom(m.roomId)}
+                      >
+                        Join match
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={!m.roomId}
+                        onClick={() => m.roomId && goToRoom(m.roomId)}
+                      >
+                        Go to your match
+                      </Button>
+                    )}
+                  </div>
                 ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={!m.roomId}
-                    onClick={() => m.roomId && goToRoom(m.roomId)}
-                  >
-                    Go to your match
-                  </Button>
+                  <div className="break-words">{m.content}</div>
                 )}
+                <div
+                  className={`mt-0.5 flex items-center gap-1 text-[10px] ${
+                    isMine
+                      ? 'justify-end text-primary-foreground/60'
+                      : 'justify-start text-muted-foreground'
+                  }`}
+                >
+                  <span>{formatTime(m.createdAt)}</span>
+                  {isMine &&
+                    (m.seen ? (
+                      <CheckCheckIcon className="size-3.5 text-sky-300" />
+                    ) : (
+                      <CheckIcon className="size-3.5" />
+                    ))}
+                </div>
               </div>
-            ) : (
-              <div className="break-words">{m.content}</div>
-            )}
-            {m.id === lastSeenMessageId && (
-              <div className="text-[10px] text-muted-foreground text-right">
-                Seen
-              </div>
-            )}
-          </div>
-        ))}
+            </div>
+          )
+        })}
       </div>
     )
   })()
@@ -479,8 +507,14 @@ export const DMPanel = (props: {
         >
           <Gamepad2Icon />
         </Button>
-        <Button type="submit" silent={true} disabled={sendMutation.isPending}>
-          Send
+        <Button
+          type="submit"
+          size="icon-sm"
+          silent={true}
+          disabled={sendMutation.isPending}
+          aria-label="Send message"
+        >
+          <SendIcon className="size-4" />
         </Button>
       </form>
     </div>
