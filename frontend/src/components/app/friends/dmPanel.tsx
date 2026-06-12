@@ -277,7 +277,7 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
             </div>
             {m.type === 'match_invite' ? (
               <div className="flex flex-col gap-2 rounded-md border border-sidebar-border/70 bg-background/40 p-2">
-                <div className="break-words font-medium">{m.content}</div>
+                <div className="wrap-break-word font-medium">{m.content}</div>
                 {m.senderId === props.friend.id ? (
                   <Button
                     size="sm"

@@ -142,17 +142,17 @@ export const FriendsOverlay = () => {
         onClick={() => setFriendsOverlayIsOpen(false)}
       />
       <div
-        className={`fixed z-50 top-1/2 -translate-y-1/2 flex bg-sidebar border-r border-sidebar-border shadow-2xl transition-all duration-300 ease-in-out clip-pixel-corners-btn ${
+        className={`fixed top-1/2 z-50 flex -translate-y-1/2 border-r border-sidebar-border bg-sidebar shadow-2xl transition-all duration-300 ease-in-out clip-pixel-corners-btn ${
           isOpen
-            ? `translate-x-0 left-5 h-[calc(100dvh-2rem)] ${
-                activeDmFriend
-                  ? 'w-[calc(100vw-2.5rem)] max-w-[1120px]'
-                  : 'w-[380px]'
+            ? `left-5 h-[calc(100dvh-2rem)] translate-x-0 ${
+                activeDmFriend ? 'w-[calc(100vw-2.5rem)] max-w-280' : 'w-95'
               }`
-            : 'left-0 h-[calc(100dvh/2)] -translate-x-full w-[380px]'
+            : activeDmFriend
+              ? 'left-0 h-[calc(100dvh-2rem)] w-[calc(100vw-2.5rem)] max-w-280 -translate-x-full'
+              : 'left-0 h-[calc(100dvh/2)] w-95 -translate-x-full'
         }`}
       >
-        <div className="flex w-[380px] shrink-0 flex-col overflow-hidden">
+        <div className="flex w-95 shrink-0 flex-col overflow-hidden">
           <h2 className="p-4 font-bold text-lg border-b border-sidebar-border shrink-0">
             Friends
           </h2>
