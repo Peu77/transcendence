@@ -707,11 +707,9 @@ export class TetrisGame {
     '3>2': [[0,0],[0,-2],[0,1],[1,-2],[-2,1]],
     '0>3': [[0,0],[0,-1],[0,2],[-2,-1],[1,2]],
     // 180° entries — not part of SRS spec; custom extension for rotate180 input
-    // 0↔2 are offset by 1 row relative to each other, so kicks compensate for
-    // that offset first to keep blocks visually stationary during the rotation.
-    '0>2': [[-1,0],[-1,1],[-1,-1],[0,0],[1,0]],
+    '0>2': [[0,0],[0,1],[0,-1],[-1,0],[1,0]],
     '1>3': [[0,0],[0,1],[0,-1],[-1,0],[1,0]],
-    '2>0': [[1,0],[1,1],[1,-1],[0,0],[-1,0]],
+    '2>0': [[0,0],[0,1],[0,-1],[-1,0],[1,0]],
     '3>1': [[0,0],[0,1],[0,-1],[-1,0],[1,0]],
   }
 
@@ -768,10 +766,6 @@ export class TetrisGame {
 
   private tryRotate(delta: number): boolean {
     const piece = this.currentPiece
-
-    if (Math.abs(delta) === 1 && (piece.type === TetrominoType.S || piece.type === TetrominoType.Z)) {
-      piece.rotation = piece.rotation % 2
-    }
 
     const from = piece.rotation
     const to = (from + delta + 4) % 4

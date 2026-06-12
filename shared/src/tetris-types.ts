@@ -138,10 +138,10 @@ export const TETROMINOES: Record<TetrominoType, Block[][]> = {
   ],
   [TetrominoType.S]: [
     [
-      [0, -1],
-      [0, 0],
       [-1, 0],
       [-1, 1],
+      [0, -1],
+      [0, 0],
     ],
     [
       [-1, 0],
@@ -150,16 +150,16 @@ export const TETROMINOES: Record<TetrominoType, Block[][]> = {
       [1, 1],
     ],
     [
-      [0, -1],
-      [0, 0],
-      [-1, 0],
-      [-1, 1],
-    ],
-    [
-      [-1, 0],
       [0, 0],
       [0, 1],
-      [1, 1],
+      [1, -1],
+      [1, 0],
+    ],
+    [
+      [-1, -1],
+      [0, -1],
+      [0, 0],
+      [1, 0],
     ],
   ],
   [TetrominoType.Z]: [
@@ -176,16 +176,16 @@ export const TETROMINOES: Record<TetrominoType, Block[][]> = {
       [1, 0],
     ],
     [
-      [-1, -1],
-      [-1, 0],
+      [0, -1],
       [0, 0],
-      [0, 1],
+      [1, 0],
+      [1, 1],
     ],
     [
-      [-1, 1],
+      [-1, 0],
+      [0, -1],
       [0, 0],
-      [0, 1],
-      [1, 0],
+      [1, -1],
     ],
   ],
   [TetrominoType.J]: [
