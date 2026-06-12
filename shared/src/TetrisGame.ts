@@ -537,8 +537,6 @@ export class TetrisGame {
     const [bi, bj] = backPairs[rotation] ?? [2, 3]
 
     const frontBothFilled = filled[fi] && filled[fj]
-    const backBothFilled = filled[bi] && filled[bj]
-
     const isMiniShape = !frontBothFilled
 
     if (!isMiniShape) {
