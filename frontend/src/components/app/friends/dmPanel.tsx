@@ -13,7 +13,6 @@ import {
   type Friend,
   getDirectMessages,
   sendDirectMessage,
-  sendMatchInvite,
 } from '@/api/friends.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { Button } from '@/components/ui/button.tsx'
@@ -23,6 +22,7 @@ import { useDmRoom, useLiveEvent } from '@/realtime/hooks.ts'
 import { userStore } from '@/store/userStore.ts'
 import { useNavigate } from '@tanstack/react-router'
 import { Gamepad2Icon } from 'lucide-react'
+import { useMatchInvite } from '@/hooks/use-match-invite.ts'
 
 let dmSendSound: HTMLAudioElement | null = null
 let dmReceiveSound: HTMLAudioElement | null = null
@@ -217,14 +217,9 @@ export const DMPanel = (props: {
     sendMutation.mutate(content)
   }, [input, sendMutation])
 
-  const inviteMutation = useMutation({
-    mutationFn: () => sendMatchInvite(props.friend.id),
-    onSuccess: async (msg) => {
+  const inviteMutation = useMatchInvite(props.friend.id, {
+    onSuccess: async () => {
       await qc.invalidateQueries({ queryKey })
-      if (msg.roomId) await goToRoom(msg.roomId)
-    },
-    onError: (e: any) => {
-      toast.error(e?.response?.data?.message ?? 'Failed to send invite')
     },
   })
 

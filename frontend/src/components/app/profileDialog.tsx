@@ -22,13 +22,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip.tsx'
 import { CrownIcon, Gamepad2Icon } from 'lucide-react'
-import { useMutation } from '@tanstack/react-query'
-import { sendMatchInvite, useGetFriends } from '@/api/friends.ts'
-import { toast } from 'sonner'
-import { useNavigate } from '@tanstack/react-router'
+import { useGetFriends } from '@/api/friends.ts'
 import { useStore } from '@tanstack/react-store'
 import { userStore } from '@/store/userStore.ts'
-import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
+import { useMatchInvite } from '@/hooks/use-match-invite.ts'
 
 const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
   const level = Math.floor(profile.totalLines / 10) + 1
@@ -83,25 +80,8 @@ export const ProfileDialog = ({
   const { data: profile, isLoading } = useGetPublicProfile(userId, open)
   const currentUserId = useStore(userStore, (user) => user?.id)
   const friendsQuery = useGetFriends()
-  const navigate = useNavigate()
   const isFriend = friendsQuery.data?.some((friend) => friend.id === userId)
-  const inviteMutation = useMutation({
-    mutationFn: () => sendMatchInvite(userId),
-    onSuccess: async (message) => {
-      if (!message.roomId) return
-      onOpenChange(false)
-      setFriendsOverlayIsOpen(false)
-      await navigate({
-        to: '/app/room/$roomId',
-        params: { roomId: message.roomId },
-      })
-    },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message ?? 'Failed to send match invite',
-      )
-    },
-  })
+  const inviteMutation = useMatchInvite(userId)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
