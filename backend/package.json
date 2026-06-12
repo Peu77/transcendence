@@ -102,6 +102,13 @@
     "testEnvironment": "node"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@nestjs/core", "@swc/core"]
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@swc/core"
+    ],
+    "ignoredBuiltDependencies": [
+      "@nestjs/core",
+      "@swc/core"
+    ]
   }
 }
