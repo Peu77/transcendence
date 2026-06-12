@@ -115,7 +115,7 @@ export function useDeleteFriend() {
   })
 }
 
-export type PresenceStatus = 'online' | 'offline' | 'away'
+export type PresenceStatus = 'online' | 'offline' | 'away' | 'in-room' | 'in-game'
 
 export type FriendRequestUser = {
   id: string
