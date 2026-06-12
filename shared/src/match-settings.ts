@@ -1,5 +1,5 @@
 export enum RotationSystem {
-  SRS = 'SRS',
+  SRS = 'SRS+180',
 }
 
 export enum GarbageCancel {

@@ -164,7 +164,7 @@ export function MatchSettingsForm({
               <field.Select
                 label="Rotation System"
                 disabled={!isHost}
-                values={[{ label: 'SRS', value: RotationSystem.SRS }]}
+                values={[{ label: 'SRS+180', value: RotationSystem.SRS }]}
               />
             )}
           </form.AppField>

@@ -30,7 +30,7 @@ const Index = () => {
     },
     {
       label: 'solo',
-      description: 'Practice your skills against AI opponents.',
+      description: 'Play solo at your own pace and improve your skills.',
       path: '/app/solo',
       color: 'bg-green-400',
       borderColor: 'bg-green-600',
