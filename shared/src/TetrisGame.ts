@@ -526,16 +526,7 @@ export class TetrisGame {
       3: [0, 2],
     }
 
-    const backPairs: Record<number, [number, number]> = {
-      0: [2, 3],
-      1: [0, 2],
-      2: [0, 1],
-      3: [1, 3],
-    }
-
     const [fi, fj] = frontPairs[rotation] ?? [0, 1]
-    const [bi, bj] = backPairs[rotation] ?? [2, 3]
-
     const frontBothFilled = filled[fi] && filled[fj]
     const isMiniShape = !frontBothFilled
 
