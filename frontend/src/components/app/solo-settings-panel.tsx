@@ -42,7 +42,7 @@ const NUMERIC_SETTINGS: NumericSetting[] = [
     description:
       'Starting gravity (how fast pieces fall). Higher is faster.',
     min: 0,
-    max: 20,
+    max: 3,
     step: 0.01,
     formatValue: (value) => `${value}`,
   },
