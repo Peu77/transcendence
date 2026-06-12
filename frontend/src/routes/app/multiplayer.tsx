@@ -25,7 +25,7 @@ const Multiplayer = () => {
   })
 
   const joinRoomById = async () => {
-    const trimmedRoomId = roomIdInput.trim()
+    const trimmedRoomId = roomIdInput.trim().toUpperCase()
     if (!trimmedRoomId) {
       toast.error('Enter a room ID to join')
       return
