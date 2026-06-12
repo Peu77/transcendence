@@ -24,6 +24,7 @@ export class SendFriendRequestDto {
 export class SendDirectMessageDto {
   @IsString()
   @MinLength(1)
+  @MaxLength(500)
   content!: string
 }
 

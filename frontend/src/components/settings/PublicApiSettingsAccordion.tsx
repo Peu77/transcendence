@@ -79,6 +79,7 @@ export const PublicApiSettingsAccordion = () => {
               id="api-key-name"
               value={newKeyName}
               onChange={(event) => setNewKeyName(event.target.value)}
+              maxLength={80}
               placeholder="Production dashboard"
             />
           </div>
@@ -189,6 +190,7 @@ const ApiKeyList = ({ apiKeys, onRename, onRevoke }: ApiKeyListProps) => {
                         <Input
                           value={draftName}
                           onChange={(event) => setDraftName(event.target.value)}
+                          maxLength={80}
                           className="max-w-xs"
                         />
                       ) : (

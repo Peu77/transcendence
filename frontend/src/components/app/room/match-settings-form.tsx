@@ -182,7 +182,7 @@ export function MatchSettingsForm({
               <field.Slider
                 label="Next Queue"
                 min={0}
-                max={6}
+                max={10}
                 step={1}
                 disabled={!isHost}
               />
@@ -369,7 +369,7 @@ export function MatchSettingsForm({
                 <field.Slider
                   label="T-Spin Mini Single"
                   min={0}
-                  max={10}
+                  max={5}
                   disabled={!isHost}
                 />
               )}
@@ -429,7 +429,7 @@ export function MatchSettingsForm({
                 <field.Slider
                   label="B2B Bonus"
                   min={0}
-                  max={5}
+                  max={10}
                   disabled={!isHost}
                 />
               )}
