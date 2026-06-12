@@ -15,10 +15,23 @@ export enum PieceRandomizer {
 export type MatchSettings = {
   /**
    * Automatic downward fall speed of pieces.
-   * Measured in G (cells per frame).
-   * 1 = standard gravity, 20 = instant fall.
+   * `1` keeps the standard level-based speed curve.
+   * Any other positive value is treated as a direct rows-per-second override.
    */
   gravity: number
+
+  /**
+   * Gravity increase per second.
+   * Added to base gravity continuously after gmargin expires.
+   * Mirrors TETR.IO's gincrease custom room parameter.
+   */
+  gincrease: number
+
+  /**
+   * Delay in frames (at 60 fps) before gravity starts increasing.
+   * Mirrors TETR.IO's gmargin custom room parameter.
+   */
+  gmargin: number
 
   /**
    * Time in milliseconds before a piece locks after touching the stack.
@@ -31,18 +44,6 @@ export type MatchSettings = {
    * Prevents infinite stalling on the stack.
    */
   lockResetLimit: number
-
-  /**
-   * Delay in milliseconds before the next piece spawns
-   * after the previous piece locks.
-   */
-  areMs: number
-
-  /**
-   * Pause in milliseconds after clearing lines.
-   * Competitive modes typically use 0.
-   */
-  lineClearDelayMs: number
 
   /**
    * Rotation system used by the game.
@@ -89,6 +90,12 @@ export type MatchSettings = {
    * Used for piece spawn and top-out detection.
    */
   hiddenRows: number
+
+  /**
+   * Number of garbage attacks sent to the same target before a new target is selected.
+   * Only counts attacks that deliver at least one line. Set to 0 to re-roll on every attack.
+   */
+  garbageTargetK: number
 
   /**
    * Garbage attack and defense behavior in versus modes.

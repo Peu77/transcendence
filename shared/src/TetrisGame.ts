@@ -2,20 +2,13 @@ import {
   type Block,
   BOARD_COLS,
   BOARD_ROWS,
-  createEmptyGameMetrics,
-  type GameMetrics,
   type InputAction,
-  TETROMINOES,
   type TetrisPiece,
   type TetrisState,
+  TETROMINOES,
   TetrominoType,
 } from './tetris-types'
-import {
-  GarbageCancel,
-  type MatchSettings,
-  PieceRandomizer,
-  RotationSystem,
-} from './match-settings'
+import {GarbageCancel, type MatchSettings, PieceRandomizer, RotationSystem,} from './match-settings'
 
 const PIECE_TYPES = Object.values(TetrominoType)
 
@@ -48,8 +41,7 @@ export class TetrisGame {
   lines = 0
   level = 1
   gameOver = false
-  /** Cumulative gameplay counters (pieces placed, line clears, etc.). */
-  metrics: GameMetrics = createEmptyGameMetrics()
+    piecesPlaced = 0
   private combo = -1
   private backToBack = false
   private outgoingGarbage = 0
@@ -59,9 +51,12 @@ export class TetrisGame {
   private lockResetCount = 0
   private lastRotated = false
   private b2bChain = 0
+  private readonly gameStartTime = Date.now()
+  private readonly rng: () => number
 
-  constructor(settings: Partial<MatchSettings> = {}) {
+  constructor(settings: Partial<MatchSettings> = {}, seed?: number) {
     this.settings = this.createSettings(settings)
+    this.rng = this.createRng(seed ?? Math.floor(Math.random() * 0xffffffff))
     this.board = this.createEmptyBoard()
     this.refillNextTypes()
     this.currentPiece = this.spawnPiece(this.takeNextType(true))
@@ -81,6 +76,7 @@ export class TetrisGame {
     if (this.canMove(this.currentPiece, 1, 0)) {
       this.currentPiece.row += 1
       this.lockDelayStart = null
+      this.lockResetCount = 0
     } else {
       if (this.lockDelayStart === null) {
         this.lockDelayStart = Date.now()
@@ -113,15 +109,15 @@ export class TetrisGame {
         break
 
       case 'rotateCW':
-        if (this.tryRotate(1) && this.tryResetLockDelay()) this.lockAndSpawn()
+        this.doRotate(1)
         break
 
       case 'rotateCCW':
-        if (this.tryRotate(-1) && this.tryResetLockDelay()) this.lockAndSpawn()
+        this.doRotate(-1)
         break
 
       case 'rotate180':
-        if (this.tryRotate(2) && this.tryResetLockDelay()) this.lockAndSpawn()
+        this.doRotate(2)
         break
 
       case 'softDrop':
@@ -173,9 +169,9 @@ export class TetrisGame {
       lines: this.lines,
       level: this.level,
       gameOver: this.gameOver,
-      metrics: { ...this.metrics },
       combo: this.combo,
       b2bChain: this.b2bChain,
+        piecesPlaced: this.piecesPlaced,
     }
   }
 
@@ -191,10 +187,10 @@ export class TetrisGame {
     this.lines = state.lines
     this.level = state.level
     this.gameOver = state.gameOver
-    this.metrics = { ...createEmptyGameMetrics(), ...state.metrics }
-    // Private state resets — corrected on next reconciliation
-    this.combo = -1
-    this.backToBack = false
+      this.piecesPlaced = state.piecesPlaced
+    this.combo = state.combo
+    this.b2bChain = state.b2bChain
+    this.backToBack = state.b2bChain > 0
     this.outgoingGarbage = 0
     this.pendingGarbage = []
   }
@@ -204,14 +200,24 @@ export class TetrisGame {
     return this.nextTypes.slice(this.settings.nextCount, this.settings.nextCount + count)
   }
 
-  /** Milliseconds between gravity ticks for the current level. */
+  /** Milliseconds between gravity ticks for the current level or custom override. */
   getTickInterval(): number {
-    if (this.settings.gravity >= 20) return 1
-    if (this.settings.gravity > 0 && this.settings.gravity !== 1) {
-      return Math.max(1, Math.round(1000 / this.settings.gravity))
+    const g = this.getEffectiveGravity()
+    if (g >= 20) return 1
+    // Use level-based curve only when gravity is default and gincrease is off.
+    if (this.settings.gincrease === 0 && this.settings.gravity === 1) {
+      return Math.max(100, 800 - (this.level - 1) * 70)
     }
-    // Starts at 800 ms, decreases per level down to a minimum of 100 ms.
-    return Math.max(100, 800 - (this.level - 1) * 70)
+    // G is cells per frame at 60 fps, so interval = (1000ms / 60) / G
+    return Math.max(1, Math.round((1000 / 60) / g))
+  }
+
+  private getEffectiveGravity(): number {
+    if (this.settings.gincrease === 0) return this.settings.gravity
+    const elapsedSeconds = (Date.now() - this.gameStartTime) / 1000
+    const marginSeconds = this.settings.gmargin / 60
+    const increase = this.settings.gincrease * Math.max(0, elapsedSeconds - marginSeconds)
+    return Math.min(20, this.settings.gravity + increase)
   }
 
   /* ------------------------------------------------------------------ */
@@ -226,11 +232,13 @@ export class TetrisGame {
 
   private createSettings(settings: Partial<MatchSettings>): MatchSettings {
     return {
-      gravity: 1,
-      lockDelayMs: 500,
+      gravity: 0.02,
+      gincrease: 0.0025,
+      gmargin: 3600,
+      lockDelayMs: 300,
       lockResetLimit: 15,
-      areMs: 0,
-      lineClearDelayMs: 500,
+
+
       rotationSystem: RotationSystem.SRS,
       hold: true,
       nextCount: 5,
@@ -239,13 +247,14 @@ export class TetrisGame {
       width: BOARD_COLS,
       height: BOARD_ROWS,
       hiddenRows: 0,
+      garbageTargetK: 5,
       ...settings,
       garbage: {
         enabled: settings.garbage?.enabled ?? true,
         delayMs: settings.garbage?.delayMs ?? 1000,
         cancel: settings.garbage?.cancel ?? GarbageCancel.PARTIAL,
         holeCount: settings.garbage?.holeCount ?? 1,
-        messiness: settings.garbage?.messiness ?? 0.42,
+        messiness: settings.garbage?.messiness ?? 0,
       },
       damage: {
         table: {
@@ -271,14 +280,25 @@ export class TetrisGame {
     return this.settings.height + this.settings.hiddenRows
   }
 
+  private createRng(seed: number): () => number {
+    let s = seed >>> 0
+    return () => {
+      s += 0x6d2b79f5
+      let z = s
+      z = Math.imul(z ^ (z >>> 15), z | 1)
+      z ^= z + Math.imul(z ^ (z >>> 7), z | 61)
+      return ((z ^ (z >>> 14)) >>> 0) / 0x100000000
+    }
+  }
+
   private randomType(): TetrominoType {
-    return PIECE_TYPES[Math.floor(Math.random() * PIECE_TYPES.length)]
+    return PIECE_TYPES[Math.floor(this.rng() * PIECE_TYPES.length)]
   }
 
   private randomBag(): TetrominoType[] {
     const bag = [...PIECE_TYPES]
     for (let i = bag.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
+      const j = Math.floor(this.rng() * (i + 1))
       ;[bag[i], bag[j]] = [bag[j], bag[i]]
     }
     return bag
@@ -382,7 +402,6 @@ export class TetrisGame {
   }
 
   private lockPiece(): void {
-    this.metrics.piecesPlaced++
     const blocks = this.getBlocks(this.currentPiece)
     for (const [br, bc] of blocks) {
       const r = this.currentPiece.row + br
@@ -391,6 +410,7 @@ export class TetrisGame {
         this.board[r][c] = this.currentPiece.type
       }
     }
+      this.piecesPlaced++
   }
 
   private clearLines(): void {
@@ -415,30 +435,8 @@ export class TetrisGame {
       this.level = Math.floor(this.lines / LINES_PER_LEVEL) + 1
       const isAllClear = this.board.every((row) => row.every((cell) => cell === 0))
       this.outgoingGarbage += this.calculateGarbage(cleared, tSpin, isAllClear)
-      this.recordLineClear(cleared)
     } else {
       this.combo = -1
-    }
-  }
-
-  /** Update line-clear breakdown and combo metrics for a successful clear. */
-  private recordLineClear(cleared: number): void {
-    switch (cleared) {
-      case 1:
-        this.metrics.singles++
-        break
-      case 2:
-        this.metrics.doubles++
-        break
-      case 3:
-        this.metrics.triples++
-        break
-      default:
-        this.metrics.tetrises++
-        break
-    }
-    if (this.combo > this.metrics.maxCombo) {
-      this.metrics.maxCombo = this.combo
     }
   }
 
@@ -477,9 +475,9 @@ export class TetrisGame {
     const comboBonus = comboTable[Math.min(this.combo, comboTable.length - 1)] ?? 0
     const allClearBonus = isAllClear ? table.allClear : 0
 
-    if (isHardClear) {
+    if (isHardClear && this.backToBack) {
       this.b2bChain++
-    } else {
+    } else if (!isHardClear) {
       this.b2bChain = 0
     }
     this.backToBack = isHardClear
@@ -554,15 +552,18 @@ export class TetrisGame {
     }
 
     const now = Date.now()
-    let lines = 0
+    const due: PendingGarbage[] = []
     this.pendingGarbage = this.pendingGarbage.filter((item) => {
       if (item.applyAt > now) return true
-      lines += item.lines
+      due.push(item)
       return false
     })
 
-    for (let i = 0; i < lines; i++) {
-      this.addGarbageLine()
+    for (const item of due) {
+      this.garbageHoleCol = -1
+      for (let i = 0; i < item.lines; i++) {
+        this.addGarbageLine()
+      }
     }
   }
 
@@ -631,7 +632,6 @@ export class TetrisGame {
     this.heldType = currentType
     this.currentPiece = this.spawnPiece(nextType)
     this.canHold = false
-    this.metrics.holds++
     this.lockDelayStart = null
     this.lockResetCount = 0
     this.lastRotated = false
@@ -693,9 +693,16 @@ export class TetrisGame {
   }
 
   private lockAndSpawn(): boolean {
+    if (this.canMove(this.currentPiece, 1, 0)) {
+      this.lockDelayStart = null
+      this.lockResetCount = 0
+      return true
+    }
     log(
       `Locking piece ${this.currentPiece.type} at row=${this.currentPiece.row} col=${this.currentPiece.col}`,
     )
+    this.lockDelayStart = null
+    this.lockResetCount = 0
     this.lockPiece()
     this.clearLines()
     this.applyDueGarbage()
@@ -716,6 +723,11 @@ export class TetrisGame {
     const key = `${from}>${to}`
     if (type === TetrominoType.I) return this.I_KICKS[key] ?? [[0, 0]]
     return this.JLSTZ_KICKS[key] ?? [[0, 0]]
+  }
+
+  private doRotate(delta: number): void {
+    if (!this.tryRotate(delta)) return
+    if (this.tryResetLockDelay()) this.lockAndSpawn()
   }
 
   private tryRotate(delta: number): boolean {

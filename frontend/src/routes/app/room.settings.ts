@@ -8,10 +8,12 @@ import {
 
 export const matchSettingsSchema = z.object({
   gravity: z.number().min(0),
+  gincrease: z.number().min(0),
+  gmargin: z.number().min(0),
   lockDelayMs: z.number().min(0),
   lockResetLimit: z.number().min(0),
-  areMs: z.number().min(0),
-  lineClearDelayMs: z.number().min(0),
+
+
   rotationSystem: z.enum(RotationSystem),
   hold: z.boolean(),
   nextCount: z.number().min(0).max(10),
@@ -20,6 +22,7 @@ export const matchSettingsSchema = z.object({
   width: z.number().min(4).max(20),
   height: z.number().min(10).max(40),
   hiddenRows: z.number().min(0),
+  garbageTargetK: z.number().min(0).max(20),
   garbage: z.object({
     enabled: z.boolean(),
     delayMs: z.number().min(0),

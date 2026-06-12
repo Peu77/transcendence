@@ -19,7 +19,6 @@ import { UserBlock } from './entities/block.entity'
 import { isUUID } from 'class-validator'
 import { RealtimeService } from '../realtime/realtime.service'
 import { UsersService } from '../users/users.service'
-import { RoomService } from '../room/room.service'
 
 @Injectable()
 export class FriendsService {

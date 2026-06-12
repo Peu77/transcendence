@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   acceptFriendRequest,
+  blockUser,
   cancelFriendRequest,
   denyFriendRequest,
   getIncomingFriendRequests,
@@ -13,6 +14,7 @@ import {
 import { RequestRow } from '@/components/app/friends/requestRow.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { useLiveEvent } from '@/realtime/hooks.ts'
+import { checkAndQueueNewAchievements } from '@/store/achievementNotificationStore.ts'
 
 export const RequestsTab = (props: { isOpen: boolean }) => {
   const qc = useQueryClient()
@@ -67,6 +69,7 @@ export const RequestsTab = (props: { isOpen: boolean }) => {
         qc.invalidateQueries({ queryKey: ['friends', 'requests', 'incoming'] }),
       ])
       toast.success('Friend request accepted')
+      await checkAndQueueNewAchievements(qc)
     },
     onError: (e: any) =>
       toast.error(e?.response?.data?.message ?? 'Failed to accept request'),
@@ -82,6 +85,27 @@ export const RequestsTab = (props: { isOpen: boolean }) => {
     },
     onError: (e: any) =>
       toast.error(e?.response?.data?.message ?? 'Failed to deny request'),
+  })
+
+  const blockMutation = useMutation({
+    mutationFn: async ({
+      requestId,
+      fromUserId,
+    }: {
+      requestId: string
+      fromUserId: string
+    }) => {
+      await denyFriendRequest(requestId)
+      await blockUser(fromUserId)
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({
+        queryKey: ['friends', 'requests', 'incoming'],
+      })
+      toast.success('User blocked')
+    },
+    onError: (e: any) =>
+      toast.error(e?.response?.data?.message ?? 'Failed to block user'),
   })
 
   const cancelMutation = useMutation({
@@ -130,6 +154,18 @@ export const RequestsTab = (props: { isOpen: boolean }) => {
                   onClick={() => denyMutation.mutate(r.id)}
                 >
                   Deny
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    blockMutation.mutate({
+                      requestId: r.id,
+                      fromUserId: r.fromUser.id,
+                    })
+                  }
+                >
+                  Block
                 </Button>
               </>
             }

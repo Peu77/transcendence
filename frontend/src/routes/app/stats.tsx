@@ -1,15 +1,9 @@
 import { useState } from 'react'
 import {
-  useMyAchievements,
-  useMyStats,
-  type Achievement,
-  type UserStats,
-} from '@/api/stats.ts'
-import {
-  useGlobalRanking,
-  useMatchHistory,
   type GlobalRankingItem,
   type MatchHistoryItem,
+  useGlobalRanking,
+  useMatchHistory,
 } from '@/api/history.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { ProfileDialog } from '@/components/app/profileDialog.tsx'
@@ -33,31 +27,15 @@ import { createRoute, useRouter } from '@tanstack/react-router'
 import { format } from 'date-fns'
 import {
   ArrowLeftIcon,
-  AwardIcon,
   ChartNoAxesColumnIncreasingIcon,
-  GaugeIcon,
+  CrownIcon,
   HistoryIcon,
-  LockIcon,
   MedalIcon,
   TrophyIcon,
 } from 'lucide-react'
 
 const placementLabel = (placement: number, playerCount: number) =>
   `${placement} / ${playerCount}`
-
-const formatPlayTime = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  if (hours > 0) return `${hours}h ${minutes}m`
-  if (minutes > 0) return `${minutes}m`
-  return `${seconds}s`
-}
-
-const LoadingState = () => (
-  <div className="flex h-full items-center justify-center">
-    <Spinner className="size-12" />
-  </div>
-)
 
 const Stat = ({ label, value }: { label: string; value: string }) => (
   <div className="rounded-md bg-muted px-3 py-2 text-center">
@@ -67,129 +45,6 @@ const Stat = ({ label, value }: { label: string; value: string }) => (
     </div>
   </div>
 )
-
-/* ----------------------------- Overview tab ----------------------------- */
-
-const StatsOverview = ({ stats }: { stats: UserStats }) => (
-  <ScrollArea className="h-full">
-    <div className="grid grid-cols-2 gap-3 pr-4 pb-6 sm:grid-cols-3 md:grid-cols-4">
-      <Stat label="Matches" value={stats.matchesPlayed.toLocaleString()} />
-      <Stat label="Wins" value={stats.matchesWon.toLocaleString()} />
-      <Stat label="Win Rate" value={`${Math.round(stats.winRate * 100)}%`} />
-      <Stat label="Best Score" value={stats.highestScore.toLocaleString()} />
-      <Stat label="Avg Score" value={stats.averageScore.toLocaleString()} />
-      <Stat label="Lines" value={stats.totalLinesCleared.toLocaleString()} />
-      <Stat label="Pieces" value={stats.totalPiecesPlaced.toLocaleString()} />
-      <Stat label="Best Combo" value={stats.bestCombo.toLocaleString()} />
-      <Stat
-        label="Tetrises"
-        value={(stats.metrics.tetrises ?? 0).toLocaleString()}
-      />
-      <Stat label="Play Time" value={formatPlayTime(stats.playTimeInSeconds)} />
-    </div>
-  </ScrollArea>
-)
-
-const Overview = () => {
-  const statsQuery = useMyStats()
-
-  if (statsQuery.isPending) return <LoadingState />
-
-  if (statsQuery.isError) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-        <p className="text-xl font-semibold">Could not load your stats.</p>
-        <Button onClick={() => statsQuery.refetch()}>Try again</Button>
-      </div>
-    )
-  }
-
-  return <StatsOverview stats={statsQuery.data} />
-}
-
-/* --------------------------- Achievements tab --------------------------- */
-
-const formatAchievementValue = (value: number, unit: Achievement['unit']) =>
-  unit === 'minutes'
-    ? `${Math.floor(value / 60).toLocaleString()}m`
-    : value.toLocaleString()
-
-const AchievementCard = ({ achievement }: { achievement: Achievement }) => {
-  const percent = achievement.goal
-    ? Math.min(100, Math.round((achievement.progress / achievement.goal) * 100))
-    : 0
-
-  return (
-    <Card
-      className={`border py-4 transition-colors ${
-        achievement.unlocked
-          ? 'border-yellow-500/50 bg-yellow-400/5'
-          : 'border-border opacity-80'
-      }`}
-    >
-      <CardContent className="flex items-center gap-4 px-4">
-        <div
-          className={`flex size-12 shrink-0 items-center justify-center rounded-md text-2xl ${
-            achievement.unlocked ? 'bg-yellow-400/20' : 'bg-muted grayscale'
-          }`}
-        >
-          {achievement.unlocked ? (
-            achievement.icon
-          ) : (
-            <LockIcon className="size-5 text-muted-foreground" />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <span className="truncate font-semibold">{achievement.name}</span>
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {formatAchievementValue(achievement.progress, achievement.unit)} /{' '}
-              {formatAchievementValue(achievement.goal, achievement.unit)}
-            </span>
-          </div>
-          <p className="mb-2 truncate text-sm text-muted-foreground">
-            {achievement.description}
-          </p>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className={`h-full rounded-full ${
-                achievement.unlocked ? 'bg-yellow-500' : 'bg-primary/60'
-              }`}
-              style={{ width: `${percent}%` }}
-            />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-const Achievements = () => {
-  const achievementsQuery = useMyAchievements()
-
-  if (achievementsQuery.isPending) return <LoadingState />
-
-  if (achievementsQuery.isError) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-        <p className="text-xl font-semibold">Could not load achievements.</p>
-        <Button onClick={() => achievementsQuery.refetch()}>Try again</Button>
-      </div>
-    )
-  }
-
-  return (
-    <ScrollArea className="h-full">
-      <div className="grid grid-cols-1 gap-3 pr-4 pb-6 md:grid-cols-2">
-        {achievementsQuery.data.map((achievement) => (
-          <AchievementCard key={achievement.id} achievement={achievement} />
-        ))}
-      </div>
-    </ScrollArea>
-  )
-}
-
-/* ----------------------------- History tab ------------------------------ */
 
 const MatchCard = ({ match }: { match: MatchHistoryItem }) => {
   const won = match.placement === 1
@@ -237,7 +92,9 @@ const MatchCard = ({ match }: { match: MatchHistoryItem }) => {
         <ProfileDialog
           userId={profileUserId ?? ''}
           open={profileUserId !== null}
-          onOpenChange={(open) => { if (!open) setProfileUserId(null) }}
+          onOpenChange={(open) => {
+            if (!open) setProfileUserId(null)
+          }}
         />
         <div className="overflow-hidden rounded-md border border-border">
           {match.players.map((player) => (
@@ -252,8 +109,13 @@ const MatchCard = ({ match }: { match: MatchHistoryItem }) => {
                 onClick={() => setProfileUserId(player.userId)}
                 className="flex items-center gap-2 min-w-0 text-left hover:opacity-70 transition-opacity cursor-pointer"
               >
-                <ProfileImage profilePictureId={player.profilePictureId} className="size-7 shrink-0" />
-                <span className="truncate font-semibold">{player.username}</span>
+                <ProfileImage
+                  profilePictureId={player.profilePictureId}
+                  className="size-7 shrink-0"
+                />
+                <span className="truncate font-semibold">
+                  {player.username}
+                </span>
               </button>
               <span className="text-sm text-muted-foreground">
                 {player.score.toLocaleString()} pts
@@ -265,6 +127,12 @@ const MatchCard = ({ match }: { match: MatchHistoryItem }) => {
     </Card>
   )
 }
+
+const LoadingState = () => (
+  <div className="flex h-full items-center justify-center">
+    <Spinner className="size-12" />
+  </div>
+)
 
 const MatchHistory = () => {
   const historyQuery = useMatchHistory()
@@ -303,8 +171,6 @@ const MatchHistory = () => {
   )
 }
 
-/* ----------------------------- Ranking tab ------------------------------ */
-
 const rankClassName = (rank: number) => {
   if (rank === 1) return 'bg-yellow-400/20 text-yellow-500'
   if (rank === 2) return 'bg-slate-400/20 text-slate-500'
@@ -325,7 +191,7 @@ const RankingRow = ({
     <div
       className={`flex size-9 items-center justify-center rounded-md font-bold ${rankClassName(rank)}`}
     >
-      {rank <= 3 ? <MedalIcon className="size-5" /> : rank}
+      {rank === 1 ? <CrownIcon className="size-5" /> : rank <= 3 ? <MedalIcon className="size-5" /> : rank}
     </div>
     <button
       onClick={onPlayerClick}
@@ -344,9 +210,9 @@ const RankingRow = ({
       </div>
     </button>
     <div className="text-right">
-      <p className="text-lg font-bold">{player.score.toLocaleString()}</p>
+      <p className="text-lg font-bold">{(player.wins ?? 0).toLocaleString()}</p>
       <p className="text-xs uppercase tracking-wider text-muted-foreground">
-        points
+        {player.wins === 1 ? 'win' : 'wins'}
       </p>
     </div>
   </div>
@@ -384,7 +250,9 @@ const GlobalRanking = () => {
       <ProfileDialog
         userId={profileUserId ?? ''}
         open={profileUserId !== null}
-        onOpenChange={(open) => { if (!open) setProfileUserId(null) }}
+        onOpenChange={(open) => {
+          if (!open) setProfileUserId(null)
+        }}
       />
       <ScrollArea className="h-full">
         <Card className="gap-0 overflow-hidden border border-border py-0">
@@ -402,9 +270,7 @@ const GlobalRanking = () => {
   )
 }
 
-/* -------------------------------- Page ---------------------------------- */
-
-const Stats = () => {
+const Statistics = () => {
   const router = useRouter()
 
   return (
@@ -418,54 +284,40 @@ const Stats = () => {
           <ArrowLeftIcon />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Stats</h1>
+          <h1 className="text-3xl font-bold">Statistics</h1>
           <p className="text-muted-foreground">
-            Your stats, achievements, match history and the global ranking
+            Your match history and the global player ranking
           </p>
         </div>
       </div>
 
       <Tabs
-        defaultValue="overview"
+        defaultValue="history"
         className="flex min-h-0 flex-1 flex-col gap-4"
       >
-        <TabsList className="grid w-full shrink-0 grid-cols-4">
-          <TabsTrigger value="overview">
-            <GaugeIcon />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="achievements">
-            <AwardIcon />
-            Achievements
+        <TabsList className="grid w-full shrink-0 grid-cols-2">
+          <TabsTrigger value="history">
+            <HistoryIcon />
+            Match History
           </TabsTrigger>
           <TabsTrigger value="ranking">
             <ChartNoAxesColumnIncreasingIcon />
-            Ranking
-          </TabsTrigger>
-          <TabsTrigger value="history">
-            <HistoryIcon />
-            History
+            Global Ranking
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="overview" className="min-h-0">
-          <Overview />
-        </TabsContent>
-        <TabsContent value="achievements" className="min-h-0">
-          <Achievements />
+        <TabsContent value="history" className="min-h-0">
+          <MatchHistory />
         </TabsContent>
         <TabsContent value="ranking" className="min-h-0">
           <GlobalRanking />
-        </TabsContent>
-        <TabsContent value="history" className="min-h-0">
-          <MatchHistory />
         </TabsContent>
       </Tabs>
     </div>
   )
 }
 
-export const StatsRoute = createRoute({
+export const StatisticsRoute = createRoute({
   getParentRoute: () => AppRoute,
-  component: Stats,
-  path: '/stats',
+  component: Statistics,
+  path: '/statistics',
 })

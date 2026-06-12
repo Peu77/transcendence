@@ -87,6 +87,30 @@ export class FriendsController {
     return {}
   }
 
+  @Get('friends/blocked')
+  async getBlockedUsers(@UserId() userId: string) {
+    const blocked = await this.friendsService.getBlockedUsers(userId)
+    return { blocked }
+  }
+
+  @Post('friends/block/:userId')
+  async blockUser(
+    @UserId() blockerId: string,
+    @Param('userId') blockedId: string,
+  ) {
+    await this.friendsService.blockUser(blockerId, blockedId)
+    return {}
+  }
+
+  @Delete('friends/block/:userId')
+  async unblockUser(
+    @UserId() blockerId: string,
+    @Param('userId') blockedId: string,
+  ) {
+    await this.friendsService.unblockUser(blockerId, blockedId)
+    return {}
+  }
+
   @Post('friends/requests/:requestId/cancel')
   async cancel(
     @UserId() userId: string,

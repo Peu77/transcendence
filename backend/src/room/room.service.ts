@@ -43,6 +43,7 @@ export class RoomService {
     })
 
     this.sendUpdateRoomEvent(roomId)
+    this.realtimeService.emitRoomsUpdated()
   }
 
   getRoom(roomId: string): Room {
@@ -63,6 +64,7 @@ export class RoomService {
 
     if (room.users.length === 0) {
       this.deleteRoom(roomId)
+      this.realtimeService.emitRoomsUpdated()
       return
     }
 
@@ -72,6 +74,7 @@ export class RoomService {
     }
 
     this.sendUpdateRoomEvent(roomId)
+    this.realtimeService.emitRoomsUpdated()
   }
 
   leaveAllRooms(userId: string) {
@@ -90,6 +93,7 @@ export class RoomService {
       users: [],
     }
     this.rooms.set(room.id, room)
+    this.realtimeService.emitRoomsUpdated()
     return room
   }
 
@@ -113,6 +117,7 @@ export class RoomService {
 
     room.status = 'waiting'
     this.sendUpdateRoomEvent(roomId)
+    this.realtimeService.emitRoomsUpdated()
   }
 
   getPublicRooms(): Promise<Room[]> {
@@ -143,6 +148,7 @@ export class RoomService {
     }
 
     this.sendUpdateRoomEvent(roomId)
+    this.realtimeService.emitRoomsUpdated()
     return room
   }
 
@@ -169,11 +175,13 @@ export class RoomService {
 
   createDefaultMatchSettings(): MatchSettings {
     return {
-      gravity: 1,
-      lockDelayMs: 500,
+      gravity: 0.02,
+      gincrease: 0.0025,
+      gmargin: 3600,
+      lockDelayMs: 300,
       lockResetLimit: 15,
-      areMs: 0,
-      lineClearDelayMs: 500,
+
+
       rotationSystem: RotationSystem.SRS,
       hold: true,
       nextCount: 5,
@@ -182,12 +190,13 @@ export class RoomService {
       width: 10,
       height: 20,
       hiddenRows: 0,
+      garbageTargetK: 5,
       garbage: {
         enabled: true,
-        delayMs: 1000,
+        delayMs: 500,
         cancel: GarbageCancel.PARTIAL,
         holeCount: 1,
-        messiness: 0.42,
+        messiness: 0,
       },
       damage: {
         table: {

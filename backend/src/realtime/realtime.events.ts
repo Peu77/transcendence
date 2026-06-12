@@ -9,6 +9,12 @@ export type LiveEventName =
   | 'friendship.deleted'
   | 'presence.updated'
   | 'dm.created'
+  | 'user.blocked'
+  | 'rooms.updated'
+
+export interface UserBlockedEvent {
+  blockerId: string
+}
 
 export interface UserInfo {
   username: string

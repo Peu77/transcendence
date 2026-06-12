@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useStore } from '@tanstack/react-store'
 import {
   friendsOverlayStore,
@@ -13,9 +12,71 @@ import {
 } from '@/components/ui/tabs.tsx'
 import { FriendsTab } from '@/components/app/friends/friendsTab.tsx'
 import { RequestsTab } from '@/components/app/friends/requestsTab.tsx'
-import { BlockedTab } from '@/components/app/friends/blockedTab.tsx'
-import { DMPanel } from '@/components/app/friends/dmPanel.tsx'
-import type { Friend } from '@/api/friends.ts'
+import { useGetBlockedUsers, useUnblockUser } from '@/api/friends.ts'
+import { ProfileImage } from '@/components/app/profileImage.tsx'
+import { Button } from '@/components/ui/button.tsx'
+import { ChevronUpIcon } from 'lucide-react'
+import { toast } from 'sonner'
+
+function BlockedDrawer() {
+  const [expanded, setExpanded] = useState(false)
+  const { data: blocked = [], isLoading } = useGetBlockedUsers()
+  const unblockMutation = useUnblockUser()
+
+  return (
+    <div className="border-t border-sidebar-border">
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <span>Blocked{blocked.length > 0 ? ` (${blocked.length})` : ''}</span>
+        <ChevronUpIcon
+          className={`size-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      <div
+        className="overflow-hidden transition-all duration-300 ease-in-out"
+        style={{ maxHeight: expanded ? `${Math.max(blocked.length, 1) * 56 + 16}px` : '0px' }}
+      >
+        <div className="flex flex-col gap-1 px-3 pb-3">
+          {isLoading && (
+            <p className="px-1 py-2 text-xs text-muted-foreground">Loading…</p>
+          )}
+          {!isLoading && blocked.length === 0 && (
+            <p className="px-1 py-2 text-xs text-muted-foreground">No blocked users.</p>
+          )}
+          {blocked.map((user) => (
+            <div
+              key={user.id}
+              className="flex items-center gap-3 rounded-md px-2 py-2"
+            >
+              <ProfileImage
+                profilePictureId={user.profilePictureId}
+                className="size-8 shrink-0"
+              />
+              <span className="flex-1 truncate text-sm font-medium">{user.username}</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="shrink-0 text-xs"
+                disabled={unblockMutation.isPending}
+                onClick={() =>
+                  unblockMutation.mutate(user.id, {
+                    onSuccess: () => toast.success(`Unblocked ${user.username}`),
+                    onError: () => toast.error('Failed to unblock'),
+                  })
+                }
+              >
+                Unblock
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export const FriendsOverlay = () => {
   const isOpen = useStore(friendsOverlayStore, (s) => s.isOpen)

@@ -16,17 +16,18 @@ import { randomUUID } from 'node:crypto'
 import type { Server, Socket } from 'socket.io'
 import { Repository } from 'typeorm'
 import {
-  REALTIME_NAMESPACE,
   dmRoom,
   gameRoom,
+  REALTIME_NAMESPACE,
   userRoom,
 } from './realtime.constants'
 import { RealtimeService } from './realtime.service'
 import { RealtimePresenceService } from './realtime-presence.service'
 import { RoomService } from '../room/room.service'
 import {
-  TetrisGame,
   type InputAction,
+  type MatchSettings,
+  TetrisGame,
   type TetrisState,
   type TetrominoType,
 } from '@transcendence/shared'
@@ -41,6 +42,8 @@ interface PlayerGame {
   tickTimer: ReturnType<typeof setTimeout> | null
   lastSeq: number
   placement: number | null
+  targetId: string | null
+  attackEventCount: number
 }
 
 interface RoomGameSession {
@@ -49,6 +52,7 @@ interface RoomGameSession {
   finishing: boolean
   startedAt: number // epoch ms, used to compute match duration
   nextPlacement: number
+  settings: MatchSettings
 }
 
 function parseCookie(cookieHeader: string | undefined): Record<string, string> {
@@ -67,7 +71,7 @@ function parseCookie(cookieHeader: string | undefined): Record<string, string> {
 @WebSocketGateway({
   namespace: REALTIME_NAMESPACE,
   cors: {
-    origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN ?? 'https://localhost',
     credentials: true,
   },
 })
@@ -294,14 +298,18 @@ export class RealtimeGateway
         finishing: false,
         startedAt: Date.now(),
         nextPlacement: room.users.length,
+        settings: room.settings,
       }
 
+      const seed = Math.floor(Math.random() * 0xffffffff)
       for (const user of room.users) {
         session.players.set(user.id, {
-          game: new TetrisGame(room.settings),
+          game: new TetrisGame(room.settings, seed),
           tickTimer: null,
           lastSeq: 0,
           placement: null,
+          targetId: null,
+          attackEventCount: 0,
         })
       }
 
@@ -444,6 +452,7 @@ export class RealtimeGateway
     }
 
     pg.placement = session.nextPlacement--
+    this.retargetPlayersWhoTargeted(session, userId)
 
     const state = pg.game.getState()
     this.emitToGameRoom(roomId, 'game.player-over', {
@@ -468,9 +477,43 @@ export class RealtimeGateway
     const session = this.gameSessions.get(roomId)
     if (!session) return
 
-    for (const [targetUserId, target] of session.players) {
-      if (targetUserId === attackerUserId || target.game.gameOver) continue
-      target.game.receiveGarbage(garbage)
+    const attacker = session.players.get(attackerUserId)
+    if (!attacker) return
+
+    const alive = Array.from(session.players.entries()).filter(
+      ([id, pg]) => id !== attackerUserId && !pg.game.gameOver,
+    )
+    if (alive.length === 0) return
+
+    const K = session.settings.garbageTargetK
+    const needsRetarget =
+      attacker.targetId === null ||
+      (K > 0 && attacker.attackEventCount >= K) ||
+      !alive.some(([id]) => id === attacker.targetId)
+
+    if (needsRetarget) {
+      const [newTargetId] = alive[Math.floor(Math.random() * alive.length)]
+      attacker.targetId = newTargetId
+      attacker.attackEventCount = 0
+      this.logger.log(`[targeting] ${attackerUserId} → new target: ${newTargetId}`)
+    }
+
+    const target = session.players.get(attacker.targetId!)
+    if (!target) return
+
+    target.game.receiveGarbage(garbage)
+    attacker.attackEventCount++
+    this.logger.log(
+      `[targeting] ${attackerUserId} → ${attacker.targetId} | lines: ${garbage} | attacks on target: ${attacker.attackEventCount}/${K}`,
+    )
+  }
+
+  private retargetPlayersWhoTargeted(session: RoomGameSession, deadUserId: string) {
+    for (const [, pg] of session.players) {
+      if (pg.targetId === deadUserId) {
+        pg.targetId = null
+        pg.attackEventCount = 0
+      }
     }
   }
 
@@ -544,6 +587,7 @@ export class RealtimeGateway
         matchId,
         roomId,
         userId: result.userId,
+        placement: result.placement,
         score: result.score,
         lines: result.lines,
         state: session.players.get(result.userId)!.game.getState(),
@@ -657,6 +701,7 @@ export class RealtimeGateway
     }
     pg.placement = session.nextPlacement--
     pg.game.gameOver = true
+    this.retargetPlayersWhoTargeted(session, userId)
 
     this.emitToGameRoom(roomId, 'game.player-over', {
       roomId,

@@ -93,7 +93,7 @@ During the development of this project, Artificial Intelligence was utilized str
 - [x] Allow users to interact with other users (2)
   - [x] A basic chat system
   - [x] A friend system
-  - [ ] A profile system (Theo)
+  - [x] A profile system (Theo)
 - [x] Realtime feature using WebSockets - (2)
 - [x] User interaction - Basic Chat, friend system, profile system - (2)
 - [ ] Public API (at least 5 endpoints) - (2) (blocked by achievements)
@@ -107,8 +107,8 @@ During the development of this project, Artificial Intelligence was utilized str
 - [x] Standard User Management and Auth --> Update profile info, upload avatar, add friends and see if online, profile page per user - (2) (Theo)
 - [x] Game statistics and match history - (1) --> ? 
   - [x] Track user game statistics (wins, losses, ranking, level, etc.)
-  - [] Display match history (1v1 games, dates, results, opponents).
-  - [ ] Show achievements and progression.
+  - [x] Display match history (1v1 games, dates, results, opponents).
+  - [x] Show achievements and progression.
   - [x] Leaderboard integration.
 - [x] Implement OAuth 2.0 (1)
 - [x] Users have a profile page displaying their information. (Theo)
@@ -127,7 +127,7 @@ During the development of this project, Artificial Intelligence was utilized str
   same game in real-time
 - [ ] Advanced Chat Features (1)
 - [x] Game customization options (1)
-- [ ] Gamification system (1)
+- [x] Gamification system (1)
 
 ## Devops
 - [x] Monitoring System with Prometheus and Grafana (2)
@@ -141,7 +141,8 @@ During the development of this project, Artificial Intelligence was utilized str
 
 
 # Tetris Features:
-- [ ] T-Spin implementation (remove 4 lines) 
+
+- [x] T-Spin implementation (remove 4 lines)
 - [ ] Allow custom game configs for rooms (needs testing)
 - [ ] Special Modes (bomb mode for example)
 - [x] Solo Mode (needs enhancing)

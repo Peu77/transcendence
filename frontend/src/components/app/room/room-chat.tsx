@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { SendIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button.tsx'
@@ -7,6 +7,17 @@ import { useLiveEvent } from '@/realtime/hooks.ts'
 import { useLiveSocket } from '@/realtime/useRealtimeStore.ts'
 import type { RoomChatMessageEvent } from '@/realtime/events.ts'
 import { cn } from '@/lib/utils.ts'
+
+let sendSound: HTMLAudioElement | null = null
+let receiveSound: HTMLAudioElement | null = null
+function getSendSound() {
+  if (!sendSound) sendSound = new Audio('/sounds/message_send.mp3')
+  return sendSound
+}
+function getReceiveSound() {
+  if (!receiveSound) receiveSound = new Audio('/sounds/message_receive.mp3')
+  return receiveSound
+}
 
 type RoomChatProps = {
   roomId: string
@@ -34,10 +45,21 @@ export function RoomChat({
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
 
-  useLiveEvent('room.chat.message', (message) => {
-    if (message.roomId !== roomId) return
-    setMessages((current) => [...current, message])
-  })
+  useLiveEvent(
+    'room.chat.message',
+    useCallback(
+      (message: RoomChatMessageEvent) => {
+        if (message.roomId !== roomId) return
+        setMessages((current) => [...current, message])
+        if (message.senderId !== currentUserId) {
+          const sound = getReceiveSound()
+          sound.currentTime = 0
+          sound.play().catch(() => {})
+        }
+      },
+      [roomId, currentUserId],
+    ),
+  )
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -58,6 +80,10 @@ export function RoomChat({
     socket.emit('room.chat.send', { roomId, content }, (res) => {
       if (!res?.ok) {
         toast.error(res?.error || 'Failed to send message')
+      } else {
+        const sound = getSendSound()
+        sound.currentTime = 0
+        sound.play().catch(() => {})
       }
     })
     setDraftMessage('')

@@ -152,9 +152,17 @@ export class UsersController {
     stream.pipe(res)
   }
 
+  @Get('users/achievements')
+  async getAchievements(@UserId() userId: string) {
+    return this.usersService.getUserAchievements(userId)
+  }
+
   @Get('users/profile/:id')
-  async getPublicProfile(@Param('id') id: string) {
-    return this.usersService.getPublicProfile(id)
+  async getPublicProfile(
+    @Param('id') id: string,
+    @UserId() requesterId: string,
+  ) {
+    return this.usersService.getPublicProfile(id, requesterId)
   }
 
   @Post('users/toggleTheme')

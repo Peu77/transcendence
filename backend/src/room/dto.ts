@@ -120,6 +120,16 @@ export class UpdateMatchSettingsDto {
 
   @IsNumber()
   @Min(0)
+  @Max(20)
+  gincrease!: number
+  
+  @IsNumber()
+  @Min(0)
+  @Max(10000)
+  gmargin!: number
+
+  @IsNumber()
+  @Min(0)
   @Max(2000)
   lockDelayMs!: number
 
@@ -127,16 +137,6 @@ export class UpdateMatchSettingsDto {
   @Min(0)
   @Max(30)
   lockResetLimit!: number
-
-  @IsNumber()
-  @Min(0)
-  @Max(1000)
-  areMs!: number
-
-  @IsNumber()
-  @Min(0)
-  @Max(1000)
-  lineClearDelayMs!: number
 
   @IsEnum(RotationSystem)
   rotationSystem!: RotationSystem
@@ -169,6 +169,11 @@ export class UpdateMatchSettingsDto {
   @Min(0)
   @Max(20)
   hiddenRows!: number
+
+  @IsNumber()
+  @Min(0)
+  @Max(20)
+  garbageTargetK!: number
 
   @IsObject()
   @ValidateNested()

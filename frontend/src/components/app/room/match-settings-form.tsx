@@ -56,6 +56,28 @@ export function MatchSettingsForm({
               />
             )}
           </form.AppField>
+          <form.AppField name="gincrease">
+            {(field) => (
+              <field.Slider
+                label="Gravity Increase"
+                min={0}
+                max={20}
+                step={0.001}
+                disabled={!isHost}
+              />
+            )}
+          </form.AppField>
+          <form.AppField name="gmargin">
+            {(field) => (
+              <field.Slider
+                label="Gravity Margin Time (frames)"
+                min={0}
+                max={10000}
+                step={1}
+                disabled={!isHost}
+              />
+            )}
+          </form.AppField>
           <form.AppField name="lockDelayMs">
             {(field) => (
               <field.Slider
@@ -74,28 +96,6 @@ export function MatchSettingsForm({
                 min={0}
                 max={30}
                 step={1}
-                disabled={!isHost}
-              />
-            )}
-          </form.AppField>
-          <form.AppField name="areMs">
-            {(field) => (
-              <field.Slider
-                label="ARE (ms)"
-                min={0}
-                max={1000}
-                step={10}
-                disabled={!isHost}
-              />
-            )}
-          </form.AppField>
-          <form.AppField name="lineClearDelayMs">
-            {(field) => (
-              <field.Slider
-                label="Line Clear Delay (ms)"
-                min={0}
-                max={1000}
-                step={10}
                 disabled={!isHost}
               />
             )}
@@ -192,6 +192,17 @@ export function MatchSettingsForm({
           <h3 className="border-b border-border pb-2 text-lg font-bold">
             Garbage
           </h3>
+          <form.AppField name="garbageTargetK">
+            {(field) => (
+              <field.Slider
+                label="Attacks per Target"
+                min={0}
+                max={20}
+                step={1}
+                disabled={!isHost}
+              />
+            )}
+          </form.AppField>
           <form.AppField name="garbage.enabled">
             {(field) => (
               <field.Switch label="Enable Garbage" disabled={!isHost} />

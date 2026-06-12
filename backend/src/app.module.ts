@@ -28,6 +28,11 @@ import { AchievementsModule } from './achievements/achievements.module'
         database: config.getOrThrow<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
+        ssl: config.get<string>('DB_SSL') === 'true' ? true : false,
+        extra:
+          config.get<string>('DB_SSL') === 'true'
+            ? { ssl: { rejectUnauthorized: false } }
+            : {},
       }),
     }),
     UsersModule,
