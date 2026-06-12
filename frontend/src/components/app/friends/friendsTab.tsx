@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-import { getFriends, sendFriendRequest, type Friend } from '@/api/friends.ts'
+import { type Friend, getFriends, sendFriendRequest } from '@/api/friends.ts'
 import { Button } from '@/components/ui/button.tsx'
 import { Input } from '@/components/ui/input.tsx'
 import { FriendRow } from '@/components/app/friends/friendRow.tsx'
@@ -148,6 +148,7 @@ export const FriendsTab = (props: {
         <Input
           value={userIdentifier}
           onChange={(e) => setUserIdentifier(e.target.value)}
+          maxLength={50}
           placeholder="Add friend by user id or username"
         />
         <Button type="submit" disabled={sendRequestMutation.isPending}>
