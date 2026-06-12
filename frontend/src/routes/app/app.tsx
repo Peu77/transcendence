@@ -87,12 +87,12 @@ const Index = () => {
             >
               <Link to={item.path}>
                 <div
-                  className={`flex flex-col items-start justify-center ${item.textColor}`}
+                  className={`flex flex-col items-start justify-center gap-0 sm:gap-1 ${item.textColor}`}
                 >
-                  <span className="font-bold text-2xl sm:text-4xl">
+                  <span className="font-bold text-2xl leading-tight sm:text-4xl">
                     {item.label}
                   </span>
-                  <span className="font-normal text-lg sm:text-xl">
+                  <span className="font-normal text-sm sm:text-xl">
                     {item.description}
                   </span>
                 </div>

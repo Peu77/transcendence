@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { ArrowLeftIcon } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -23,9 +24,13 @@ import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { useDmRoom, useLiveEvent } from '@/realtime/hooks.ts'
 import { userStore } from '@/store/userStore.ts'
 import { useNavigate } from '@tanstack/react-router'
+import { useStore } from '@tanstack/react-store'
 import { CheckCheckIcon, CheckIcon, Gamepad2Icon, SendIcon } from 'lucide-react'
 import { useMatchInvite } from '@/hooks/use-match-invite.ts'
-import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
+import {
+  friendsOverlayStore,
+  setFriendsOverlayIsOpen,
+} from '@/store/friendsOverlayStore.tsx'
 import { useDmTypingIndicator } from '@/hooks/use-typing-indicator.ts'
 
 let dmSendSound: HTMLAudioElement | null = null
@@ -57,6 +62,7 @@ export const DMPanel = (props: {
 }) => {
   const qc = useQueryClient()
   const navigate = useNavigate()
+  const isOverlayOpen = useStore(friendsOverlayStore, (s) => s.isOpen)
 
   useDmRoom(props.friend.id)
   const { isTyping: friendIsTyping, emitTyping } = useDmTypingIndicator(
@@ -129,6 +135,12 @@ export const DMPanel = (props: {
       })
     },
   })
+
+  useEffect(() => {
+    if (isOverlayOpen) {
+      markSeenMutation.mutate()
+    }
+  }, [isOverlayOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadOlderMutation = useMutation({
     mutationFn: async () => {
@@ -408,7 +420,9 @@ export const DMPanel = (props: {
       })
 
       if (msg.senderId !== userStore.state?.id) {
-        markSeenMutation.mutate()
+        if (friendsOverlayStore.state.isOpen) {
+          markSeenMutation.mutate()
+        }
         const sound = getDmReceiveSound()
         sound.currentTime = 0
         sound.play().catch(() => {})
@@ -456,9 +470,19 @@ export const DMPanel = (props: {
         </button>
         <div className="flex items-center gap-2 shrink-0">
           <Button
+            size="icon-sm"
+            variant="ghost"
+            className="sm:hidden"
+            aria-label="Back"
+            onClick={props.onClose}
+          >
+            <ArrowLeftIcon className="size-4" />
+          </Button>
+          <Button
             size="sm"
             variant="ghost"
             silent={true}
+            className="hidden sm:flex"
             onClick={props.onClose}
           >
             Close

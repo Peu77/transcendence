@@ -181,7 +181,7 @@ const ApiKeyList = ({ apiKeys, onRename, onRevoke }: ApiKeyListProps) => {
             return (
               <div
                 key={apiKey.id}
-                className="rounded-xl border bg-background/70 p-4 shadow-sm"
+                className="min-w-0 rounded-xl border bg-background/70 p-4 shadow-sm"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div className="min-w-0 flex-1 space-y-2">
@@ -227,7 +227,7 @@ const ApiKeyList = ({ apiKeys, onRename, onRevoke }: ApiKeyListProps) => {
                   </div>
                 </div>
 
-                <div className="mt-3 grid gap-2 text-xs text-muted-foreground md:grid-cols-3">
+                <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-muted-foreground md:grid-cols-3">
                   <span>{apiKey.rateLimitPerMinute}/min</span>
                   <span>Created {formatDate(apiKey.createdAt)}</span>
                   <span>Last used {formatDate(apiKey.lastUsedAt)}</span>
@@ -262,7 +262,7 @@ const EndpointDocs = ({ endpoints }: EndpointDocsProps) => (
         return (
           <div
             key={endpoint.path}
-            className="rounded-xl border bg-muted/30 p-4"
+            className="min-w-0 rounded-xl border bg-muted/30 p-4"
           >
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
