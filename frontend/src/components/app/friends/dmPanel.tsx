@@ -25,7 +25,10 @@ import { userStore } from '@/store/userStore.ts'
 import { useNavigate } from '@tanstack/react-router'
 import { CheckCheckIcon, CheckIcon, Gamepad2Icon, SendIcon } from 'lucide-react'
 import { useMatchInvite } from '@/hooks/use-match-invite.ts'
-import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
+import {
+  friendsOverlayStore,
+  setFriendsOverlayIsOpen,
+} from '@/store/friendsOverlayStore.tsx'
 import { useDmTypingIndicator } from '@/hooks/use-typing-indicator.ts'
 
 let dmSendSound: HTMLAudioElement | null = null
@@ -408,7 +411,9 @@ export const DMPanel = (props: {
       })
 
       if (msg.senderId !== userStore.state?.id) {
-        markSeenMutation.mutate()
+        if (friendsOverlayStore.state.isOpen) {
+          markSeenMutation.mutate()
+        }
         const sound = getDmReceiveSound()
         sound.currentTime = 0
         sound.play().catch(() => {})
