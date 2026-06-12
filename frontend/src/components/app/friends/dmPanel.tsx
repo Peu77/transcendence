@@ -47,7 +47,11 @@ function dedupeById<T extends { id: string }>(items: T[]): T[] {
   return result
 }
 
-export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
+export const DMPanel = (props: {
+  friend: Friend
+  onClose: () => void
+  onOpenProfile: () => void
+}) => {
   const qc = useQueryClient()
   const navigate = useNavigate()
 
@@ -344,17 +348,17 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
   return (
     <div className="h-full flex flex-col p-3 bg-input/20">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
+        <button
+          type="button"
+          aria-label={`Open ${props.friend.username}'s profile`}
+          onClick={props.onOpenProfile}
+          className="flex min-w-0 items-center gap-2 rounded-sm text-left transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
           <ProfileImage profilePictureId={props.friend.profilePictureId} />
-          <div className="min-w-0">
-            <div className="font-semibold truncate">
-              DM: {props.friend.username}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Scroll up to load older messages
-            </div>
-          </div>
-        </div>
+          <span className="truncate font-semibold">
+            DM: {props.friend.username}
+          </span>
+        </button>
         <div className="flex items-center gap-2 shrink-0">
           <Button
             type="button"
