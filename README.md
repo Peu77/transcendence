@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by `eebert, jgoetz, cgerling, kmuhlbau, tpaesch`.*
+*This project has been created as part of the 42 curriculum by `eebert, jgotz, cgerling, kmuhlbau, tpaesch`.*
 
 ---
 
@@ -37,7 +37,7 @@ A competitive, real-time multiplayer Tetris platform built as the final Common C
 |---|---|---|
 | `eebert` | **Product Owner** · Developer | Defines product vision and priorities. Validates completed work. Led backend infrastructure, auth, friends/chat system, public API, and monitoring setup. |
 | `tpaesch` | **Project Manager / Scrum Master** · Developer | Organized meetings, tracked progress, managed blockers. Led profile system, achievements/gamification, and UI/UX improvements. |
-| `jgoetz` | **Technical Lead / Architect** · Developer | Defined the technical architecture and stack. Enforced code quality and reviewed critical changes. Led the Tetris game engine and multiplayer game logic. |
+| `jgotz` | **Technical Lead / Architect** · Developer | Defined the technical architecture and stack. Enforced code quality and reviewed critical changes. Led the Tetris game engine and multiplayer game logic. |
 | `cgerling` | Developer | Implemented core Tetris mechanics refinements (piece rotations, T-spin detection, gravity, game feel). |
 | `kmuhlbau` | Developer | Co-implemented Prometheus + Grafana monitoring. |
 
@@ -443,7 +443,7 @@ Emil was the backbone of the backend and owned the majority of the infrastructur
 
 Theo owned project coordination: organized meetings, maintained the GitHub issue board, and kept the team unblocked. On the product side he built and iterated the profile system (public profile dialogs, shared-match charts, friendship visualizations, the #1 crown on the leaderboard), the entire achievements and gamification system (25+ achievements across multiple categories, animated popup notifications, deduplication via localStorage, achievement baseline seeding), and numerous UX improvements (mobile-responsive friends overlay and DM panel, unblock flow, heart badge for friends in the lobby, "Accept Friend Request" fix for mutual-request edge case).
 
-### Jonas (`jgoetz`) — Technical Lead & Developer
+### Jonas (`jgotz`) — Technical Lead & Developer
 
 Jonas defined the project's technical architecture and was the primary author of the Tetris game engine in the shared package (`TetrisGame`). He implemented the SRS+ rotation system, the multiplayer game server loop, the client-side prediction and server reconciliation system (the project's most technically complex feature), the synchronized piece queue, the garbage attack system, and the B2B/combo mechanics. He also co-built the multiplayer room game frontend and the match invite flow from DMs. Jonas enforced code quality across the codebase and reviewed all critical pull requests.
 
