@@ -107,6 +107,9 @@ export class RoomService {
     if (room.status === 'playing')
       throw new BadRequestException('Game is already in progress')
 
+    if (room.users.length < 2)
+      throw new BadRequestException('At least 2 players are required to start')
+
     room.status = 'playing'
     return room
   }
