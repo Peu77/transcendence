@@ -127,7 +127,7 @@ describe('useSoloGame', () => {
         gincrease: 0,
         gmargin: 0,
         hold: false,
-
+        infiniteHold: false,
         lockDelayMs: 150,
         nextCount: 3,
         forbidInitialSZ: true,
@@ -156,7 +156,7 @@ describe('useSoloGame', () => {
         gincrease: 0,
         gmargin: 0,
         hold: true,
-
+        infiniteHold: false,
         lockDelayMs: 500,
         nextCount: 5,
         forbidInitialSZ: false,
