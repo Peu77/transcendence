@@ -227,7 +227,7 @@ export function NumberField({
           value={display}
           disabled={disabled}
           onFocus={() => { focusedRef.current = true }}
-          onBlur={(e) => {
+          onBlur={() => {
             focusedRef.current = false
             field.handleBlur()
             const parsed = parseFloat(display.replace(',', '.'))
