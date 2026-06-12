@@ -5,6 +5,7 @@ import { RoomGamePhase } from '@/components/app/room/room-game-phase.tsx'
 import { RoomLobbyPhase } from '@/components/app/room/room-lobby-phase.tsx'
 import { useRoomGame } from '@/components/app/room/use-room-game.ts'
 import { useRoomSession } from '@/components/app/room/use-room-session.ts'
+import { ScreenSupportGate } from '@/components/app/screen-support-gate.tsx'
 
 const RoomPage = () => {
   const { roomId } = RoomRoute.useParams()
@@ -70,6 +71,10 @@ const RoomPage = () => {
 
 export const RoomRoute = createRoute({
   getParentRoute: () => AppRoute,
-  component: RoomPage,
+  component: () => (
+    <ScreenSupportGate>
+      <RoomPage />
+    </ScreenSupportGate>
+  ),
   path: '/room/$roomId',
 })

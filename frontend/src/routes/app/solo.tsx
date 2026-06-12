@@ -4,6 +4,7 @@ import { SoloSettingsPanel } from '@/components/app/solo-settings-panel.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { useSoloGame } from '@/hooks/use-solo-game.ts'
 import { AppRoute } from '@/routes/app/layout.tsx'
+import { ScreenSupportGate } from '@/components/app/screen-support-gate.tsx'
 
 const Solo = () => {
   const {
@@ -90,6 +91,10 @@ const Solo = () => {
 
 export const SoloRoute = createRoute({
   getParentRoute: () => AppRoute,
-  component: Solo,
+  component: () => (
+    <ScreenSupportGate>
+      <Solo />
+    </ScreenSupportGate>
+  ),
   path: '/solo',
 })

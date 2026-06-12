@@ -72,25 +72,27 @@ const Index = () => {
   ]
 
   return (
-    <div className="w-full flex flex-col items-end pt-10">
-      <div className="max-w-[90%] flex flex-col w-full gap-4">
+    <div className="w-full flex flex-col items-center sm:items-end pt-10">
+      <div className="max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] flex flex-col w-full gap-4">
         {items.map((item) => (
           <div
             key={item.label}
             onMouseEnter={onMenuHover}
-            className={`pb-1 pr-1 ${item.borderColor} clip-pixel-corners-btn translate-x-48 hover:translate-x-40 transition-transform w-[calc(100%+12rem)] overflow-hidden`}
+            className={`pb-1 pr-1 ${item.borderColor} clip-pixel-corners-btn translate-x-0 sm:translate-x-48 sm:hover:translate-x-40 transition-transform w-full sm:w-[calc(100%+12rem)] overflow-hidden`}
           >
             <Button
               asChild={true}
-              className={` justify-start ${item.color} saturate-50 hover:scale-100 py-10 w-full select-none`}
+              className={` justify-start ${item.color} saturate-50 hover:scale-100 py-8 sm:py-10 w-full select-none`}
               key={item.label}
             >
               <Link to={item.path}>
                 <div
                   className={`flex flex-col items-start justify-center ${item.textColor}`}
                 >
-                  <span className="font-bold text-4xl">{item.label}</span>
-                  <span className="font-normal text-xl">
+                  <span className="font-bold text-2xl sm:text-4xl">
+                    {item.label}
+                  </span>
+                  <span className="font-normal text-lg sm:text-xl">
                     {item.description}
                   </span>
                 </div>

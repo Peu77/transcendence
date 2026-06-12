@@ -79,9 +79,9 @@ const Multiplayer = () => {
   ]
 
   return (
-    <div className="w-full flex flex-col items-end pt-10">
-      <div className="max-w-[90%] flex flex-col w-full gap-4">
-        <div className="flex items-center  translate-x-48 w-[calc(100%+12rem)] gap-2">
+    <div className="w-full flex flex-col items-center sm:items-end pt-10">
+      <div className="max-w-[90%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%] flex flex-col w-full gap-4">
+        <div className="flex items-center translate-x-0 sm:translate-x-48 w-full sm:w-[calc(100%+12rem)] gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -93,10 +93,10 @@ const Multiplayer = () => {
           >
             <ArrowLeftIcon />
           </Button>
-          <h1 className="text-3xl font-bold">Multiplayer</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Multiplayer</h1>
         </div>
         <form
-          className="translate-x-48 w-[calc(100%+12rem)]"
+          className="translate-x-0 sm:translate-x-48 w-full sm:w-[calc(100%+12rem)]"
           onSubmit={async (e) => {
             e.preventDefault()
             await joinRoomById()
@@ -108,31 +108,36 @@ const Multiplayer = () => {
             onChange={(e) => setRoomIdInput(e.target.value)}
             placeholder="Paste a room ID and press Enter to join"
             autoComplete="off"
+            className="w-full"
           />
         </form>
 
         {isLoading && (
-          <div className="text-white text-right pr-10">Loading rooms...</div>
+          <div className="text-white text-center sm:text-right sm:pr-10">
+            Loading rooms...
+          </div>
         )}
         {menuItems.map((item) => (
           <div
             key={item.path ?? item.label}
             onMouseEnter={onMenuHover}
-            className={`pb-1 pr-1 ${item.borderColor} clip-pixel-corners-btn translate-x-48 hover:translate-x-40 transition-transform w-[calc(100%+12rem)] overflow-hidden`}
+            className={`pb-1 pr-1 ${item.borderColor} clip-pixel-corners-btn translate-x-0 sm:translate-x-48 sm:hover:translate-x-40 transition-transform w-full sm:w-[calc(100%+12rem)] overflow-hidden`}
           >
             <Button
               asChild={!item.onClick}
               onClick={item.onClick}
               disabled={item.loading}
-              className={`justify-start ${item.color} saturate-50 hover:scale-100 py-10 w-full select-none`}
+              className={`justify-start ${item.color} saturate-50 hover:scale-100 py-8 sm:py-10 w-full select-none`}
             >
               {item.path ? (
                 <Link to={item.path}>
                   <div
                     className={`flex flex-col items-start justify-center ${item.textColor}`}
                   >
-                    <span className="font-bold text-4xl">{item.label}</span>
-                    <span className="font-normal text-xl">
+                    <span className="font-bold text-2xl sm:text-4xl">
+                      {item.label}
+                    </span>
+                    <span className="font-normal text-lg sm:text-xl">
                       {item.description}
                     </span>
                   </div>
@@ -141,8 +146,10 @@ const Multiplayer = () => {
                 <div
                   className={`flex flex-col items-start justify-center ${item.textColor}`}
                 >
-                  <span className="font-bold text-4xl">{item.label}</span>
-                  <span className="font-normal text-xl">
+                  <span className="font-bold text-2xl sm:text-4xl">
+                    {item.label}
+                  </span>
+                  <span className="font-normal text-lg sm:text-xl">
                     {item.description}
                   </span>
                 </div>
@@ -151,7 +158,7 @@ const Multiplayer = () => {
           </div>
         ))}
         {!isLoading && rooms?.length === 0 && (
-          <div className="text-white text-right pr-10">
+          <div className="text-white text-center sm:text-right sm:pr-10">
             No public rooms available.
           </div>
         )}

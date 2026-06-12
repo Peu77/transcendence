@@ -16,7 +16,6 @@ import reportWebVitals from './reportWebVitals.ts'
 
 import { Toaster } from '@/components/ui/sonner.tsx'
 import { AudioPreloader } from '@/components/app/audio-preloader.tsx'
-import { ScreenSupportGate } from '@/components/app/screen-support-gate.tsx'
 import Login from '@/routes/auth/login.tsx'
 import Register from '@/routes/auth/register.tsx'
 import Home from '@/routes/home.tsx'
@@ -38,9 +37,7 @@ export const rootRoute = createRootRoute<unknown>({
   component: () => (
     <>
       <Toaster />
-      <ScreenSupportGate>
         <Outlet />
-      </ScreenSupportGate>
       <TanStackRouterDevtools />
     </>
   ),
