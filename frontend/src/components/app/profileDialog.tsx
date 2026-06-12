@@ -35,12 +35,14 @@ const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <ProfileImage profilePictureId={profile.profilePictureId} />
-        <h2 className="text-2xl font-bold">{profile.username}</h2>
-        {profile.rank === 1 && <CrownIcon className="size-5 text-yellow-500" />}
+        <h2 className="truncate text-xl font-bold">{profile.username}</h2>
+        {profile.rank === 1 && (
+          <CrownIcon className="size-5 shrink-0 text-yellow-500" />
+        )}
       </div>
-      <div className="flex gap-4">
+      <div className="flex flex-wrap justify-center gap-3">
         <StatCard value={rank} label="Rank" size="sm" />
         <StatCard value={points} label="Points" size="sm" />
         <StatCard value={`${level}`} label="Level" size="sm" />
@@ -49,7 +51,7 @@ const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
         <LevelBar totalLines={profile.totalLines} />
       </div>
       {profile.sharedMatchCount > 0 && (
-        <div className="flex gap-8 items-start justify-center">
+        <div className="flex flex-wrap items-start justify-center gap-4">
           <FriendshipRing sharedMatchCount={profile.sharedMatchCount} />
           <SharedPointsPie
             sharedPoints={profile.sharedPoints}
@@ -85,7 +87,7 @@ export const ProfileDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="sr-only">Profile</DialogTitle>
           <DialogDescription className="sr-only">
