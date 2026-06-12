@@ -16,10 +16,11 @@ import reportWebVitals from './reportWebVitals.ts'
 
 import { Toaster } from '@/components/ui/sonner.tsx'
 import { AudioPreloader } from '@/components/app/audio-preloader.tsx'
-import { ScreenSupportGate } from '@/components/app/screen-support-gate.tsx'
 import Login from '@/routes/auth/login.tsx'
 import Register from '@/routes/auth/register.tsx'
 import Home from '@/routes/home.tsx'
+import PrivacyPolicy from '@/routes/privacy.tsx'
+import TermsOfService from '@/routes/terms.tsx'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { AppIndexRoute } from '@/routes/app/app.tsx'
 import { SettingsRoute } from '@/routes/app/settings.tsx'
@@ -28,18 +29,15 @@ import { SoloRoute } from '@/routes/app/solo.tsx'
 import { RoomLobbyRoute } from '@/routes/app/room.tsx'
 import { RoomRoute } from '@/routes/app/room.$roomId.tsx'
 import { AboutRoute } from '@/routes/app/about.tsx'
-import { ProfilePageRoute } from '@/routes/app/profile.$userId.tsx'
 import { NotFound } from '@/routes/notFound.tsx'
-import { StatisticsRoute } from '@/routes/app/statistics.tsx'
 import { AchievementsRoute } from '@/routes/app/achievements.tsx'
+import { StatsRoute } from '@/routes/app/stats.tsx'
 
 export const rootRoute = createRootRoute<unknown>({
   component: () => (
     <>
       <Toaster />
-      <ScreenSupportGate>
         <Outlet />
-      </ScreenSupportGate>
       <TanStackRouterDevtools />
     </>
   ),
@@ -64,6 +62,16 @@ const routeTree = rootRoute.addChildren([
     component: Register,
     path: 'register',
   }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    component: PrivacyPolicy,
+    path: 'privacy',
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    component: TermsOfService,
+    path: 'terms',
+  }),
   AppRoute,
   AppIndexRoute,
   SettingsRoute,
@@ -72,8 +80,7 @@ const routeTree = rootRoute.addChildren([
   RoomLobbyRoute,
   RoomRoute,
   AboutRoute,
-  ProfilePageRoute,
-  StatisticsRoute,
+  StatsRoute,
   AchievementsRoute,
 ])
 

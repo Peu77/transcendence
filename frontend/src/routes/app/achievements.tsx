@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { createRoute, useRouter } from '@tanstack/react-router'
 import { AppRoute } from '@/routes/app/layout.tsx'
-import { useGetAchievements, type AchievementsResponse } from '@/api/achievements.ts'
+import {
+  useGetAchievements,
+  type AchievementsResponse,
+} from '@/api/achievements.ts'
 import { Button } from '@/components/ui/button.tsx'
 import {
   Dialog,
@@ -10,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
+import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -126,7 +130,9 @@ const CATEGORIES: CategoryDef[] = [
     formatStat: fmtRank,
     invertProgress: true,
     progressLabel: (v, t) =>
-      v === 0 ? 'Play a match to get ranked' : `Currently ${fmtRank(v)} — need top ${t}`,
+      v === 0
+        ? 'Play a match to get ranked'
+        : `Currently ${fmtRank(v)} — need top ${t}`,
     tiers: [
       { id: 'rank_top10', threshold: 10 },
       { id: 'rank_top3', threshold: 3 },
@@ -172,7 +178,11 @@ const CATEGORIES: CategoryDef[] = [
     tiers: [
       { id: 'collector_1', threshold: 1 },
       { id: 'collector_5', threshold: 5 },
-      { id: 'collector_all', threshold: 0, dynamicThreshold: 'totalBaseAchievements' },
+      {
+        id: 'collector_all',
+        threshold: 0,
+        dynamicThreshold: 'totalBaseAchievements',
+      },
     ],
   },
 ]
@@ -181,8 +191,15 @@ function resolveThreshold(tier: Tier, stats: Stats): number {
   return tier.dynamicThreshold ? stats[tier.dynamicThreshold] : tier.threshold
 }
 
-function calcProgress(statValue: number, threshold: number, invert?: boolean): number {
-  if (invert) return threshold === 0 || statValue === 0 ? 0 : Math.min(threshold / statValue, 1)
+function calcProgress(
+  statValue: number,
+  threshold: number,
+  invert?: boolean,
+): number {
+  if (invert)
+    return threshold === 0 || statValue === 0
+      ? 0
+      : Math.min(threshold / statValue, 1)
   return threshold === 0 ? 1 : Math.min(statValue / threshold, 1)
 }
 
@@ -198,11 +215,15 @@ function CategoryDetailDialog({
   onOpenChange: (open: boolean) => void
 }) {
   const { achievements, stats } = data
-  const unlockedIds = new Set(achievements.filter((a) => a.unlocked).map((a) => a.id))
+  const unlockedIds = new Set(
+    achievements.filter((a) => a.unlocked).map((a) => a.id),
+  )
   const statValue = stats[category.statKey]
   const { Icon, formatStat, invertProgress, progressLabel } = category
 
-  const currentTierIndex = category.tiers.findIndex((t) => !unlockedIds.has(t.id))
+  const currentTierIndex = category.tiers.findIndex(
+    (t) => !unlockedIds.has(t.id),
+  )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -298,14 +319,22 @@ function CategoryCard({
   onClick: () => void
 }) {
   const { achievements, stats } = data
-  const unlockedIds = new Set(achievements.filter((a) => a.unlocked).map((a) => a.id))
-  const completedCount = category.tiers.filter((t) => unlockedIds.has(t.id)).length
+  const unlockedIds = new Set(
+    achievements.filter((a) => a.unlocked).map((a) => a.id),
+  )
+  const completedCount = category.tiers.filter((t) =>
+    unlockedIds.has(t.id),
+  ).length
   const currentTier = category.tiers.find((t) => !unlockedIds.has(t.id))
   const statValue = stats[category.statKey]
   const { Icon, formatStat, invertProgress, progressLabel } = category
 
-  const currentThreshold = currentTier ? resolveThreshold(currentTier, stats) : 0
-  const progress = currentTier ? calcProgress(statValue, currentThreshold, invertProgress) : 1
+  const currentThreshold = currentTier
+    ? resolveThreshold(currentTier, stats)
+    : 0
+  const progress = currentTier
+    ? calcProgress(statValue, currentThreshold, invertProgress)
+    : 1
   const currentAchievement = currentTier
     ? achievements.find((a) => a.id === currentTier.id)
     : null
@@ -330,7 +359,9 @@ function CategoryCard({
       {currentAchievement ? (
         <>
           <div>
-            <div className="text-sm font-medium">{currentAchievement.label}</div>
+            <div className="text-sm font-medium">
+              {currentAchievement.label}
+            </div>
             <div className="mt-0.5 text-xs text-muted-foreground">
               {currentAchievement.description}
             </div>
@@ -368,61 +399,65 @@ function AchievementsPage() {
   const totalCount = data?.achievements.length ?? 0
 
   return (
-    <div className="container mx-auto flex h-full max-w-2xl flex-col overflow-y-auto p-6">
-      <div className="mb-8 flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.history.back()}
-        >
-          <ArrowLeftIcon />
-        </Button>
-        <h1 className="text-3xl font-bold">Achievements</h1>
-      </div>
-
-      {isLoading || !data ? (
-        <div className="flex flex-1 items-center justify-center">
-          <Spinner className="size-8" />
+    <ScrollArea className="h-full">
+      <div className="container mx-auto flex min-h-full max-w-2xl flex-col p-6">
+        <div className="mb-8 flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.history.back()}
+          >
+            <ArrowLeftIcon />
+          </Button>
+          <h1 className="text-3xl font-bold">Achievements</h1>
         </div>
-      ) : (
-        <>
-          <div className="mb-6 flex items-center justify-between rounded-lg border bg-violet-500/10 px-5 py-4">
-            <span className="text-sm text-muted-foreground">
-              {unlockedCount} of {totalCount} unlocked
-            </span>
-            <div className="h-2 w-48 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-violet-500 transition-all"
-                style={{
-                  width: `${totalCount > 0 ? (unlockedCount / totalCount) * 100 : 0}%`,
-                }}
-              />
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {isLoading || !data ? (
+          <div className="flex flex-1 items-center justify-center">
+            <Spinner className="size-8" />
+          </div>
+        ) : (
+          <>
+            <div className="mb-6 flex items-center justify-between rounded-lg border bg-violet-500/10 px-5 py-4">
+              <span className="text-sm text-muted-foreground">
+                {unlockedCount} of {totalCount} unlocked
+              </span>
+              <div className="h-2 w-48 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-violet-500 transition-all"
+                  style={{
+                    width: `${totalCount > 0 ? (unlockedCount / totalCount) * 100 : 0}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {CATEGORIES.map((category) => (
+                <CategoryCard
+                  key={category.id}
+                  category={category}
+                  data={data}
+                  onClick={() => setOpenCategory(category.id)}
+                />
+              ))}
+            </div>
+
             {CATEGORIES.map((category) => (
-              <CategoryCard
+              <CategoryDetailDialog
                 key={category.id}
                 category={category}
                 data={data}
-                onClick={() => setOpenCategory(category.id)}
+                open={openCategory === category.id}
+                onOpenChange={(open) =>
+                  setOpenCategory(open ? category.id : null)
+                }
               />
             ))}
-          </div>
-
-          {CATEGORIES.map((category) => (
-            <CategoryDetailDialog
-              key={category.id}
-              category={category}
-              data={data}
-              open={openCategory === category.id}
-              onOpenChange={(open) => setOpenCategory(open ? category.id : null)}
-            />
-          ))}
-        </>
-      )}
-    </div>
+          </>
+        )}
+      </div>
+    </ScrollArea>
   )
 }
 

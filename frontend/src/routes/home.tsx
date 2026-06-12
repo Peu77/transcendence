@@ -60,8 +60,16 @@ export default function Home() {
       >
         {isDark ? 'White' : 'Dark'}
       </button>
-      <footer className="absolute bottom-6 text-gray-400 text-sm">
-        Project by {authors.join(', ')}
+      <footer className="absolute bottom-6 text-gray-400 text-sm flex flex-col items-center gap-2">
+        <p>Project by {authors.join(', ')}</p>
+        <div className="flex gap-4">
+          <Link to="/privacy" className="hover:text-foreground transition-colors">
+            Privacy Policy
+          </Link>
+          <Link to="/terms" className="hover:text-foreground transition-colors">
+            Terms of Service
+          </Link>
+        </div>
       </footer>
       <style>{`
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }

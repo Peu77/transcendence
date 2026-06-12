@@ -1,9 +1,7 @@
 import { Input } from './input'
 import { cn } from '@/lib/utils'
 
-export function NumberBadgeInput(
-  props: React.ComponentProps<typeof Input>,
-) {
+export function NumberBadgeInput(props: React.ComponentProps<typeof Input>) {
   return (
     <input
       {...props}

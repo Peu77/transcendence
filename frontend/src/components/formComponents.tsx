@@ -206,7 +206,9 @@ export function NumberField({
 }) {
   const field = useFieldContext<number>()
   const errors = useStore(field.store, (state) => state.meta.errors)
-  const [display, setDisplay] = useState(() => field.state.value?.toString() ?? '')
+  const [display, setDisplay] = useState(
+    () => field.state.value?.toString() ?? '',
+  )
   const focusedRef = useRef(false)
 
   const fieldValue = field.state.value
@@ -226,8 +228,10 @@ export function NumberField({
           inputMode="decimal"
           value={display}
           disabled={disabled}
-          onFocus={() => { focusedRef.current = true }}
-          onBlur={(e) => {
+          onFocus={() => {
+            focusedRef.current = true
+          }}
+          onBlur={() => {
             focusedRef.current = false
             field.handleBlur()
             const parsed = parseFloat(display.replace(',', '.'))
@@ -253,7 +257,10 @@ export function NumberField({
             const s = step ?? 1
             const dec = (String(s).split('.')[1] ?? '').length
             const raw = e.key === 'ArrowUp' ? current + s : current - s
-            const clamped = Math.max(min ?? -Infinity, Math.min(max ?? Infinity, raw))
+            const clamped = Math.max(
+              min ?? -Infinity,
+              Math.min(max ?? Infinity, raw),
+            )
             const next = parseFloat(clamped.toFixed(dec))
             field.handleChange(next)
             setDisplay(String(next))

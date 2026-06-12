@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useLiveEvent } from '@/realtime/hooks.ts'
+import { useNavigate } from '@tanstack/react-router'
 import { FRIENDS_QUERY_KEYS } from '@/api/friends.ts'
 import { USER_QUERY_KEYS } from '@/api/user.ts'
 import {
@@ -9,6 +10,7 @@ import {
 } from '@/store/achievementNotificationStore.ts'
 import { toast } from 'sonner'
 import { userStore } from '@/store/userStore.ts'
+import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
 import { useQueryClient } from '@tanstack/react-query'
 
 let globalReceiveSound: HTMLAudioElement | null = null
@@ -26,6 +28,8 @@ function getFriendRequestSound() {
 }
 
 export function useGlobalListeners() {
+  const navigate = useNavigate()
+
   const qc = useQueryClient()
 
   useEffect(() => {
@@ -34,6 +38,25 @@ export function useGlobalListeners() {
 
   useLiveEvent('dm.created', (event) => {
     if (event.senderId === userStore.state?.id) return
+
+    void qc.invalidateQueries({
+      queryKey: FRIENDS_QUERY_KEYS.UNREAD_MESSAGES,
+    })
+
+    if (event.type === 'match_invite' && event.roomId) {
+      const roomId = event.roomId
+      toast.info('Match invite', {
+        description: `${event.senderInfo.username} invited you to a match`,
+        action: {
+          label: 'Join',
+          onClick: () => {
+            setFriendsOverlayIsOpen(false)
+            void navigate({ to: '/app/room/$roomId', params: { roomId } })
+          },
+        },
+      })
+      return
+    }
 
     const sound = getGlobalReceiveSound()
     sound.currentTime = 0
@@ -71,7 +94,12 @@ export function useGlobalListeners() {
   })
 
   useLiveEvent('friendship.deleted', async () => {
-    await qc.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.FRIENDS })
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.FRIENDS }),
+      qc.invalidateQueries({
+        queryKey: FRIENDS_QUERY_KEYS.UNREAD_MESSAGES,
+      }),
+    ])
   })
 
   // When someone blocks you, their profile's blockedByThem flag needs to update

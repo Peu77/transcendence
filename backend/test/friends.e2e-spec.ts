@@ -136,11 +136,20 @@ describe('FriendsService (integration)', () => {
     )
   })
 
-  it('rejects cross-pending requests (A->B then B->A)', async () => {
-    await service.sendFriendRequest(userA.id, userB.id)
-    await expect(service.sendFriendRequest(userB.id, userA.id)).rejects.toThrow(
-      /pending|already/i,
-    )
+  it('accepts an existing reverse friend request', async () => {
+    const originalRequest = await service.sendFriendRequest(userA.id, userB.id)
+    const acceptedRequest = await service.sendFriendRequest(userB.id, userA.id)
+
+    expect(acceptedRequest.id).toBe(originalRequest.id)
+    expect(acceptedRequest.status).toBe('accepted')
+    await expect(
+      friendshipsRepo.exists({
+        where: {
+          userLowId: [userA.id, userB.id].sort()[0],
+          userHighId: [userA.id, userB.id].sort()[1],
+        },
+      }),
+    ).resolves.toBe(true)
   })
 
   it('rejects sending a request when already friends', async () => {

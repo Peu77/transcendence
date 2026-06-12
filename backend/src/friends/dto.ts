@@ -27,6 +27,12 @@ export class SendDirectMessageDto {
   content!: string
 }
 
+export class InviteToMatchDto {
+  @IsOptional()
+  @IsString()
+  roomId?: string
+}
+
 export class GetMessagesQueryDto {
   @IsOptional()
   @IsUUID()

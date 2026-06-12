@@ -4,6 +4,8 @@ export {
   type InputAction,
   type TetrisPiece,
   type TetrisState,
+  type GameMetrics,
+  createEmptyGameMetrics,
   BOARD_ROWS,
   BOARD_COLS,
   TETROMINOES,

@@ -16,8 +16,8 @@ import { GithubValidateReturn } from '../auth/github.strategy'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { MatchResult } from './match-result.entity'
-import { UserBlock } from '../friends/entities/user-block.entity'
 import { Friendship } from '../friends/entities/friendship.entity'
+import { UserBlock } from '../friends/entities/block.entity'
 
 export interface MatchHistoryPlayer {
   userId: string
@@ -53,6 +53,26 @@ interface PlayerStats {
   totalLines: number
   totalScore: number | null
   wins: number
+}
+
+export interface AchievementStats {
+  matches: number
+  score: number
+  lines: number
+  wins: number
+  friends: number
+  rank: number
+  level: number
+  bestDomination: number
+  baseUnlocked?: number
+  totalBaseAchievements?: number
+}
+
+export interface Achievement {
+  id: string
+  label: string
+  description: string
+  unlocked: boolean
 }
 
 interface HeadToHeadStats {
@@ -259,7 +279,10 @@ export class UsersService {
       .select('SUM(result.score)', 'totalScore')
       .addSelect('SUM(result.lines)', 'totalLines')
       .addSelect('COUNT(result.id)', 'matchCount')
-      .addSelect('SUM(CASE WHEN result.placement = 1 THEN 1 ELSE 0 END)', 'wins')
+      .addSelect(
+        'SUM(CASE WHEN result.placement = 1 THEN 1 ELSE 0 END)',
+        'wins',
+      )
       .where('result.userId = :userId', { userId })
       .getRawOne<{
         totalScore: string | null
@@ -288,10 +311,9 @@ export class UsersService {
       .createQueryBuilder('result')
       .select('result.userId')
       .groupBy('result.userId')
-      .having(
-        'SUM(CASE WHEN result.placement = 1 THEN 1 ELSE 0 END) > :wins',
-        { wins },
-      )
+      .having('SUM(CASE WHEN result.placement = 1 THEN 1 ELSE 0 END) > :wins', {
+        wins,
+      })
       .getRawMany()
 
     return higherRankedPlayers.length + 1
@@ -468,241 +490,294 @@ export class UsersService {
   }
 
   async getUserAchievements(userId: string) {
-    const [matchCount, scoreResult, linesResult, winCount, friendCount, higherRankedUsers] =
+    const stats = await this.getAchievementStats(userId)
+    const baseAchievements = this.getBaseAchievements(stats)
+    const baseUnlocked = baseAchievements.filter((a) => a.unlocked).length
+    const metaAchievements = this.getMetaAchievements(
+      baseUnlocked,
+      baseAchievements.length,
+    )
+
+    return {
+      stats: {
+        ...stats,
+        baseUnlocked,
+        totalBaseAchievements: baseAchievements.length,
+      },
+      achievements: [...baseAchievements, ...metaAchievements],
+    }
+  }
+
+  private async getAchievementStats(userId: string): Promise<AchievementStats> {
+    const [matchCount, totals, winCount, friendCount, higherRankedUsersCount] =
       await Promise.all([
         this.matchResultsRepo.count({ where: { userId } }),
         this.matchResultsRepo
           .createQueryBuilder('r')
-          .select('SUM(r.score)', 'total')
+          .select('SUM(r.score)', 'score')
+          .addSelect('SUM(r.lines)', 'lines')
           .where('r.userId = :userId', { userId })
-          .getRawOne<{ total: string | null }>(),
-        this.matchResultsRepo
-          .createQueryBuilder('r')
-          .select('SUM(r.lines)', 'total')
-          .where('r.userId = :userId', { userId })
-          .getRawOne<{ total: string | null }>(),
-        this.matchResultsRepo
-          .createQueryBuilder('r1')
-          .where('r1.userId = :userId', { userId })
-          .andWhere('r1.placement = 1')
-          .getCount(),
+          .getRawOne<{ score: string | null; lines: string | null }>(),
+        this.matchResultsRepo.count({
+          where: { userId, placement: 1 },
+        }),
         this.friendshipsRepo
           .createQueryBuilder('f')
           .where('f.userLowId = :userId OR f.userHighId = :userId', { userId })
           .getCount(),
-        // Count users with strictly higher total score to derive rank
-        (() => {
-          const myScoreSub = this.matchResultsRepo
-            .createQueryBuilder('r2')
-            .select('COALESCE(SUM(r2.score), 0)', 'myScore')
-            .where('r2.userId = :userId', { userId })
-          return this.matchResultsRepo
-            .createQueryBuilder('r')
-            .select('r.userId', 'userId')
-            .groupBy('r.userId')
-            .having(`SUM(r.score) > (${myScoreSub.getQuery()})`)
-            .setParameters(myScoreSub.getParameters())
-            .getRawMany<{ userId: string }>()
-        })(),
+        this.getHigherRankedUsersCountByScore(userId),
       ])
 
     const matches = matchCount
-    const score = Number(scoreResult?.total ?? 0)
-    const lines = Number(linesResult?.total ?? 0)
+    const score = Number(totals?.score ?? 0)
+    const lines = Number(totals?.lines ?? 0)
     const wins = winCount
     const friends = friendCount
-    const rank = matches > 0 ? higherRankedUsers.length + 1 : 0
+    const rank = matches > 0 ? higherRankedUsersCount + 1 : 0
     const level = Math.floor(lines / 10) + 1
+    const bestDomination = await this.calculateBestDomination(userId, matches)
 
-    // Compute best domination: max games against a single opponent where user won ALL of them
-    let bestDomination = 0
-    if (matches > 0) {
-      const userResults = await this.matchResultsRepo.find({
-        where: { userId },
-        select: ['matchId', 'score', 'placement'],
-      })
-      const matchIds = [...new Set(userResults.map((r) => r.matchId))]
-      const allResults = await this.matchResultsRepo.find({
-        where: { matchId: In(matchIds) },
-        select: ['matchId', 'userId', 'score'],
-      })
-      const userWonMatches = new Set(
-        userResults
-          .filter((r) => r.placement === 1)
-          .map((r) => r.matchId),
-      )
-      const opponentStats = new Map<string, { total: number; wins: number }>()
-      for (const r of allResults) {
-        if (r.userId === userId) continue
-        const s = opponentStats.get(r.userId) ?? { total: 0, wins: 0 }
-        s.total++
-        if (userWonMatches.has(r.matchId)) s.wins++
-        opponentStats.set(r.userId, s)
-      }
-      bestDomination = Math.max(
-        0,
-        ...Array.from(opponentStats.values())
-          .filter((s) => s.wins === s.total)
-          .map((s) => s.total),
-      )
+    return {
+      matches,
+      score,
+      lines,
+      wins,
+      friends,
+      rank,
+      level,
+      bestDomination,
+    }
+  }
+
+  private async getHigherRankedUsersCountByScore(
+    userId: string,
+  ): Promise<number> {
+    const myScoreSub = this.matchResultsRepo
+      .createQueryBuilder('r2')
+      .select('COALESCE(SUM(r2.score), 0)', 'myScore')
+      .where('r2.userId = :userId', { userId })
+
+    const higherRankedUsers = await this.matchResultsRepo
+      .createQueryBuilder('r')
+      .select('r.userId', 'userId')
+      .groupBy('r.userId')
+      .having(`SUM(r.score) > (${myScoreSub.getQuery()})`)
+      .setParameters(myScoreSub.getParameters())
+      .getRawMany<{ userId: string }>()
+
+    return higherRankedUsers.length
+  }
+
+  private async calculateBestDomination(
+    userId: string,
+    matches: number,
+  ): Promise<number> {
+    if (matches === 0) return 0
+
+    const userResults = await this.matchResultsRepo.find({
+      where: { userId },
+      select: ['matchId', 'placement'],
+    })
+
+    const matchIds = [...new Set(userResults.map((r) => r.matchId))]
+    const allResults = await this.matchResultsRepo.find({
+      where: { matchId: In(matchIds) },
+      select: ['matchId', 'userId'],
+    })
+
+    const userWonMatches = new Set(
+      userResults.filter((r) => r.placement === 1).map((r) => r.matchId),
+    )
+
+    const opponentStats = new Map<string, { total: number; wins: number }>()
+    for (const r of allResults) {
+      if (r.userId === userId) continue
+      const s = opponentStats.get(r.userId) ?? { total: 0, wins: 0 }
+      s.total++
+      if (userWonMatches.has(r.matchId)) s.wins++
+      opponentStats.set(r.userId, s)
     }
 
-    const baseAchievements = [
-        {
-          id: 'first_match',
-          label: 'First Match',
-          description: 'Play your first match',
-          unlocked: matches >= 1,
-        },
-        {
-          id: 'matches_10',
-          label: 'Getting Started',
-          description: 'Play 10 matches',
-          unlocked: matches >= 10,
-        },
-        {
-          id: 'matches_50',
-          label: 'Dedicated Player',
-          description: 'Play 50 matches',
-          unlocked: matches >= 50,
-        },
-        {
-          id: 'matches_100',
-          label: 'Centurion',
-          description: 'Play 100 matches',
-          unlocked: matches >= 100,
-        },
-        {
-          id: 'score_1k',
-          label: 'Point Collector',
-          description: 'Score 1,000 total points',
-          unlocked: score >= 1000,
-        },
-        {
-          id: 'score_10k',
-          label: 'High Scorer',
-          description: 'Score 10,000 total points',
-          unlocked: score >= 10000,
-        },
-        {
-          id: 'score_100k',
-          label: 'Legend',
-          description: 'Score 100,000 total points',
-          unlocked: score >= 100000,
-        },
-        {
-          id: 'lines_100',
-          label: 'Line Clearer',
-          description: 'Clear 100 total lines',
-          unlocked: lines >= 100,
-        },
-        {
-          id: 'lines_500',
-          label: 'Wrecking Ball',
-          description: 'Clear 500 total lines',
-          unlocked: lines >= 500,
-        },
-        {
-          id: 'lines_1000',
-          label: 'Line Destroyer',
-          description: 'Clear 1,000 total lines',
-          unlocked: lines >= 1000,
-        },
-        {
-          id: 'first_win',
-          label: 'Winner',
-          description: 'Win your first match',
-          unlocked: wins >= 1,
-        },
-        {
-          id: 'wins_10',
-          label: 'Seasoned Victor',
-          description: 'Win 10 matches',
-          unlocked: wins >= 10,
-        },
-        {
-          id: 'wins_50',
-          label: 'Champion',
-          description: 'Win 50 matches',
-          unlocked: wins >= 50,
-        },
-        {
-          id: 'first_friend',
-          label: 'Social Butterfly',
-          description: 'Make your first friend',
-          unlocked: friends >= 1,
-        },
-        {
-          id: 'friends_5',
-          label: 'Popular',
-          description: 'Have 5 friends',
-          unlocked: friends >= 5,
-        },
-        {
-          id: 'level_5',
-          label: 'Getting Warmed Up',
-          description: 'Reach level 5',
-          unlocked: level >= 5,
-        },
-        {
-          id: 'level_10',
-          label: 'Seasoned',
-          description: 'Reach level 10',
-          unlocked: level >= 10,
-        },
-        {
-          id: 'level_25',
-          label: 'Veteran',
-          description: 'Reach level 25',
-          unlocked: level >= 25,
-        },
-        {
-          id: 'level_50',
-          label: 'Elite',
-          description: 'Reach level 50',
-          unlocked: level >= 50,
-        },
-        {
-          id: 'rank_top10',
-          label: 'Rising Star',
-          description: 'Reach top 10 on the leaderboard',
-          unlocked: rank > 0 && rank <= 10,
-        },
-        {
-          id: 'rank_top3',
-          label: 'Podium Finish',
-          description: 'Reach top 3 on the leaderboard',
-          unlocked: rank > 0 && rank <= 3,
-        },
-        {
-          id: 'rank_1',
-          label: 'King of the Board',
-          description: 'Reach #1 on the leaderboard',
-          unlocked: rank === 1,
-        },
-        {
-          id: 'domination_3',
-          label: 'Bully',
-          description: 'Beat the same opponent in 3 matches without ever losing to them',
-          unlocked: bestDomination >= 3,
-        },
-        {
-          id: 'domination_5',
-          label: 'Dominator',
-          description: 'Beat the same opponent in 5 matches without ever losing to them',
-          unlocked: bestDomination >= 5,
-        },
-        {
-          id: 'domination_10',
-          label: 'Their Nightmare',
-          description: 'Beat the same opponent in 10 matches without ever losing to them',
-          unlocked: bestDomination >= 10,
-        },
+    const dominations = Array.from(opponentStats.values())
+      .filter((s) => s.wins === s.total)
+      .map((s) => s.total)
+
+    return dominations.length > 0 ? Math.max(...dominations) : 0
+  }
+
+  private getBaseAchievements(stats: AchievementStats): Achievement[] {
+    const {
+      matches,
+      score,
+      lines,
+      wins,
+      friends,
+      level,
+      rank,
+      bestDomination,
+    } = stats
+    return [
+      {
+        id: 'first_match',
+        label: 'First Match',
+        description: 'Play your first match',
+        unlocked: matches >= 1,
+      },
+      {
+        id: 'matches_10',
+        label: 'Getting Started',
+        description: 'Play 10 matches',
+        unlocked: matches >= 10,
+      },
+      {
+        id: 'matches_50',
+        label: 'Dedicated Player',
+        description: 'Play 50 matches',
+        unlocked: matches >= 50,
+      },
+      {
+        id: 'matches_100',
+        label: 'Centurion',
+        description: 'Play 100 matches',
+        unlocked: matches >= 100,
+      },
+      {
+        id: 'score_1k',
+        label: 'Point Collector',
+        description: 'Score 1,000 total points',
+        unlocked: score >= 1000,
+      },
+      {
+        id: 'score_10k',
+        label: 'High Scorer',
+        description: 'Score 10,000 total points',
+        unlocked: score >= 10000,
+      },
+      {
+        id: 'score_100k',
+        label: 'Legend',
+        description: 'Score 100,000 total points',
+        unlocked: score >= 100000,
+      },
+      {
+        id: 'lines_100',
+        label: 'Line Clearer',
+        description: 'Clear 100 total lines',
+        unlocked: lines >= 100,
+      },
+      {
+        id: 'lines_500',
+        label: 'Wrecking Ball',
+        description: 'Clear 500 total lines',
+        unlocked: lines >= 500,
+      },
+      {
+        id: 'lines_1000',
+        label: 'Line Destroyer',
+        description: 'Clear 1,000 total lines',
+        unlocked: lines >= 1000,
+      },
+      {
+        id: 'first_win',
+        label: 'Winner',
+        description: 'Win your first match',
+        unlocked: wins >= 1,
+      },
+      {
+        id: 'wins_10',
+        label: 'Seasoned Victor',
+        description: 'Win 10 matches',
+        unlocked: wins >= 10,
+      },
+      {
+        id: 'wins_50',
+        label: 'Champion',
+        description: 'Win 50 matches',
+        unlocked: wins >= 50,
+      },
+      {
+        id: 'first_friend',
+        label: 'Social Butterfly',
+        description: 'Make your first friend',
+        unlocked: friends >= 1,
+      },
+      {
+        id: 'friends_5',
+        label: 'Popular',
+        description: 'Have 5 friends',
+        unlocked: friends >= 5,
+      },
+      {
+        id: 'level_5',
+        label: 'Getting Warmed Up',
+        description: 'Reach level 5',
+        unlocked: level >= 5,
+      },
+      {
+        id: 'level_10',
+        label: 'Seasoned',
+        description: 'Reach level 10',
+        unlocked: level >= 10,
+      },
+      {
+        id: 'level_25',
+        label: 'Veteran',
+        description: 'Reach level 25',
+        unlocked: level >= 25,
+      },
+      {
+        id: 'level_50',
+        label: 'Elite',
+        description: 'Reach level 50',
+        unlocked: level >= 50,
+      },
+      {
+        id: 'rank_top10',
+        label: 'Rising Star',
+        description: 'Reach top 10 on the leaderboard',
+        unlocked: rank > 0 && rank <= 10,
+      },
+      {
+        id: 'rank_top3',
+        label: 'Podium Finish',
+        description: 'Reach top 3 on the leaderboard',
+        unlocked: rank > 0 && rank <= 3,
+      },
+      {
+        id: 'rank_1',
+        label: 'King of the Board',
+        description: 'Reach #1 on the leaderboard',
+        unlocked: rank === 1,
+      },
+      {
+        id: 'domination_3',
+        label: 'Bully',
+        description:
+          'Beat the same opponent in 3 matches without ever losing to them',
+        unlocked: bestDomination >= 3,
+      },
+      {
+        id: 'domination_5',
+        label: 'Dominator',
+        description:
+          'Beat the same opponent in 5 matches without ever losing to them',
+        unlocked: bestDomination >= 5,
+      },
+      {
+        id: 'domination_10',
+        label: 'Their Nightmare',
+        description:
+          'Beat the same opponent in 10 matches without ever losing to them',
+        unlocked: bestDomination >= 10,
+      },
     ]
+  }
 
-    const baseUnlocked = baseAchievements.filter((a) => a.unlocked).length
-
-    const metaAchievements = [
+  private getMetaAchievements(
+    baseUnlocked: number,
+    totalBase: number,
+  ): Achievement[] {
+    return [
       {
         id: 'collector_1',
         label: 'First Step',
@@ -719,14 +794,9 @@ export class UsersService {
         id: 'collector_all',
         label: 'Completionist',
         description: 'Unlock all achievements',
-        unlocked: baseUnlocked >= baseAchievements.length,
+        unlocked: baseUnlocked >= totalBase,
       },
     ]
-
-    return {
-      stats: { matches, score, lines, wins, friends, rank, level, bestDomination, baseUnlocked, totalBaseAchievements: baseAchievements.length },
-      achievements: [...baseAchievements, ...metaAchievements],
-    }
   }
 
   async existUserProfilePictureInFs(

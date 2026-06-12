@@ -48,6 +48,7 @@ interface RoomGameSession {
   players: Map<string, PlayerGame> // userId → their game
   roomId: string
   finishing: boolean
+  startedAt: number // epoch ms, used to compute match duration
   nextPlacement: number
   settings: MatchSettings
 }
@@ -291,6 +292,7 @@ export class RealtimeGateway
         players: new Map(),
         roomId,
         finishing: false,
+        startedAt: Date.now(),
         nextPlacement: room.users.length,
         settings: room.settings,
       }
@@ -489,7 +491,9 @@ export class RealtimeGateway
       const [newTargetId] = alive[Math.floor(Math.random() * alive.length)]
       attacker.targetId = newTargetId
       attacker.attackEventCount = 0
-      this.logger.log(`[targeting] ${attackerUserId} → new target: ${newTargetId}`)
+      this.logger.log(
+        `[targeting] ${attackerUserId} → new target: ${newTargetId}`,
+      )
     }
 
     const target = session.players.get(attacker.targetId!)
@@ -502,7 +506,10 @@ export class RealtimeGateway
     )
   }
 
-  private retargetPlayersWhoTargeted(session: RoomGameSession, deadUserId: string) {
+  private retargetPlayersWhoTargeted(
+    session: RoomGameSession,
+    deadUserId: string,
+  ) {
     for (const [, pg] of session.players) {
       if (pg.targetId === deadUserId) {
         pg.targetId = null
@@ -588,8 +595,10 @@ export class RealtimeGateway
       }),
     )
 
+    let resultsSaved = false
     try {
       await this.matchResultsRepository.save(matchResults)
+      resultsSaved = true
     } catch (error) {
       this.logger.error(`Failed to save results for match ${matchId}`, error)
     }

@@ -181,7 +181,6 @@ export class RoomService {
       lockDelayMs: 300,
       lockResetLimit: 15,
 
-
       rotationSystem: RotationSystem.SRS,
       hold: true,
       nextCount: 5,

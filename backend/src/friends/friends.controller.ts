@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -12,6 +13,7 @@ import {
 import { AuthGuard, UserId } from '../auth/auth.guard'
 import {
   GetMessagesQueryDto,
+  InviteToMatchDto,
   SendDirectMessageDto,
   SendFriendRequestDto,
   UpdatePresenceDto,
@@ -91,24 +93,6 @@ export class FriendsController {
     return { blocked }
   }
 
-  @Post('friends/block/:userId')
-  async blockUser(
-    @UserId() blockerId: string,
-    @Param('userId') blockedId: string,
-  ) {
-    await this.friendsService.blockUser(blockerId, blockedId)
-    return {}
-  }
-
-  @Delete('friends/block/:userId')
-  async unblockUser(
-    @UserId() blockerId: string,
-    @Param('userId') blockedId: string,
-  ) {
-    await this.friendsService.unblockUser(blockerId, blockedId)
-    return {}
-  }
-
   @Post('friends/requests/:requestId/cancel')
   async cancel(
     @UserId() userId: string,
@@ -165,8 +149,51 @@ export class FriendsController {
       senderId: msg.senderId,
       recipientId: msg.recipientId,
       content: msg.content,
+      type: msg.type,
+      roomId: msg.roomId,
+      seen: msg.seen,
       createdAt: msg.createdAt,
     }
+  }
+
+  @Post('dm/:friendUserId/invite')
+  async inviteToMatch(
+    @UserId() userId: string,
+    @Param('friendUserId') friendUserId: string,
+    @Body() body: InviteToMatchDto,
+  ) {
+    const msg = await this.friendsService.sendMatchInvite(
+      userId,
+      friendUserId,
+      body.roomId,
+    )
+    return {
+      id: msg.id,
+      senderId: msg.senderId,
+      recipientId: msg.recipientId,
+      content: msg.content,
+      type: msg.type,
+      roomId: msg.roomId,
+      seen: msg.seen,
+      createdAt: msg.createdAt,
+    }
+  }
+
+  @Get('dm/unread/count')
+  async getUnreadMessageCount(@UserId() userId: string) {
+    return this.friendsService.getUnreadDirectMessages(userId)
+  }
+
+  @Post('dm/:friendUserId/messages/seen')
+  async markMessagesSeen(
+    @UserId() userId: string,
+    @Param('friendUserId') friendUserId: string,
+  ) {
+    const markedSeen = await this.friendsService.markDirectMessagesSeen(
+      userId,
+      friendUserId,
+    )
+    return { markedSeen }
   }
 
   @Get('dm/:friendUserId/messages')
@@ -191,9 +218,37 @@ export class FriendsController {
         senderId: m.senderId,
         recipientId: m.recipientId,
         content: m.content,
+        type: m.type,
+        roomId: m.roomId,
+        seen: m.seen,
         createdAt: m.createdAt,
       })),
       pageInfo: result.pageInfo,
     }
+  }
+
+  @Post('friends/block/:userId')
+  @HttpCode(200)
+  async blockUser(
+    @UserId() userId: string,
+    @Param('userId') targetUserId: string,
+  ) {
+    await this.friendsService.blockUser(userId, targetUserId)
+    return {}
+  }
+
+  @Delete('friends/block/:userId')
+  async unblockUser(
+    @UserId() userId: string,
+    @Param('userId') targetUserId: string,
+  ) {
+    await this.friendsService.unblockUser(userId, targetUserId)
+    return {}
+  }
+
+  @Get('friends/blocked')
+  async listBlocked(@UserId() userId: string) {
+    const blocked = await this.friendsService.listBlocked(userId)
+    return { blocked }
   }
 }

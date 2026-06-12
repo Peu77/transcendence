@@ -26,7 +26,7 @@ import { PublicApiModule } from './public-api/public-api.module'
         database: config.getOrThrow<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
-        ssl: config.get<string>('DB_SSL') === 'true' ? true : false,
+        ssl: config.get<string>('DB_SSL') === 'true',
         extra:
           config.get<string>('DB_SSL') === 'true'
             ? { ssl: { rejectUnauthorized: false } }

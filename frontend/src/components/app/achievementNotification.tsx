@@ -43,7 +43,9 @@ function NotificationCard({
           Achievement Unlocked
         </div>
         <div className="font-semibold">{achievement.label}</div>
-        <div className="text-sm text-muted-foreground">{achievement.description}</div>
+        <div className="text-sm text-muted-foreground">
+          {achievement.description}
+        </div>
       </div>
 
       {remaining > 0 && (
@@ -53,7 +55,11 @@ function NotificationCard({
       )}
 
       <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-muted">
-        <div ref={barRef} className="h-full rounded-full bg-violet-500" style={{ width: '100%' }} />
+        <div
+          ref={barRef}
+          className="h-full rounded-full bg-violet-500"
+          style={{ width: '100%' }}
+        />
       </div>
     </div>
   )

@@ -249,7 +249,7 @@ const EndpointDocs = ({ endpoints }: EndpointDocsProps) => (
       <CardTitle>Documentation</CardTitle>
       <CardDescription>
         Send your key as <code>x-api-key</code> or as a Bearer token. All
-        endpoints currently return static mock data.
+        endpoints return data from the current application database.
       </CardDescription>
     </CardHeader>
     <CardContent className="space-y-4">

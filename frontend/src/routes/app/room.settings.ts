@@ -13,7 +13,6 @@ export const matchSettingsSchema = z.object({
   lockDelayMs: z.number().min(0),
   lockResetLimit: z.number().min(0),
 
-
   rotationSystem: z.enum(RotationSystem),
   hold: z.boolean(),
   nextCount: z.number().min(0).max(10),

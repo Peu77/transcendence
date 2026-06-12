@@ -8,7 +8,10 @@ import { Label } from '@/components/ui/label.tsx'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { Slider } from '@/components/ui/slider.tsx'
 import { Switch } from '@/components/ui/switch.tsx'
-import { DEFAULT_SOLO_MATCH_SETTINGS, type SoloMatchSettings } from '@/game/solo-settings.ts'
+import {
+  DEFAULT_SOLO_MATCH_SETTINGS,
+  type SoloMatchSettings,
+} from '@/game/solo-settings.ts'
 import { RESTART_SOLO_KEY } from '@/game/keyboard.ts'
 import { NumberBadgeInput } from '@/components/ui/number-badge-input'
 import { Button } from '@/components/ui/button.tsx'
@@ -24,7 +27,6 @@ type NumericSettingKey =
   | 'gincrease'
   | 'gmargin'
   | 'lockDelayMs'
-
   | 'nextCount'
   | 'blowbackPercent'
 
@@ -44,8 +46,7 @@ const NUMERIC_SETTINGS: NumericSetting[] = [
   {
     key: 'gravity',
     label: 'Gravity',
-    description:
-      'Starting gravity (how fast pieces fall). Higher is faster.',
+    description: 'Starting gravity (how fast pieces fall). Higher is faster.',
     min: 0,
     max: 3,
     step: 0.01,
@@ -139,7 +140,9 @@ function NumericSettingInput({
       inputMode="decimal"
       value={display}
       className="w-20 h-7 px-2 text-xs"
-      onFocus={() => { focusedRef.current = true }}
+      onFocus={() => {
+        focusedRef.current = true
+      }}
       onBlur={() => {
         focusedRef.current = false
         const parsed = parseFloat(display.replace(',', '.'))
@@ -221,7 +224,9 @@ export function SoloSettingsPanel({
                             max={setting.max}
                             step={setting.step}
                             defaultValue={setting.defaultValue}
-                            onChange={(val) => onChange({ ...settings, [setting.key]: val })}
+                            onChange={(val) =>
+                              onChange({ ...settings, [setting.key]: val })
+                            }
                           />
                         ) : (
                           <span className="clip-pixel-corners-btn bg-primary/12 px-2.5 py-1 text-xs font-semibold text-primary">

@@ -30,19 +30,17 @@ const loginSchema = z.object({
 export default function Login() {
   const navigate = useNavigate()
   const userQuery = useGetUser()
+  const { data: user, error: userError, isLoading: isUserLoading } = userQuery
   const [twoFaData, setTwoFaData] = useState<LoginResponse | null>(null)
   const [otpCode, setOtpCode] = useState('')
 
   useEffect(() => {
-    if (!userQuery.data) return
+    if (!user || userError || isUserLoading || !user.id) return
 
-    userStore.setState(userQuery.data)
-    document.documentElement.classList.toggle(
-      'dark',
-      userQuery.data.theme === 'dark',
-    )
+    userStore.setState(() => user)
+    document.documentElement.classList.toggle('dark', user.theme === 'dark')
     navigate({ to: '/app' }).catch(console.error)
-  }, [navigate, userQuery.data])
+  }, [isUserLoading, navigate, user, userError])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -232,6 +230,14 @@ export default function Login() {
           </form>
         </CardContent>
       </Card>
+      <footer className="mt-8 text-gray-400 text-sm flex gap-4">
+        <Link to="/privacy" className="hover:text-foreground transition-colors">
+          Privacy Policy
+        </Link>
+        <Link to="/terms" className="hover:text-foreground transition-colors">
+          Terms of Service
+        </Link>
+      </footer>
     </div>
   )
 }
