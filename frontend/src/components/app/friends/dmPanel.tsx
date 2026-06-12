@@ -9,15 +9,20 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
+  type DirectMessage,
   type Friend,
   getDirectMessages,
   sendDirectMessage,
+  sendMatchInvite,
 } from '@/api/friends.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { Input } from '@/components/ui/input.tsx'
+import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { useDmRoom, useLiveEvent } from '@/realtime/hooks.ts'
 import { userStore } from '@/store/userStore.ts'
+import { useNavigate } from '@tanstack/react-router'
+import { Gamepad2Icon } from 'lucide-react'
 
 let dmSendSound: HTMLAudioElement | null = null
 let dmReceiveSound: HTMLAudioElement | null = null
@@ -219,7 +224,10 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
     },
   })
 
-  const messages = dmQuery.data?.messages ?? []
+  const messages = useMemo(
+    () => dmQuery.data?.messages ?? [],
+    [dmQuery.data?.messages],
+  )
 
   useEffect(() => {
     didInitialScrollRef.current = false
@@ -349,25 +357,33 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button
-            size="sm"
+            type="button"
+            size="icon-sm"
+            aria-label="Invite to match"
+            title="Invite to match"
             onClick={() => inviteMutation.mutate()}
             disabled={inviteMutation.isPending}
           >
-            Invite to match
+            <Gamepad2Icon />
           </Button>
-          <Button size="sm" variant="ghost" onClick={props.onClose}>
+          <Button
+            size="sm"
+            variant="ghost"
+            silent={true}
+            onClick={props.onClose}
+          >
             Close
           </Button>
         </div>
       </div>
 
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="mt-3 flex-1 min-h-0 overflow-auto bg-background/30 border border-sidebar-border/50 clip-pixel-corners-btn p-2 text-sm"
+      <ScrollArea
+        viewportRef={scrollRef}
+        onViewportScroll={handleScroll}
+        className="mt-3 min-h-0 flex-1 border border-sidebar-border/50 bg-background/30 text-sm clip-pixel-corners-btn"
       >
-        {messagesContent}
-      </div>
+        <div className="p-2">{messagesContent}</div>
+      </ScrollArea>
 
       <form
         className="mt-3 flex gap-2"
@@ -381,7 +397,7 @@ export const DMPanel = (props: { friend: Friend; onClose: () => void }) => {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type a message…"
         />
-        <Button type="submit" disabled={sendMutation.isPending}>
+        <Button type="submit" silent={true} disabled={sendMutation.isPending}>
           Send
         </Button>
       </form>
