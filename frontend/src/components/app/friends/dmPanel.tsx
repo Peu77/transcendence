@@ -23,6 +23,7 @@ import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { useDmRoom, useLiveEvent } from '@/realtime/hooks.ts'
 import { userStore } from '@/store/userStore.ts'
 import { useNavigate } from '@tanstack/react-router'
+import { useStore } from '@tanstack/react-store'
 import { CheckCheckIcon, CheckIcon, Gamepad2Icon, SendIcon } from 'lucide-react'
 import { useMatchInvite } from '@/hooks/use-match-invite.ts'
 import {
@@ -60,6 +61,7 @@ export const DMPanel = (props: {
 }) => {
   const qc = useQueryClient()
   const navigate = useNavigate()
+  const isOverlayOpen = useStore(friendsOverlayStore, (s) => s.isOpen)
 
   useDmRoom(props.friend.id)
   const { isTyping: friendIsTyping, emitTyping } = useDmTypingIndicator(
@@ -132,6 +134,12 @@ export const DMPanel = (props: {
       })
     },
   })
+
+  useEffect(() => {
+    if (isOverlayOpen) {
+      markSeenMutation.mutate()
+    }
+  }, [isOverlayOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadOlderMutation = useMutation({
     mutationFn: async () => {
