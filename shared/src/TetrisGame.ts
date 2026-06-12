@@ -12,8 +12,8 @@ import {GarbageCancel, type MatchSettings, PieceRandomizer, RotationSystem,} fro
 
 const PIECE_TYPES = Object.values(TetrominoType)
 
-const log = (msg: string, data?: unknown) =>
-  console.log(`[TetrisGame] ${msg}`, data ?? '')
+const log = (_msg: string, _data?: unknown) => {
+}
 
 const LINES_PER_LEVEL = 10
 
