@@ -16,9 +16,8 @@ import { GithubValidateReturn } from '../auth/github.strategy'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { MatchResult } from './match-result.entity'
-import { UserBlock } from '../friends/entities/user-block.entity'
 import { Friendship } from '../friends/entities/friendship.entity'
-import { UserStats } from '../stats/user-stats.entity'
+import { UserBlock } from '../friends/entities/block.entity'
 
 export interface MatchHistoryPlayer {
   userId: string
@@ -73,8 +72,6 @@ export class UsersService {
     private readonly userBlocksRepo: Repository<UserBlock>,
     @InjectRepository(Friendship)
     private readonly friendshipsRepo: Repository<Friendship>,
-    @InjectRepository(UserStats)
-    private readonly userStatsRepo: Repository<UserStats>,
   ) {}
 
   static readonly UPLOAD_DIR = 'uploads/'

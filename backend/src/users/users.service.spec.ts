@@ -1,5 +1,6 @@
 import { Repository } from 'typeorm'
-import { UserBlock } from '../friends/entities/user-block.entity'
+import { UserBlock } from '../friends/entities/block.entity'
+import { Friendship } from '../friends/entities/friendship.entity'
 import { MatchResult } from './match-result.entity'
 import {
   DEFAULT_GAME_CONTROLS,
@@ -30,19 +31,26 @@ const createUserBlocksRepo = () => ({
   exists: jest.fn(),
 })
 
+const createFriendshipsRepo = () => ({
+  findOne: jest.fn(),
+})
+
 const createService = () => {
   const usersRepo = createUsersRepo()
   const matchResultsRepo = createMatchResultsRepo()
   const userBlocksRepo = createUserBlocksRepo()
+  const friendshipsRepo = createFriendshipsRepo()
 
   return {
     usersRepo,
     matchResultsRepo,
     userBlocksRepo,
+    friendshipsRepo,
     service: new UsersService(
       usersRepo as unknown as Repository<User>,
       matchResultsRepo as unknown as Repository<MatchResult>,
       userBlocksRepo as unknown as Repository<UserBlock>,
+      friendshipsRepo as unknown as Repository<Friendship>,
     ),
   }
 }
@@ -401,7 +409,7 @@ describe('UsersService match statistics', () => {
         userId: 'user-1',
         username: 'alice',
         profilePictureId: null,
-        score: '1200',
+        wins: '2',
         matchesPlayed: '3',
       },
     ])
@@ -422,13 +430,13 @@ describe('UsersService match statistics', () => {
         userId: 'user-1',
         username: 'alice',
         profilePictureId: null,
-        score: 1200,
+        wins: 2,
         matchesPlayed: 3,
       },
     ])
 
     expect(queryBuilder.orderBy).toHaveBeenCalledWith(
-      'SUM(result.score)',
+      'SUM(CASE WHEN result.placement = 1 THEN 1 ELSE 0 END)',
       'DESC',
     )
   })

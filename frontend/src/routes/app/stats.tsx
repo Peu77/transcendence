@@ -316,8 +316,8 @@ const Statistics = () => {
   )
 }
 
-export const StatisticsRoute = createRoute({
+export const StatsRoute = createRoute({
   getParentRoute: () => AppRoute,
-  component: Statistics,
   path: '/statistics',
+  component: Statistics,
 })
