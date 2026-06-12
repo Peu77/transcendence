@@ -57,5 +57,6 @@ export interface DirectMessageCreatedEvent {
   content: string
   type: 'text' | 'match_invite'
   roomId: string | null
+  seen: boolean
   createdAt: string
 }

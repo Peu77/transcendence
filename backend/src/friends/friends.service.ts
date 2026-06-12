@@ -305,6 +305,7 @@ export class FriendsService {
       fromUserId: In([userId, friendUserId]),
       toUserId: In([userId, friendUserId]),
     })
+    await this.markConversationMessagesSeen(userId, friendUserId)
 
     const result = await this.friendshipsRepo.delete({
       userLowId: low,
@@ -370,6 +371,7 @@ export class FriendsService {
       senderId,
       recipientId: friendUserId,
       content,
+      seen: false,
     })
     const saved = await this.messagesRepo.save(msg)
 
@@ -381,6 +383,7 @@ export class FriendsService {
       content: saved.content,
       type: saved.type,
       roomId: saved.roomId,
+      seen: saved.seen,
       createdAt: saved.createdAt.toISOString(),
     })
 
@@ -419,6 +422,7 @@ export class FriendsService {
       content: `${senderInfo.username} invited you to a match`,
       type: 'match_invite',
       roomId: targetRoomId,
+      seen: false,
     })
     const saved = await this.messagesRepo.save(msg)
 
@@ -430,6 +434,7 @@ export class FriendsService {
       content: saved.content,
       type: saved.type,
       roomId: saved.roomId,
+      seen: saved.seen,
       createdAt: saved.createdAt.toISOString(),
     })
 
@@ -548,6 +553,71 @@ export class FriendsService {
     }
   }
 
+  async getUnreadDirectMessages(userId: string): Promise<{
+    count: number
+    bySender: Record<string, number>
+  }> {
+    const rows = await this.messagesRepo
+      .createQueryBuilder('message')
+      .select('message.senderId', 'senderId')
+      .addSelect('COUNT(*)', 'count')
+      .where('message.recipientId = :userId', { userId })
+      .andWhere('message.seen = :seen', { seen: false })
+      .groupBy('message.senderId')
+      .getRawMany<{ senderId: string; count: string }>()
+
+    const bySender = Object.fromEntries(
+      rows.map(({ senderId, count }) => [senderId, Number(count)]),
+    )
+
+    return {
+      count: Object.values(bySender).reduce((total, count) => total + count, 0),
+      bySender,
+    }
+  }
+
+  async markDirectMessagesSeen(
+    userId: string,
+    friendUserId: string,
+  ): Promise<number> {
+    await this.assertFriends(userId, friendUserId)
+
+    const result = await this.messagesRepo.update(
+      {
+        senderId: friendUserId,
+        recipientId: userId,
+        seen: false,
+      },
+      { seen: true },
+    )
+
+    return result.affected ?? 0
+  }
+
+  private async markConversationMessagesSeen(
+    firstUserId: string,
+    secondUserId: string,
+  ): Promise<void> {
+    await Promise.all([
+      this.messagesRepo.update(
+        {
+          senderId: firstUserId,
+          recipientId: secondUserId,
+          seen: false,
+        },
+        { seen: true },
+      ),
+      this.messagesRepo.update(
+        {
+          senderId: secondUserId,
+          recipientId: firstUserId,
+          seen: false,
+        },
+        { seen: true },
+      ),
+    ])
+  }
+
   private async assertFriends(
     userId: string,
     friendUserId: string,
@@ -574,6 +644,7 @@ export class FriendsService {
         fromUserId: In([blockerId, blockedId]),
         toUserId: In([blockerId, blockedId]),
       })
+      await this.markConversationMessagesSeen(blockerId, blockedId)
       await this.friendshipsRepo.delete({ userLowId: low, userHighId: high })
       this.realtime.emitFriendshipDeleted([blockerId, blockedId], {
         userId: blockerId,

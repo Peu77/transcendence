@@ -6,6 +6,7 @@ export const FRIENDS_QUERY_KEYS = {
   OUTGOING_REQUESTS: ['friends', 'requests', 'outgoing'],
   INCOMING_REQUESTS: ['friends', 'requests', 'incoming'],
   BLOCKED_USERS: ['friends', 'blocked'],
+  UNREAD_MESSAGES: ['friends', 'messages', 'unread'],
 }
 
 export function useGetFriends() {
@@ -50,6 +51,13 @@ export function useGetBlockedUsers() {
   return useQuery({
     queryKey: FRIENDS_QUERY_KEYS.BLOCKED_USERS,
     queryFn: getBlockedUsers,
+  })
+}
+
+export function useGetUnreadDirectMessages() {
+  return useQuery({
+    queryKey: FRIENDS_QUERY_KEYS.UNREAD_MESSAGES,
+    queryFn: getUnreadDirectMessages,
   })
 }
 
@@ -241,6 +249,7 @@ export type DirectMessage = {
   content: string
   type: DirectMessageType
   roomId: string | null
+  seen: boolean
   createdAt: string
 }
 
@@ -295,6 +304,25 @@ export async function getDirectMessages(
     { params },
   )
   return res.data
+}
+
+export type UnreadDirectMessages = {
+  count: number
+  bySender: Record<string, number>
+}
+
+export async function getUnreadDirectMessages(): Promise<UnreadDirectMessages> {
+  const res = await axios.get<UnreadDirectMessages>('/dm/unread/count')
+  return res.data
+}
+
+export async function markDirectMessagesSeen(
+  friendUserId: string,
+): Promise<number> {
+  const res = await axios.post<{ markedSeen: number }>(
+    `/dm/${friendUserId}/messages/seen`,
+  )
+  return res.data.markedSeen
 }
 
 export type BlockedUser = {

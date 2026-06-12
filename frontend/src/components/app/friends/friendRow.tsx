@@ -5,6 +5,7 @@ import type { MouseEvent } from 'react'
 
 export const FriendRow = (props: {
   friend: Friend
+  unreadCount: number
   onOpenDM: () => void
   onOpenProfile: () => void
 }) => {
@@ -49,6 +50,14 @@ export const FriendRow = (props: {
         </button>
         <PresencePill friend={friend} />
       </div>
+      {props.unreadCount > 0 && (
+        <span
+          className="flex min-w-5 shrink-0 items-center justify-center rounded-full bg-red-600 px-1 text-xs font-bold leading-5 text-white"
+          aria-label={`${props.unreadCount} unread messages`}
+        >
+          {props.unreadCount > 9 ? '9+' : props.unreadCount}
+        </span>
+      )}
     </div>
   )
 }

@@ -12,7 +12,9 @@ import {
   type DirectMessage,
   type Friend,
   getDirectMessages,
+  markDirectMessagesSeen,
   sendDirectMessage,
+  FRIENDS_QUERY_KEYS,
 } from '@/api/friends.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { Button } from '@/components/ui/button.tsx'
@@ -85,12 +87,43 @@ export const DMPanel = (props: {
     queryKey,
     queryFn: async () => {
       const data = await getDirectMessages(props.friend.id, { limit: 25 })
+      await markDirectMessagesSeen(props.friend.id)
+      await qc.invalidateQueries({
+        queryKey: FRIENDS_QUERY_KEYS.UNREAD_MESSAGES,
+      })
       setOldestCursor(data.pageInfo.oldestCursor)
       setNewestCursor(data.pageInfo.newestCursor)
-      return data
+      return {
+        ...data,
+        messages: data.messages.map((message) =>
+          message.senderId === props.friend.id
+            ? { ...message, seen: true }
+            : message,
+        ),
+      }
     },
     refetchOnWindowFocus: false,
     staleTime: 5_000,
+  })
+
+  const markSeenMutation = useMutation({
+    mutationFn: () => markDirectMessagesSeen(props.friend.id),
+    onSuccess: async () => {
+      qc.setQueryData(queryKey, (prev: any) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          messages: (prev.messages ?? []).map((message: DirectMessage) =>
+            message.senderId === props.friend.id
+              ? { ...message, seen: true }
+              : message,
+          ),
+        }
+      })
+      await qc.invalidateQueries({
+        queryKey: FRIENDS_QUERY_KEYS.UNREAD_MESSAGES,
+      })
+    },
   })
 
   const loadOlderMutation = useMutation({
@@ -327,6 +360,7 @@ export const DMPanel = (props: {
       })
 
       if (msg.senderId !== userStore.state?.id) {
+        markSeenMutation.mutate()
         const sound = getDmReceiveSound()
         sound.currentTime = 0
         sound.play().catch(() => {})
@@ -335,7 +369,7 @@ export const DMPanel = (props: {
       setNewestCursor((c) => c ?? msg.id)
       setOldestCursor((c) => c ?? msg.id)
     },
-    [props.friend.id, qc, queryKey],
+    [markSeenMutation, props.friend.id, qc, queryKey],
   )
 
   useLiveEvent('dm.created', handleDmCreated)

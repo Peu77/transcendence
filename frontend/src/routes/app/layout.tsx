@@ -16,7 +16,7 @@ const AppLayout = () => {
 
   useEffect(() => {
     if (userQuery.data) {
-      userStore.setState(userQuery.data)
+      userStore.setState(() => userQuery.data)
       document.documentElement.classList.toggle(
         'dark',
         userQuery.data.theme === 'dark',

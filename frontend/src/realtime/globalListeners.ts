@@ -39,6 +39,10 @@ export function useGlobalListeners() {
   useLiveEvent('dm.created', (event) => {
     if (event.senderId === userStore.state?.id) return
 
+    void qc.invalidateQueries({
+      queryKey: FRIENDS_QUERY_KEYS.UNREAD_MESSAGES,
+    })
+
     if (event.type === 'match_invite' && event.roomId) {
       const roomId = event.roomId
       toast.info('Match invite', {
@@ -90,7 +94,12 @@ export function useGlobalListeners() {
   })
 
   useLiveEvent('friendship.deleted', async () => {
-    await qc.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.FRIENDS })
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: FRIENDS_QUERY_KEYS.FRIENDS }),
+      qc.invalidateQueries({
+        queryKey: FRIENDS_QUERY_KEYS.UNREAD_MESSAGES,
+      }),
+    ])
   })
 
   // When someone blocks you, their profile's blockedByThem flag needs to update

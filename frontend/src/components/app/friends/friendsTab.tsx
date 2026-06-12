@@ -12,6 +12,7 @@ import { useLiveEvent } from '@/realtime/hooks.ts'
 export const FriendsTab = (props: {
   isOpen: boolean
   activeDmFriend: Friend | null
+  unreadByFriend: Record<string, number>
   onOpenDM: (friend: Friend) => void
   onOpenProfile: (friend: Friend) => void
   onCloseDM: () => void
@@ -126,6 +127,7 @@ export const FriendsTab = (props: {
           <FriendRow
             key={friend.id}
             friend={friend}
+            unreadCount={props.unreadByFriend[friend.id] ?? 0}
             onOpenDM={() => onOpenDM(friend)}
             onOpenProfile={() => props.onOpenProfile(friend)}
           />

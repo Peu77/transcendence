@@ -151,6 +151,7 @@ export class FriendsController {
       content: msg.content,
       type: msg.type,
       roomId: msg.roomId,
+      seen: msg.seen,
       createdAt: msg.createdAt,
     }
   }
@@ -173,8 +174,26 @@ export class FriendsController {
       content: msg.content,
       type: msg.type,
       roomId: msg.roomId,
+      seen: msg.seen,
       createdAt: msg.createdAt,
     }
+  }
+
+  @Get('dm/unread/count')
+  async getUnreadMessageCount(@UserId() userId: string) {
+    return this.friendsService.getUnreadDirectMessages(userId)
+  }
+
+  @Post('dm/:friendUserId/messages/seen')
+  async markMessagesSeen(
+    @UserId() userId: string,
+    @Param('friendUserId') friendUserId: string,
+  ) {
+    const markedSeen = await this.friendsService.markDirectMessagesSeen(
+      userId,
+      friendUserId,
+    )
+    return { markedSeen }
   }
 
   @Get('dm/:friendUserId/messages')
@@ -201,6 +220,7 @@ export class FriendsController {
         content: m.content,
         type: m.type,
         roomId: m.roomId,
+        seen: m.seen,
         createdAt: m.createdAt,
       })),
       pageInfo: result.pageInfo,

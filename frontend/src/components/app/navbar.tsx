@@ -17,6 +17,7 @@ import { ProfileDialog } from '@/components/app/profileDialog.tsx'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { DropdownMenu } from 'radix-ui'
 import { toast } from 'sonner'
+import { useGetUnreadDirectMessages } from '@/api/friends.ts'
 
 export const Navbar = () => {
   const [profileOpen, setProfileOpen] = useState(false)
@@ -25,6 +26,8 @@ export const Navbar = () => {
   const userId = useStore(userStore, (state) => state?.id)
   const theme = useStore(userStore, (state) => state?.theme)
   const isDark = theme === 'dark'
+  const unreadMessagesQuery = useGetUnreadDirectMessages()
+  const unreadMessageCount = unreadMessagesQuery.data?.count ?? 0
 
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -40,7 +43,7 @@ export const Navbar = () => {
   const logoutMutation = useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      userStore.setState(null)
+      userStore.setState(() => null)
       queryClient.removeQueries({ queryKey: USER_QUERY_KEYS.USER })
       navigate({ to: '/' }).catch(console.error)
     },
@@ -68,12 +71,25 @@ export const Navbar = () => {
             <Button variant="ghost" onClick={toggleDarkMode}>
               {isDark ? <MoonIcon /> : <SunIcon />}
             </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setFriendsOverlayIsOpen(true)}
-            >
-              <UsersIcon />
-            </Button>
+            <div className="relative">
+              <Button
+                variant="ghost"
+                className="relative"
+                onClick={() => setFriendsOverlayIsOpen(true)}
+                aria-label={
+                  unreadMessageCount > 0
+                    ? `Open friends, ${unreadMessageCount} unread messages`
+                    : 'Open friends'
+                }
+              >
+                <UsersIcon />
+              </Button>
+              {unreadMessageCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-xs font-bold leading-5 text-white">
+                  {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                </span>
+              )}
+            </div>
           </div>
 
           <DropdownMenu.Root>

@@ -15,6 +15,7 @@ import { RequestsTab } from '@/components/app/friends/requestsTab.tsx'
 import {
   type Friend,
   useGetBlockedUsers,
+  useGetUnreadDirectMessages,
   useUnblockUser,
 } from '@/api/friends.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
@@ -93,6 +94,7 @@ function BlockedDrawer() {
 
 export const FriendsOverlay = () => {
   const isOpen = useStore(friendsOverlayStore, (s) => s.isOpen)
+  const unreadMessagesQuery = useGetUnreadDirectMessages()
   const [activeDmFriend, setActiveDmFriend] = useState<Friend | null>(null)
   const [isDmClosing, setIsDmClosing] = useState(false)
   const [profileFriend, setProfileFriend] = useState<Friend | null>(null)
@@ -200,6 +202,7 @@ export const FriendsOverlay = () => {
               <FriendsTab
                 isOpen={isOpen}
                 activeDmFriend={activeDmFriend}
+                unreadByFriend={unreadMessagesQuery.data?.bySender ?? {}}
                 onOpenDM={openDm}
                 onOpenProfile={setProfileFriend}
                 onCloseDM={closeDm}
