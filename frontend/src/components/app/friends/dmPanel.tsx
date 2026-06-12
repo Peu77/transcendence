@@ -390,16 +390,6 @@ export const DMPanel = (props: {
         </button>
         <div className="flex items-center gap-2 shrink-0">
           <Button
-            type="button"
-            size="icon-sm"
-            aria-label="Invite to match"
-            title="Invite to match"
-            onClick={() => inviteMutation.mutate()}
-            disabled={inviteMutation.isPending}
-          >
-            <Gamepad2Icon />
-          </Button>
-          <Button
             size="sm"
             variant="ghost"
             silent={true}
@@ -430,6 +420,17 @@ export const DMPanel = (props: {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type a message…"
         />
+        <Button
+          type="button"
+          size="icon-sm"
+          className="pr-1 pl-1"
+          aria-label="Invite to match"
+          title="Invite to match"
+          onClick={() => inviteMutation.mutate()}
+          disabled={inviteMutation.isPending}
+        >
+          <Gamepad2Icon />
+        </Button>
         <Button type="submit" silent={true} disabled={sendMutation.isPending}>
           Send
         </Button>
