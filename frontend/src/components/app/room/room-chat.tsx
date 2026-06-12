@@ -7,6 +7,7 @@ import { useLiveEvent } from '@/realtime/hooks.ts'
 import { useLiveSocket } from '@/realtime/useRealtimeStore.ts'
 import type { RoomChatMessageEvent } from '@/realtime/events.ts'
 import { cn } from '@/lib/utils.ts'
+import { useRoomTypingIndicator } from '@/hooks/use-typing-indicator.ts'
 
 let sendSound: HTMLAudioElement | null = null
 let receiveSound: HTMLAudioElement | null = null
@@ -44,6 +45,10 @@ export function RoomChat({
   const [draftMessage, setDraftMessage] = useState('')
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const { typingUsers, emitTyping } = useRoomTypingIndicator(
+    roomId,
+    currentUserId,
+  )
 
   useLiveEvent(
     'room.chat.message',
@@ -141,6 +146,16 @@ export function RoomChat({
         )}
       </div>
 
+      {typingUsers.length > 0 && (
+        <div className="px-1 pb-1 text-xs text-muted-foreground animate-pulse">
+          {typingUsers.length === 1
+            ? `${typingUsers[0]} is typing...`
+            : typingUsers.length === 2
+              ? `${typingUsers[0]} and ${typingUsers[1]} are typing...`
+              : `${typingUsers[0]} and ${typingUsers.length - 1} others are typing...`}
+        </div>
+      )}
+
       <form
         onSubmit={handleSubmit}
         className="flex gap-3 border-t border-border/70 pt-5"
@@ -148,7 +163,10 @@ export function RoomChat({
         <Input
           ref={inputRef}
           value={draftMessage}
-          onChange={(e) => setDraftMessage(e.target.value)}
+          onChange={(e) => {
+            setDraftMessage(e.target.value)
+            if (e.target.value.trim()) emitTyping()
+          }}
           maxLength={500}
           placeholder="Type a message..."
         />
