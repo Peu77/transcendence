@@ -21,19 +21,3 @@ export function NumberBadgeInput(
     />
   )
 }
-
-// export function NumberBadgeInput(
-//   props: React.ComponentProps<typeof Input>,
-// ) {
-//   return (
-//     <input
-//       {...props}
-//       className={cn(
-//         'w-24 h-8 px-2 text-sm font-mono',
-//         'bg-muted border border-border rounded text-right',
-//         'retro-input clip-pixel-corners-btn',
-//         props.className,
-//       )}
-//     />
-//   )
-// }
