@@ -1,4 +1,7 @@
-PHONY: setup up down build reset certs
+.PHONY: all setup up down build reset certs
+
+all:
+	@bash setup.sh
 
 certs:
 	@bash ssl/generate-certs.sh
