@@ -1,6 +1,7 @@
 import { useStore } from '@tanstack/react-store'
 import {
   friendsOverlayStore,
+  setActiveDmFriendId,
   setFriendsOverlayIsOpen,
 } from '@/store/friendsOverlayStore.tsx'
 import { useEffect, useState } from 'react'
@@ -108,6 +109,10 @@ export const FriendsOverlay = () => {
     if (!activeDmFriend) return
     setIsDmClosing(true)
   }
+
+  useEffect(() => {
+    setActiveDmFriendId(activeDmFriend?.id ?? null)
+  }, [activeDmFriend])
 
   useEffect(() => {
     const cancelSignal = new AbortController()

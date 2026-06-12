@@ -10,8 +10,12 @@ import {
 } from '@/store/achievementNotificationStore.ts'
 import { toast } from 'sonner'
 import { userStore } from '@/store/userStore.ts'
-import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
+import {
+  friendsOverlayStore,
+  setFriendsOverlayIsOpen,
+} from '@/store/friendsOverlayStore.tsx'
 import { useQueryClient } from '@tanstack/react-query'
+import { useStore } from '@tanstack/react-store'
 
 let globalReceiveSound: HTMLAudioElement | null = null
 function getGlobalReceiveSound() {
@@ -29,8 +33,8 @@ function getFriendRequestSound() {
 
 export function useGlobalListeners() {
   const navigate = useNavigate()
-
   const qc = useQueryClient()
+  const overlayState = useStore(friendsOverlayStore)
 
   useEffect(() => {
     initAchievementBaseline(qc)
@@ -42,6 +46,13 @@ export function useGlobalListeners() {
     void qc.invalidateQueries({
       queryKey: FRIENDS_QUERY_KEYS.UNREAD_MESSAGES,
     })
+
+    if (
+      overlayState.isOpen &&
+      overlayState.activeDmFriendId === event.senderId
+    ) {
+      return
+    }
 
     if (event.type === 'match_invite' && event.roomId) {
       const roomId = event.roomId
