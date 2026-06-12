@@ -10,6 +10,8 @@ export enum GarbageCancel {
 
 export enum PieceRandomizer {
   SEVEN_BAG = '7-bag',
+  FOURTEEN_BAG = '14-bag',
+  RANDOM = 'random',
 }
 
 export type MatchSettings = {
@@ -55,6 +57,11 @@ export type MatchSettings = {
    * Enables or disables the hold mechanic entirely.
    */
   hold: boolean
+
+  /**
+   * When true, the player can hold on every piece without waiting for the next spawn.
+   */
+  infiniteHold: boolean
 
   /**
    * Number of upcoming pieces shown in the preview queue.

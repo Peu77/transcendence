@@ -12,6 +12,7 @@ const DEFAULT_MATCH_SETTINGS = {
   lockResetLimit: 15,
   rotationSystem: RotationSystem.SRS,
   hold: true,
+  infiniteHold: false,
   nextCount: 5,
   bag: PieceRandomizer.SEVEN_BAG,
   forbidInitialSZ: false,
@@ -173,7 +174,11 @@ export function MatchSettingsForm({
               <field.Select
                 label="Randomizer"
                 disabled={!isHost}
-                values={[{ label: '7-Bag', value: PieceRandomizer.SEVEN_BAG }]}
+                values={[
+                    { label: '7-Bag', value: PieceRandomizer.SEVEN_BAG },
+                    { label: '14-Bag', value: PieceRandomizer.FOURTEEN_BAG },
+                    { label: 'Random', value: PieceRandomizer.RANDOM },
+                  ]}
               />
             )}
           </form.AppField>
@@ -192,6 +197,11 @@ export function MatchSettingsForm({
             <form.AppField name="hold">
               {(field) => (
                 <field.Switch label="Enable Hold" disabled={!isHost} />
+              )}
+            </form.AppField>
+            <form.AppField name="infiniteHold">
+              {(field) => (
+                <field.Switch label="Infinite Hold" disabled={!isHost} />
               )}
             </form.AppField>
             <form.AppField name="forbidInitialSZ">

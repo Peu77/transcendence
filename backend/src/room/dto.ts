@@ -144,6 +144,9 @@ export class UpdateMatchSettingsDto {
   @IsBoolean()
   hold!: boolean
 
+  @IsBoolean()
+  infiniteHold!: boolean
+
   @IsNumber()
   @Min(0)
   @Max(10)

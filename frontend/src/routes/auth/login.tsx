@@ -24,7 +24,10 @@ import { userStore } from '@/store/userStore.ts'
 
 const loginSchema = z.object({
   email: z.email('Please enter a valid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z
+    .string()
+    .min(6, 'Password must be at least 6 characters')
+    .max(128),
 })
 
 export default function Login() {

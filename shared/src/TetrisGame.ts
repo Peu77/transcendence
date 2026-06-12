@@ -12,8 +12,8 @@ import {GarbageCancel, type MatchSettings, PieceRandomizer, RotationSystem,} fro
 
 const PIECE_TYPES = Object.values(TetrominoType)
 
-const log = (msg: string, data?: unknown) =>
-  console.log(`[TetrisGame] ${msg}`, data ?? '')
+const log = (_msg: string, _data?: unknown) => {
+}
 
 const LINES_PER_LEVEL = 10
 
@@ -243,6 +243,7 @@ export class TetrisGame {
 
       rotationSystem: RotationSystem.SRS,
       hold: true,
+      infiniteHold: false,
       nextCount: 5,
       bag: PieceRandomizer.SEVEN_BAG,
       forbidInitialSZ: false,
@@ -297,8 +298,9 @@ export class TetrisGame {
     return PIECE_TYPES[Math.floor(this.rng() * PIECE_TYPES.length)]
   }
 
-  private randomBag(): TetrominoType[] {
-    const bag = [...PIECE_TYPES]
+  private randomBag(copies = 1): TetrominoType[] {
+    const bag: TetrominoType[] = []
+    for (let c = 0; c < copies; c++) bag.push(...PIECE_TYPES)
     for (let i = bag.length - 1; i > 0; i--) {
       const j = Math.floor(this.rng() * (i + 1))
       ;[bag[i], bag[j]] = [bag[j], bag[i]]
@@ -309,11 +311,17 @@ export class TetrisGame {
   private refillNextTypes(): void {
     const minimumSize = Math.max(this.settings.nextCount + 1, 1)
     while (this.nextTypes.length < minimumSize) {
-      this.nextTypes.push(
-        ...(this.settings.bag === PieceRandomizer.SEVEN_BAG
-          ? this.randomBag()
-          : [this.randomType()]),
-      )
+      switch (this.settings.bag) {
+        case PieceRandomizer.SEVEN_BAG:
+          this.nextTypes.push(...this.randomBag())
+          break
+        case PieceRandomizer.FOURTEEN_BAG:
+          this.nextTypes.push(...this.randomBag(2))
+          break
+        case PieceRandomizer.RANDOM:
+          this.nextTypes.push(this.randomType())
+          break
+      }
     }
   }
 
@@ -656,7 +664,7 @@ export class TetrisGame {
     const nextType = this.heldType ?? this.takeNextType()
     this.heldType = currentType
     this.currentPiece = this.spawnPiece(nextType)
-    this.canHold = false
+    if (!this.settings.infiniteHold) this.canHold = false
     this.lockDelayStart = null
     this.lockResetCount = 0
     this.lastRotated = false

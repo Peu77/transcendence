@@ -48,7 +48,7 @@ const NUMERIC_SETTINGS: NumericSetting[] = [
     label: 'Gravity',
     description: 'Starting gravity (how fast pieces fall). Higher is faster.',
     min: 0,
-    max: 3,
+    max: 20,
     step: 0.01,
     formatValue: (value) => `${value}`,
     useInput: true,
@@ -267,6 +267,23 @@ export function SoloSettingsPanel({
                         checked={settings.hold}
                         onCheckedChange={(hold) => {
                           onChange({ ...settings, hold })
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex items-start justify-between gap-4 border border-border/70 bg-muted/35 p-4 clip-pixel-corners-btn">
+                      <div className="space-y-1">
+                        <Label className="text-sm font-medium text-foreground">
+                          Infinite hold
+                        </Label>
+                        <p className="text-xs leading-5 text-muted-foreground">
+                          Hold on every piece without waiting for the next spawn.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={settings.infiniteHold}
+                        onCheckedChange={(infiniteHold) => {
+                          onChange({ ...settings, infiniteHold })
                         }}
                       />
                     </div>
