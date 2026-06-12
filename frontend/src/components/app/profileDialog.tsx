@@ -14,7 +14,15 @@ import { FriendshipRing } from '@/components/app/friendshipRing.tsx'
 import { SharedPointsPie } from '@/components/app/sharedPointsPie.tsx'
 import { WinRatePie } from '@/components/app/winRatePie.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
-import { CrownIcon } from 'lucide-react'
+import { Button } from '@/components/ui/button.tsx'
+import { CrownIcon, Gamepad2Icon } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { sendMatchInvite, useGetFriends } from '@/api/friends.ts'
+import { toast } from 'sonner'
+import { useNavigate } from '@tanstack/react-router'
+import { useStore } from '@tanstack/react-store'
+import { userStore } from '@/store/userStore.ts'
+import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
 
 const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
   const level = Math.floor(profile.totalLines / 10) + 1
@@ -27,9 +35,7 @@ const ProfileContent = ({ profile }: { profile: PublicProfile }) => {
       <div className="flex items-center gap-3">
         <ProfileImage profilePictureId={profile.profilePictureId} />
         <h2 className="text-2xl font-bold">{profile.username}</h2>
-        {profile.rank === 1 && (
-          <CrownIcon className="size-5 text-yellow-500" />
-        )}
+        {profile.rank === 1 && <CrownIcon className="size-5 text-yellow-500" />}
       </div>
       <div className="flex gap-4">
         <StatCard value={rank} label="Rank" size="sm" />
@@ -69,6 +75,27 @@ export const ProfileDialog = ({
   onOpenChange: (open: boolean) => void
 }) => {
   const { data: profile, isLoading } = useGetPublicProfile(userId, open)
+  const currentUserId = useStore(userStore, (user) => user?.id)
+  const friendsQuery = useGetFriends()
+  const navigate = useNavigate()
+  const isFriend = friendsQuery.data?.some((friend) => friend.id === userId)
+  const inviteMutation = useMutation({
+    mutationFn: () => sendMatchInvite(userId),
+    onSuccess: async (message) => {
+      if (!message.roomId) return
+      onOpenChange(false)
+      setFriendsOverlayIsOpen(false)
+      await navigate({
+        to: '/app/room/$roomId',
+        params: { roomId: message.roomId },
+      })
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message ?? 'Failed to send match invite',
+      )
+    },
+  })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -86,12 +113,24 @@ export const ProfileDialog = ({
         ) : (
           <>
             <ProfileContent profile={profile} />
-            <div className="flex justify-center mt-2">
+            <div className="mt-2 flex flex-wrap justify-center gap-2">
               <AddFriendButton
                 userId={userId}
                 blockedByThem={profile.blockedByThem}
                 iBlockedThem={profile.iBlockedThem}
               />
+              {currentUserId !== userId && isFriend && (
+                <Button
+                  type="button"
+                  onClick={() => inviteMutation.mutate()}
+                  disabled={inviteMutation.isPending}
+                >
+                  <Gamepad2Icon data-icon="inline-start" />
+                  {inviteMutation.isPending
+                    ? 'Sending invite...'
+                    : 'Invite to match'}
+                </Button>
+              )}
             </div>
           </>
         )}
