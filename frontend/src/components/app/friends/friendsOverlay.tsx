@@ -167,17 +167,17 @@ export const FriendsOverlay = () => {
         }}
         className={`fixed top-1/2 z-50 flex -translate-y-1/2 overflow-hidden border-r border-sidebar-border bg-sidebar shadow-2xl transition-all duration-300 ease-in-out clip-pixel-corners-btn ${
           isOpen
-            ? `left-5 h-[calc(100dvh-2rem)] translate-x-0 ${
+            ? `left-0 sm:left-5 h-[calc(100dvh-2rem)] translate-x-0 ${
                 activeDmFriend && !isDmClosing
-                  ? 'w-[min(calc(100vw-2.5rem),70rem)]'
-                  : 'w-95'
+                  ? 'w-full sm:w-[min(calc(100vw-2.5rem),70rem)]'
+                  : 'w-full sm:w-95'
               }`
             : activeDmFriend
-              ? 'left-0 h-[calc(100dvh-2rem)] w-[min(calc(100vw-2.5rem),70rem)] -translate-x-full'
-              : 'left-0 h-[calc(100dvh/2)] w-95 -translate-x-full'
+              ? 'left-0 h-[calc(100dvh-2rem)] w-full sm:w-[min(calc(100vw-2.5rem),70rem)] -translate-x-full'
+              : 'left-0 h-[calc(100dvh/2)] w-full sm:w-95 -translate-x-full'
         }`}
       >
-        <div className="flex w-95 shrink-0 flex-col overflow-hidden">
+        <div className={`shrink-0 flex-col overflow-hidden w-full sm:w-95 ${activeDmFriend && !isDmClosing ? 'hidden sm:flex' : 'flex'}`}>
           <h2 className="p-4 font-bold text-lg border-b border-sidebar-border shrink-0">
             Friends
           </h2>

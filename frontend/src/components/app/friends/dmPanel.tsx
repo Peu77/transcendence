@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { ArrowLeftIcon } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -390,9 +391,19 @@ export const DMPanel = (props: {
         </button>
         <div className="flex items-center gap-2 shrink-0">
           <Button
+            size="icon-sm"
+            variant="ghost"
+            className="sm:hidden"
+            aria-label="Back"
+            onClick={props.onClose}
+          >
+            <ArrowLeftIcon className="size-4" />
+          </Button>
+          <Button
             size="sm"
             variant="ghost"
             silent={true}
+            className="hidden sm:flex"
             onClick={props.onClose}
           >
             Close
