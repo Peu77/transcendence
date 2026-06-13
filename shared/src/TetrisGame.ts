@@ -80,6 +80,7 @@ export class TetrisGame {
       if (this.currentPiece.row > this.lowestRow) {
         this.lowestRow = this.currentPiece.row
         this.lockDelayStart = null
+        this.lockResetCount = 0
       }
     } else {
       if (this.lockDelayStart === null) {
