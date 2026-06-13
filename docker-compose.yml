@@ -9,8 +9,10 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/certs:ro
     depends_on:
-      - backend
-      - frontend
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
     restart: unless-stopped
 
   postgres:
@@ -45,6 +47,11 @@ services:
       -c ssl_cert_file=/var/lib/postgresql/server.crt
       -c ssl_key_file=/var/lib/postgresql/server.key
       -c ssl_ca_file=/var/lib/postgresql/ca.crt
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d transcendence" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
   backend:
@@ -66,10 +73,18 @@ services:
       - /app/node_modules
       - ./ssl:/certs:ro
 
+    healthcheck:
+      test: [ "CMD-SHELL", "node -e \"require('net').connect(4000,'127.0.0.1',function(){process.exit(0)}).on('error',function(){process.exit(1)})\"" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
     restart: unless-stopped
 
     depends_on:
-      - prometheus
+      postgres:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
 
   prometheus:
     image: prom/prometheus:latest
@@ -116,8 +131,14 @@ services:
       - ./shared:/shared
       - /app/node_modules
 
+    healthcheck:
+      test: [ "CMD-SHELL", "bun -e \"fetch('http://localhost:3000').then(()=>process.exit(0)).catch(()=>process.exit(1))\"" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
     depends_on:
-      - backend
+      backend:
+        condition: service_started
 
     restart: unless-stopped
 
