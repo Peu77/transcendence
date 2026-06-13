@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { updateMyPresence, type PresenceStatus } from '@/api/friends'
+import { realtimeStore } from '@/realtime/store'
 
 // When frozen, the layout presence hook skips online/away updates so that
 // in-room/in-game status set by game routes is not overwritten.
@@ -118,12 +119,22 @@ export function useMyPresence(options: UseMyPresenceOptions = {}) {
     }
     globalThis.addEventListener('beforeunload', onBeforeUnload as any)
 
+    let firstConnect = true
+    const onSocketConnect = () => {
+      if (firstConnect) { firstConnect = false; return }
+      if (!mounted || _frozen) return
+      void updateMyPresence({ status: isAwayRef.current ? 'away' : 'online' })
+    }
+    const socket = realtimeStore.state.socket
+    socket.on('connect', onSocketConnect)
+
     return () => {
       mounted = false
       clearIdleTimer()
       for (const evt of events)
         globalThis.removeEventListener(evt, onActivity as any)
       globalThis.removeEventListener('beforeunload', onBeforeUnload as any)
+      socket.off('connect', onSocketConnect)
       if (setOfflineOnUnmount) void setPresence('offline')
     }
   }, [enabled, idleMs, setOfflineOnUnmount, setOnlineOnMount, setPresence])
