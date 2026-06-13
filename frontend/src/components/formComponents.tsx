@@ -64,6 +64,8 @@ export function TextField({
         {label}
       </Label>
       <Input
+        id={label}
+        name={field.name}
         type={type}
         value={field.state.value}
         placeholder={placeholder}
@@ -97,6 +99,7 @@ export function TextArea({
       </Label>
       <ShadcnTextarea
         id={label}
+        name={field.name}
         value={field.state.value}
         onBlur={field.handleBlur}
         rows={rows}
@@ -123,18 +126,20 @@ export function Select({
 
   return (
     <div>
+      <Label htmlFor={label} className="mb-2 font-bold">
+        {label}
+      </Label>
       <ShadcnSelect.Select
         name={field.name}
         value={field.state.value}
         onValueChange={(value) => field.handleChange(value)}
         disabled={disabled}
       >
-        <ShadcnSelect.SelectTrigger className="w-full">
+        <ShadcnSelect.SelectTrigger id={label} className="w-full">
           <ShadcnSelect.SelectValue placeholder={placeholder} />
         </ShadcnSelect.SelectTrigger>
         <ShadcnSelect.SelectContent>
           <ShadcnSelect.SelectGroup>
-            <ShadcnSelect.SelectLabel>{label}</ShadcnSelect.SelectLabel>
             {values.map((value) => (
               <ShadcnSelect.SelectItem key={value.value} value={value.value}>
                 {value.label}
@@ -167,15 +172,14 @@ export function Slider({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-between items-center">
-        <Label htmlFor={label} className="font-bold">
-          {label}
-        </Label>
+        <span className="text-sm font-medium">{label}</span>
         <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded border border-border">
           {field.state.value}
         </span>
       </div>
       <ShadcnSlider
-        id={label}
+        aria-label={label}
+        name={field.name}
         onBlur={field.handleBlur}
         value={[field.state.value]}
         onValueChange={(value) => field.handleChange(value[0])}
@@ -224,6 +228,7 @@ export function NumberField({
         </Label>
         <NumberBadgeInput
           id={label}
+          name={field.name}
           type="text"
           inputMode="decimal"
           value={display}
@@ -287,6 +292,7 @@ export function Switch({
       <div className="flex items-center gap-2">
         <ShadcnSwitch
           id={label}
+          name={field.name}
           onBlur={field.handleBlur}
           checked={field.state.value}
           onCheckedChange={(checked) => field.handleChange(checked)}

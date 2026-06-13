@@ -41,10 +41,10 @@ export function useSoloGame() {
 
   useEffect(() => {
     freezePresence()
-    void updateMyPresence({ status: 'in-game' })
+    updateMyPresence({ status: 'in-game' }).catch(() => {})
     return () => {
       unfreezePresence()
-      void updateMyPresence({ status: 'online' })
+      updateMyPresence({ status: 'online' }).catch(() => {})
     }
   }, [])
 

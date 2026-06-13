@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { useAppForm } from '@/hooks/form.ts'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { login, type LoginResponse } from '@/api/auth.ts'
 import {
   Card,
@@ -19,8 +19,8 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { verifyTwoFaLogin } from '@/api/twofa.ts'
 import { Input } from '@/components/ui/input.tsx'
 import { Label } from '@/components/ui/label.tsx'
-import { type User, USER_QUERY_KEYS } from '@/api/user.ts'
 import { userStore } from '@/store/userStore.ts'
+import { useGetUser } from '@/api/user.ts'
 
 const loginSchema = z.object({
   email: z.email('Please enter a valid email'),
@@ -32,21 +32,18 @@ const loginSchema = z.object({
 
 export default function Login() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const cachedUser = queryClient.getQueryData<User>(USER_QUERY_KEYS.USER)
+  const userQuery = useGetUser()
+  const { data: user, error: userError, isLoading: isUserLoading } = userQuery
   const [twoFaData, setTwoFaData] = useState<LoginResponse | null>(null)
   const [otpCode, setOtpCode] = useState('')
 
   useEffect(() => {
-    if (!cachedUser || !cachedUser.id) return
+    if (!user || userError || isUserLoading || !user.id) return
 
-    userStore.setState(() => cachedUser)
-    document.documentElement.classList.toggle(
-      'dark',
-      cachedUser.theme === 'dark',
-    )
+    userStore.setState(() => user)
+    document.documentElement.classList.toggle('dark', user.theme === 'dark')
     navigate({ to: '/app' }).catch(console.error)
-  }, [cachedUser, navigate])
+  }, [isUserLoading, navigate, user, userError])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
