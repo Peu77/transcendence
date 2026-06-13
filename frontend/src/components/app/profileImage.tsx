@@ -13,7 +13,9 @@ export const ProfileImage = (props: {
   return (
     <Avatar className={props.className}>
       <AvatarImage src={src} />
-      <AvatarFallback>CN</AvatarFallback>
+      <AvatarFallback>
+        <img src={DefaultProfileImage} alt="" className="size-full" />
+      </AvatarFallback>
     </Avatar>
   )
 }
