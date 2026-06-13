@@ -172,6 +172,8 @@ export function RoomChat({
         className="flex gap-3 border-t border-border/70 pt-5"
       >
         <Input
+          id="chat-message"
+          name="chat-message"
           ref={inputRef}
           value={draftMessage}
           onChange={(e) => {
