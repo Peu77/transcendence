@@ -55,9 +55,14 @@ openssl x509 -req -in "$SCRIPT_DIR/server.csr" \
   -out "$SERVER_CRT" -days 365 \
   -extfile "$SCRIPT_DIR/san.cnf" -extensions v3_req
 
-# Create postgres-specific copy with restricted permissions
+# Make certs and key world-readable (needed for Linux bind mounts where
+# container users like nobody/prometheus can't read host-user-owned files)
+chmod 644 "$CA_CRT" "$SERVER_CRT" "$SERVER_KEY"
+
+# Create postgres-specific copy (postgres requires key owned by its user
+# with mode 0600 — handled via entrypoint copy in docker-compose)
 cp "$SERVER_KEY" "$POSTGRES_KEY"
-chmod 600 "$POSTGRES_KEY"
+chmod 644 "$POSTGRES_KEY"
 
 # Clean up temp files
 rm -f "$SCRIPT_DIR/server.csr" "$SCRIPT_DIR/san.cnf" "$SCRIPT_DIR/ca.srl"

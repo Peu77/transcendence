@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -12,6 +12,8 @@ import { useTetrisInput } from '@/hooks/use-tetris-input.ts'
 import { playBlockPlacedSound } from '@/hooks/use-block-placed-sound.ts'
 import { useGameMusic } from '@/hooks/use-game-music.ts'
 import { type GamePhase, normalizeGameControls } from './room-game.ts'
+import { updateMyPresence } from '@/api/friends.ts'
+import { freezePresence, unfreezePresence } from '@/presence/useMyPresence.ts'
 
 export function useRoomGame(
   roomId: string,
@@ -51,9 +53,23 @@ export function useRoomGame(
     setTimeout(() => navigate({ to: '/app/room' }).catch(console.error), 150)
   }, [socket, roomId, navigate, setChatOpen])
 
+  useEffect(() => {
+    freezePresence()
+    void updateMyPresence({ status: 'in-room' })
+    return () => {
+      unfreezePresence()
+      void updateMyPresence({ status: 'online' })
+    }
+  }, [])
+
   const setPhase = useCallback((phase: GamePhase) => {
     gamePhaseRef.current = phase
     setGamePhase(phase)
+    if (phase === 'countdown' || phase === 'playing') {
+      void updateMyPresence({ status: 'in-game' })
+    } else {
+      void updateMyPresence({ status: 'in-room' })
+    }
   }, [])
 
   useLiveEvent('game.countdown', (data) => {

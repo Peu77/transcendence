@@ -14,6 +14,8 @@ import { useTetrisInput } from '@/hooks/use-tetris-input.ts'
 import { playBlockPlacedSound } from '@/hooks/use-block-placed-sound.ts'
 import { useGameMusic } from '@/hooks/use-game-music.ts'
 import { userStore } from '@/store/userStore.ts'
+import { updateMyPresence } from '@/api/friends.ts'
+import { freezePresence, unfreezePresence } from '@/presence/useMyPresence.ts'
 
 let gameStartSound: HTMLAudioElement | null = null
 function getGameStartSound() {
@@ -36,6 +38,15 @@ export function useSoloGame() {
   )
 
   useGameMusic(phase === 'playing')
+
+  useEffect(() => {
+    freezePresence()
+    void updateMyPresence({ status: 'in-game' })
+    return () => {
+      unfreezePresence()
+      void updateMyPresence({ status: 'online' })
+    }
+  }, [])
 
   const gameRef = useRef<TetrisGame | null>(null)
   const lastPiecesPlacedRef = useRef(0)

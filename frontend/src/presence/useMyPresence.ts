@@ -1,6 +1,12 @@
 import { useEffect, useRef } from 'react'
 import { updateMyPresence, type PresenceStatus } from '@/api/friends'
 
+// When frozen, the layout presence hook skips online/away updates so that
+// in-room/in-game status set by game routes is not overwritten.
+let _frozen = false
+export const freezePresence = () => { _frozen = true }
+export const unfreezePresence = () => { _frozen = false }
+
 export type UseMyPresenceOptions = {
   /**
    * Enables/disables presence management. Call the hook unconditionally and
@@ -72,13 +78,14 @@ export function useMyPresence(options: UseMyPresenceOptions = {}) {
     const scheduleIdle = () => {
       clearIdleTimer()
       idleTimerRef.current = globalThis.setTimeout(async () => {
-        if (!mounted) return
+        if (!mounted || _frozen) return
         isAwayRef.current = true
         await setPresence('away')
       }, idleMs) as unknown as number
     }
 
     const onActivity = async () => {
+      if (_frozen) return
       scheduleIdle()
       if (!isAwayRef.current) return
       isAwayRef.current = false
@@ -87,7 +94,7 @@ export function useMyPresence(options: UseMyPresenceOptions = {}) {
 
     // Initial mount
     ;(async () => {
-      if (setOnlineOnMount) {
+      if (setOnlineOnMount && !_frozen) {
         isAwayRef.current = false
         await setPresence('online')
       }
