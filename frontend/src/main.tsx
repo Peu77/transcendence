@@ -1,12 +1,9 @@
 import ReactDOM from 'react-dom/client'
 import {
-  createRootRoute,
   createRoute,
   createRouter,
-  Outlet,
   RouterProvider,
 } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider.tsx'
 import { getQueryContext } from './integrations/tanstack-query/query-context.ts'
@@ -14,7 +11,6 @@ import { getQueryContext } from './integrations/tanstack-query/query-context.ts'
 import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
 
-import { Toaster } from '@/components/ui/sonner.tsx'
 import { AudioPreloader } from '@/components/app/audio-preloader.tsx'
 import Login from '@/routes/auth/login.tsx'
 import Register from '@/routes/auth/register.tsx'
@@ -32,16 +28,7 @@ import { AboutRoute } from '@/routes/app/about.tsx'
 import { NotFound } from '@/routes/notFound.tsx'
 import { AchievementsRoute } from '@/routes/app/achievements.tsx'
 import { StatsRoute } from '@/routes/app/stats.tsx'
-
-export const rootRoute = createRootRoute<unknown>({
-  component: () => (
-    <>
-      <Toaster />
-        <Outlet />
-      <TanStackRouterDevtools />
-    </>
-  ),
-})
+import { rootRoute } from '@/router/root-route.tsx'
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,

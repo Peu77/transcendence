@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { useAppForm } from '@/hooks/form.ts'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { login, type LoginResponse } from '@/api/auth.ts'
 import {
   Card,
@@ -19,7 +19,7 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { verifyTwoFaLogin } from '@/api/twofa.ts'
 import { Input } from '@/components/ui/input.tsx'
 import { Label } from '@/components/ui/label.tsx'
-import { useGetUser } from '@/api/user.ts'
+import { type User, USER_QUERY_KEYS } from '@/api/user.ts'
 import { userStore } from '@/store/userStore.ts'
 
 const loginSchema = z.object({
@@ -32,18 +32,21 @@ const loginSchema = z.object({
 
 export default function Login() {
   const navigate = useNavigate()
-  const userQuery = useGetUser()
-  const { data: user, error: userError, isLoading: isUserLoading } = userQuery
+  const queryClient = useQueryClient()
+  const cachedUser = queryClient.getQueryData<User>(USER_QUERY_KEYS.USER)
   const [twoFaData, setTwoFaData] = useState<LoginResponse | null>(null)
   const [otpCode, setOtpCode] = useState('')
 
   useEffect(() => {
-    if (!user || userError || isUserLoading || !user.id) return
+    if (!cachedUser || !cachedUser.id) return
 
-    userStore.setState(() => user)
-    document.documentElement.classList.toggle('dark', user.theme === 'dark')
+    userStore.setState(() => cachedUser)
+    document.documentElement.classList.toggle(
+      'dark',
+      cachedUser.theme === 'dark',
+    )
     navigate({ to: '/app' }).catch(console.error)
-  }, [isUserLoading, navigate, user, userError])
+  }, [cachedUser, navigate])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -68,8 +71,8 @@ export default function Login() {
       email: '',
       password: '',
     },
-    onSubmit: async (data) => {
-      await loginMutation.mutateAsync(data.value)
+    onSubmit: (data) => {
+      loginMutation.mutate(data.value)
     },
   })
 

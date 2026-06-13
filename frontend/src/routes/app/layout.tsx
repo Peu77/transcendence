@@ -4,10 +4,10 @@ import {
   createRoute,
   Link,
   Outlet,
-  useNavigate,
   useLocation,
+  useNavigate,
 } from '@tanstack/react-router'
-import { rootRoute } from '@/main.tsx'
+import { rootRoute } from '@/router/root-route.tsx'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { Navbar } from '@/components/app/navbar.tsx'
@@ -45,7 +45,7 @@ const AppLayout = () => {
     }
   }, [navigate, userQuery.isError])
 
-  if (userQuery.isLoading) {
+  if (userQuery.isLoading || !userQuery.data) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner className="size-14" />
