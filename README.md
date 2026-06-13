@@ -60,9 +60,9 @@ A competitive, real-time multiplayer Tetris platform built as the final Common C
 ### Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/) installed
-- Ports `80` and `443` available on your machine
+- Port `8443` available on your machine
 
-### Setup
+### Setup & Run
 
 1. **Clone the repository:**
    ```bash
@@ -70,28 +70,23 @@ A competitive, real-time multiplayer Tetris platform built as the final Common C
    cd transcendence
    ```
 
-2. **Configure environment variables:**
+2. **Build and start everything:**
    ```bash
-   make setup
+   make
    ```
-   This copies `.env.example` files to the correct locations (`frontend/.env` and `backend/.env`) and configures the database host for Docker. Review the generated files and fill in any required values (e.g., GitHub OAuth credentials).
+   This generates SSL certificates, copies `.env.example` files to the correct locations, prompts for GitHub OAuth
+   credentials, and starts all containers (frontend, backend, PostgreSQL, Nginx, Prometheus, Grafana).
 
-3. **Start the application:**
-   ```bash
-   make up
-   ```
-   This builds and starts all containers (frontend, backend, PostgreSQL, Nginx, Prometheus, Grafana).
-
-4. **Access the app:**
-   - Application: **`https://localhost`** (HTTPS, self-signed cert — accept the browser warning)
+3. **Access the app:**
+   - Application: **`https://localhost:8443`** (HTTPS, self-signed cert — accept the browser warning)
    - Grafana dashboard and alerts: **`http://localhost:3001`**
 
-5. **Stop the application:**
+4. **Stop the application:**
    ```bash
    make down
    ```
 
-6. **Full reset** (wipes database and volumes):
+5. **Full reset** (wipes database and volumes):
    ```bash
    make reset
    ```
@@ -154,7 +149,9 @@ A `shared/` TypeScript package contains the `TetrisGame` class used verbatim by 
 
 ### Architecture decisions
 
-- **Client-side prediction with server reconciliation:** The game server is authoritative, but the local player's inputs are applied immediately on the client for zero-latency feel. On every server tick the client reconciles by snapping to server state and replaying unacknowledged inputs. See [`docs/client-side-prediction.md`](docs/client-side-prediction.md) for a full technical write-up.
+- **Client-side prediction with server reconciliation:** The game server is authoritative, but the local player's inputs
+  are applied immediately on the client for zero-latency feel. On every server tick the client reconciles by snapping to
+  server state and replaying unacknowledged inputs.
 - **Monorepo with a shared package:** Sharing game logic avoids the classic "server says one thing, client renders another" class of bugs.
 - **NestJS + Socket.IO gateway:** NestJS's module system made it straightforward to co-locate the WebSocket gateway with the HTTP controllers, sharing guards, services, and dependency injection.
 
