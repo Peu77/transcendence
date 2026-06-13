@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by `eebert, jgoetz, cgerling, kmuhlbau, tpaesch`.*
+*This project has been created as part of the 42 curriculum by `eebert, jgoetz, cgerling, tpaesch`.*
 
 ---
 
