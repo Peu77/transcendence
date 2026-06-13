@@ -48,7 +48,7 @@ const NUMERIC_SETTINGS: NumericSetting[] = [
     label: 'Gravity',
     description: 'Starting gravity (how fast pieces fall). Higher is faster.',
     min: 0,
-    max: 20,
+    max: 3,
     step: 0.01,
     formatValue: (value) => `${value}`,
     useInput: true,
@@ -151,7 +151,10 @@ function NumericSettingInput({
           setDisplay(String(fallback))
           onChange(fallback)
         } else {
-          setDisplay(String(parsed))
+          const dec = stepDecimals(step)
+          const clamped = parseFloat(Math.max(min, Math.min(max, parsed)).toFixed(dec))
+          setDisplay(String(clamped))
+          onChange(clamped)
         }
       }}
       onChange={(e) => {
@@ -159,7 +162,7 @@ function NumericSettingInput({
         setDisplay(raw)
         if (raw === '' || raw === '.' || raw === '-' || raw === '-.') return
         const parsed = parseFloat(raw.replace(',', '.'))
-        if (!isNaN(parsed)) onChange(parsed)
+        if (!isNaN(parsed)) onChange(Math.max(min, Math.min(max, parsed)))
       }}
       onKeyDown={(e) => {
         if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
