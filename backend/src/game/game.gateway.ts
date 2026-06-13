@@ -8,7 +8,7 @@ import type { Server } from 'socket.io'
 @WebSocketGateway({
   namespace: '/game',
   cors: {
-    origin: process.env.CORS_ORIGIN ?? 'https://localhost',
+    origin: process.env.CORS_ORIGIN ?? 'https://localhost:8443',
     credentials: true,
   },
 })
