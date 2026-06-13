@@ -49,6 +49,7 @@ export class TetrisGame {
   private garbageHoleCol = -1
   private lockDelayStart: number | null = null
   private lockResetCount = 0
+  private lowestRow = 0
   private lastRotated = false
   private lastKickIndex = 0
   private b2bChain = 0
@@ -76,8 +77,10 @@ export class TetrisGame {
 
     if (this.canMove(this.currentPiece, 1, 0)) {
       this.currentPiece.row += 1
-      this.lockDelayStart = null
-      this.lockResetCount = 0
+      if (this.currentPiece.row > this.lowestRow) {
+        this.lowestRow = this.currentPiece.row
+        this.lockDelayStart = null
+      }
     } else {
       if (this.lockDelayStart === null) {
         this.lockDelayStart = Date.now()
@@ -194,6 +197,9 @@ export class TetrisGame {
     this.backToBack = state.b2bChain > 0
     this.outgoingGarbage = 0
     this.pendingGarbage = []
+    this.lockDelayStart = null
+    this.lockResetCount = 0
+    this.lowestRow = this.currentPiece.row
   }
 
   /** Extra next pieces beyond the visible preview, for client-side prediction. */
@@ -204,7 +210,7 @@ export class TetrisGame {
   /** Milliseconds between gravity ticks for the current level or custom override. */
   getTickInterval(): number {
     const g = this.getEffectiveGravity()
-    if (g >= 20) return 1
+    if (g >= 3) return 1
     if (g <= 0) return 60000
     // Use level-based curve only when gravity is default and gincrease is off.
     if (this.settings.gincrease === 0 && this.settings.gravity === 1) {
@@ -219,7 +225,7 @@ export class TetrisGame {
     const elapsedSeconds = (Date.now() - this.gameStartTime) / 1000
     const marginSeconds = this.settings.gmargin / 60
     const increase = this.settings.gincrease * Math.max(0, elapsedSeconds - marginSeconds)
-    return Math.min(20, this.settings.gravity + increase)
+    return Math.min(3, this.settings.gravity + increase)
   }
 
   /* ------------------------------------------------------------------ */
@@ -362,6 +368,7 @@ export class TetrisGame {
     this.canHold = true
     this.lockDelayStart = null
     this.lockResetCount = 0
+    this.lowestRow = this.currentPiece.row
     this.lastRotated = false
 
     const blocked = this.collides(this.currentPiece)
@@ -667,6 +674,7 @@ export class TetrisGame {
     if (!this.settings.infiniteHold) this.canHold = false
     this.lockDelayStart = null
     this.lockResetCount = 0
+    this.lowestRow = this.currentPiece.row
     this.lastRotated = false
 
     if (this.collides(this.currentPiece)) {
@@ -726,7 +734,6 @@ export class TetrisGame {
   private lockAndSpawn(): boolean {
     if (this.canMove(this.currentPiece, 1, 0)) {
       this.lockDelayStart = null
-      this.lockResetCount = 0
       return true
     }
     log(

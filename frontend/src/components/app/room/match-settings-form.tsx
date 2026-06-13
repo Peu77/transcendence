@@ -102,7 +102,7 @@ export function MatchSettingsForm({
               <field.NumberField
                 label="Gravity"
                 min={0}
-                max={20}
+                max={3}
                 step={0.01}
                 defaultValue={0.02}
                 disabled={!isHost}
