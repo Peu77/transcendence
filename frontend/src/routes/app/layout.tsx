@@ -31,7 +31,7 @@ const AppLayout = () => {
     }
   }, [userQuery.data])
 
-  useMyPresence({ enabled: !!userQuery.data, idleMs: 60_000 })
+  useMyPresence({ enabled: !!userQuery.data, idleMs: 60_000, setOfflineOnUnmount: false })
 
   const navigate = useNavigate()
   const location = useLocation()
