@@ -30,7 +30,7 @@ export function RoomPlayersSidebar({
         </h2>
       </div>
 
-      <ul className="mt-6 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
+      <ul className="mt-6 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1 hide-scrollbar">
         {room.users.map((user) => {
           const isHost = user.id === room.hostUserId
           const isMe = user.id === currentUserId

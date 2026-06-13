@@ -2,12 +2,8 @@ import { createRoute, Link, useRouter } from '@tanstack/react-router'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
-import {
-  ArrowLeftIcon,
-  ExternalLinkIcon,
-  GithubIcon,
-  ShieldCheckIcon,
-} from 'lucide-react'
+import { ArrowLeftIcon, ExternalLinkIcon, ShieldCheckIcon } from 'lucide-react'
+import { GithubIcon } from '@/components/ui/github-icon.tsx'
 
 const TEAM = [
   {

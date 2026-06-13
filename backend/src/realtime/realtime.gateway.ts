@@ -69,7 +69,7 @@ function parseCookie(cookieHeader: string | undefined): Record<string, string> {
 @WebSocketGateway({
   namespace: REALTIME_NAMESPACE,
   cors: {
-    origin: process.env.CORS_ORIGIN ?? 'https://localhost',
+    origin: process.env.CORS_ORIGIN ?? 'https://localhost:8443',
     credentials: true,
   },
 })

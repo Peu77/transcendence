@@ -43,8 +43,8 @@ echo "https://github.com/settings/applications/new"
 echo
 echo "Use these values:"
 echo "  Application name: Transcendence (or any name you prefer)"
-echo "  Homepage URL:      https://localhost"
-echo "  Callback URL:      https://localhost/api/auth/github/callback"
+echo "  Homepage URL:      https://localhost:8443"
+echo "  Callback URL:      https://localhost:8443/api/auth/github/callback"
 echo
 echo "After registering the app, copy the Client ID and generate a new"
 echo "Client Secret, then enter both values below."

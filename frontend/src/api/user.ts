@@ -70,6 +70,7 @@ export function useGetUser() {
       const user = await axios.get<User>('/users/me')
       return user.data
     },
+    retry: false,
   })
 }
 
@@ -165,12 +166,21 @@ export async function toggleTheme() {
 }
 
 export async function changeEmail(newEmail: string, currentPassword: string) {
-  const res = await axios.patch('/users/me/email', { newEmail, currentPassword })
+  const res = await axios.patch('/users/me/email', {
+    newEmail,
+    currentPassword,
+  })
   return res.data
 }
 
-export async function changePassword(currentPassword: string, newPassword: string) {
-  const res = await axios.patch('/users/me/password', { currentPassword, newPassword })
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+) {
+  const res = await axios.patch('/users/me/password', {
+    currentPassword,
+    newPassword,
+  })
   return res.data
 }
 

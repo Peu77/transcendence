@@ -1,15 +1,16 @@
 import {
+  BadRequestException,
+  Body,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
-  Body,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
-  Res,
-  BadRequestException,
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { diskStorage } from 'multer'
@@ -148,7 +149,7 @@ export class UsersController {
     try {
       await fs.access(filepath)
     } catch {
-      throw new BadRequestException('Profile picture not found')
+      throw new NotFoundException('Profile picture not found')
     }
 
     res.setHeader('Cache-Control', 'public, max-age=600')
@@ -171,13 +172,24 @@ export class UsersController {
 
   @Patch('users/me/email')
   async changeEmail(@UserId() userId: string, @Body() body: ChangeEmailDto) {
-    await this.usersService.changeEmail(userId, body.newEmail, body.currentPassword)
+    await this.usersService.changeEmail(
+      userId,
+      body.newEmail,
+      body.currentPassword,
+    )
     return { message: 'Email updated successfully' }
   }
 
   @Patch('users/me/password')
-  async changePassword(@UserId() userId: string, @Body() body: ChangePasswordDto) {
-    await this.usersService.changePassword(userId, body.currentPassword, body.newPassword)
+  async changePassword(
+    @UserId() userId: string,
+    @Body() body: ChangePasswordDto,
+  ) {
+    await this.usersService.changePassword(
+      userId,
+      body.currentPassword,
+      body.newPassword,
+    )
     return { message: 'Password updated successfully' }
   }
 
