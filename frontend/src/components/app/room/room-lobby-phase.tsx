@@ -28,7 +28,7 @@ type RoomLobbyPhaseProps = {
   room: Room
   isHost: boolean
   onLeaveRoom: () => void
-  onStartGame: () => void
+  onStartGame: (onError?: () => void) => void
 }
 
 export function RoomLobbyPhase({
@@ -85,7 +85,7 @@ export function RoomLobbyPhase({
                 type="button"
                 size="lg"
                 silent
-                disabled={isStarting}
+                disabled={isStarting || room.users.length < 2}
                 className="flex min-w-56 gap-2 bg-green-600 font-bold uppercase tracking-wide text-white hover:bg-green-700 disabled:opacity-80"
                 onClick={() => {
                   if (!gameStartSoundRef.current) {
@@ -96,7 +96,7 @@ export function RoomLobbyPhase({
                   gameStartSoundRef.current.currentTime = 0
                   gameStartSoundRef.current.play().catch(() => {})
                   setIsStarting(true)
-                  onStartGame()
+                  onStartGame(() => setIsStarting(false))
                 }}
               >
                 {isStarting ? (

@@ -113,6 +113,7 @@ function stepDecimals(step: number) {
 }
 
 function NumericSettingInput({
+  id,
   value,
   min,
   max,
@@ -120,6 +121,7 @@ function NumericSettingInput({
   defaultValue,
   onChange,
 }: {
+  id?: string
   value: number
   min: number
   max: number
@@ -136,6 +138,7 @@ function NumericSettingInput({
 
   return (
     <NumberBadgeInput
+      id={id}
       type="text"
       inputMode="decimal"
       value={display}
@@ -151,7 +154,12 @@ function NumericSettingInput({
           setDisplay(String(fallback))
           onChange(fallback)
         } else {
-          setDisplay(String(parsed))
+          const dec = stepDecimals(step)
+          const clamped = parseFloat(
+            Math.max(min, Math.min(max, parsed)).toFixed(dec),
+          )
+          setDisplay(String(clamped))
+          onChange(clamped)
         }
       }}
       onChange={(e) => {
@@ -159,7 +167,7 @@ function NumericSettingInput({
         setDisplay(raw)
         if (raw === '' || raw === '.' || raw === '-' || raw === '-.') return
         const parsed = parseFloat(raw.replace(',', '.'))
-        if (!isNaN(parsed)) onChange(parsed)
+        if (!isNaN(parsed)) onChange(Math.max(min, Math.min(max, parsed)))
       }}
       onKeyDown={(e) => {
         if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
@@ -214,11 +222,21 @@ export function SoloSettingsPanel({
                       className="space-y-3 border border-border/70 bg-muted/35 p-4 clip-pixel-corners-btn"
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <Label className="text-sm font-medium text-foreground">
-                          {setting.label}
-                        </Label>
+                        {setting.useInput ? (
+                          <Label
+                            htmlFor={`solo-${setting.key}`}
+                            className="text-sm font-medium text-foreground"
+                          >
+                            {setting.label}
+                          </Label>
+                        ) : (
+                          <span className="text-sm font-medium text-foreground">
+                            {setting.label}
+                          </span>
+                        )}
                         {setting.useInput ? (
                           <NumericSettingInput
+                            id={`solo-${setting.key}`}
                             value={settings[setting.key]}
                             min={setting.min}
                             max={setting.max}
@@ -236,6 +254,7 @@ export function SoloSettingsPanel({
                       </div>
                       {!setting.useInput && (
                         <Slider
+                          aria-label={setting.label}
                           min={setting.min}
                           max={setting.max}
                           step={setting.step}
@@ -256,7 +275,10 @@ export function SoloSettingsPanel({
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-4 border border-border/70 bg-muted/35 p-4 clip-pixel-corners-btn">
                       <div className="space-y-1">
-                        <Label className="text-sm font-medium text-foreground">
+                        <Label
+                          htmlFor="solo-hold"
+                          className="text-sm font-medium text-foreground"
+                        >
                           Hold queue
                         </Label>
                         <p className="text-xs leading-5 text-muted-foreground">
@@ -264,6 +286,7 @@ export function SoloSettingsPanel({
                         </p>
                       </div>
                       <Switch
+                        id="solo-hold"
                         checked={settings.hold}
                         onCheckedChange={(hold) => {
                           onChange({ ...settings, hold })
@@ -273,7 +296,32 @@ export function SoloSettingsPanel({
 
                     <div className="flex items-start justify-between gap-4 border border-border/70 bg-muted/35 p-4 clip-pixel-corners-btn">
                       <div className="space-y-1">
-                        <Label className="text-sm font-medium text-foreground">
+                        <Label
+                          htmlFor="solo-infiniteHold"
+                          className="text-sm font-medium text-foreground"
+                        >
+                          Infinite hold
+                        </Label>
+                        <p className="text-xs leading-5 text-muted-foreground">
+                          Hold on every piece without waiting for the next
+                          spawn.
+                        </p>
+                      </div>
+                      <Switch
+                        id="solo-infiniteHold"
+                        checked={settings.infiniteHold}
+                        onCheckedChange={(infiniteHold) => {
+                          onChange({ ...settings, infiniteHold })
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex items-start justify-between gap-4 border border-border/70 bg-muted/35 p-4 clip-pixel-corners-btn">
+                      <div className="space-y-1">
+                        <Label
+                          htmlFor="solo-forbidInitialSZ"
+                          className="text-sm font-medium text-foreground"
+                        >
                           Forbid opening S/Z
                         </Label>
                         <p className="text-xs leading-5 text-muted-foreground">
@@ -281,6 +329,7 @@ export function SoloSettingsPanel({
                         </p>
                       </div>
                       <Switch
+                        id="solo-forbidInitialSZ"
                         checked={settings.forbidInitialSZ}
                         onCheckedChange={(forbidInitialSZ) => {
                           onChange({ ...settings, forbidInitialSZ })

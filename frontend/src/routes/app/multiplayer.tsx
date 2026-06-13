@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { Input } from '@/components/ui/input.tsx'
+import { Label } from '@/components/ui/label.tsx'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { createRoom, getRooms } from '@/api/room.ts'
 import { toast } from 'sonner'
@@ -102,8 +103,12 @@ const Multiplayer = () => {
             await joinRoomById()
           }}
         >
+          <Label htmlFor="join-room-id" className="sr-only">
+            Room ID
+          </Label>
           <Input
             id="join-room-id"
+            name="room-id"
             value={roomIdInput}
             onChange={(e) => setRoomIdInput(e.target.value)}
             placeholder="Paste a room ID and press Enter to join"

@@ -44,25 +44,35 @@ export function GameBoard({
     }
   }, [state?.combo, large])
 
+  const boardRows = state?.board.length ?? 20
+  const boardCols = state?.board[0]?.length ?? 10
+
   useEffect(() => {
     if (!large) return
     const canvas = canvasRef.current
     const container = canvas?.parentElement
     if (!container) return
 
+    const SIDE_GAP = 20
+    const VERTICAL_PAD = 8
+    const PREVIEW_SCALE = 0.5
+
     const compute = () => {
       const w = container.clientWidth
       const h = container.clientHeight
-      // Mirror renderer layout constants
-      const cs = Math.floor(Math.min((w - 40) / 14, (h - 16) / 20))
-      const pcs = Math.floor(cs * 0.5)
+      const cs = Math.floor(Math.min(
+        (w - 2 * SIDE_GAP) / (boardCols + 8 * PREVIEW_SCALE),
+        (h - 2 * VERTICAL_PAD) / boardRows,
+      ))
+      const pcs = Math.floor(cs * PREVIEW_SCALE)
       const dim = pcs * 4
-      const boardOffX = (w - cs * 10) / 2
+      const boardOffX = (w - cs * boardCols) / 2
+      const boardOffY = (h - cs * boardRows) / 2
       setHoldLayout({
-        x: boardOffX - 20 - dim,
-        y: (h - cs * 20) / 2,
+        x: boardOffX - SIDE_GAP - dim,
+        y: boardOffY,
         dim,
-        nextX: boardOffX + cs * 10 + 20,
+        nextX: boardOffX + cs * boardCols + SIDE_GAP,
       })
     }
 
@@ -70,7 +80,7 @@ export function GameBoard({
     const observer = new ResizeObserver(compute)
     observer.observe(container)
     return () => observer.disconnect()
-  }, [large])
+  }, [large, boardRows, boardCols])
 
   useEffect(() => {
     const canvas = canvasRef.current

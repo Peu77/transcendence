@@ -42,7 +42,7 @@ export function GameField({
         </div>
 
         {opponents && opponents.length > 0 && (
-          <div className="flex w-48 shrink-0 flex-col gap-3 overflow-y-auto py-2">
+          <div className="flex w-48 shrink-0 flex-col gap-3 overflow-y-auto py-2 hide-scrollbar">
             {opponents.map((opponent) => (
               <GameBoard
                 key={opponent.userId}

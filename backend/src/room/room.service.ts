@@ -107,6 +107,9 @@ export class RoomService {
     if (room.status === 'playing')
       throw new BadRequestException('Game is already in progress')
 
+    if (room.users.length < 2)
+      throw new BadRequestException('At least 2 players are required to start')
+
     room.status = 'playing'
     return room
   }
@@ -183,6 +186,7 @@ export class RoomService {
 
       rotationSystem: RotationSystem.SRS,
       hold: true,
+      infiniteHold: false,
       nextCount: 5,
       bag: PieceRandomizer.SEVEN_BAG,
       forbidInitialSZ: false,

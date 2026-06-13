@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { createRoute, useRouter } from '@tanstack/react-router'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import {
-  useGetAchievements,
   type AchievementsResponse,
+  useGetAchievements,
 } from '@/api/achievements.ts'
 import { Button } from '@/components/ui/button.tsx'
 import {
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog.tsx'
 import { Spinner } from '@/components/ui/spinner.tsx'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
+import type { LucideIcon } from 'lucide-react'
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -28,7 +29,6 @@ import {
   TrophyIcon,
   UsersIcon,
 } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 
 type Stats = AchievementsResponse['stats']
 
@@ -227,7 +227,7 @@ function CategoryDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/20">
@@ -438,22 +438,30 @@ function AchievementsPage() {
                   key={category.id}
                   category={category}
                   data={data}
-                  onClick={() => setOpenCategory(category.id)}
+                  onClick={() => {
+                    ;(document.activeElement as HTMLElement)?.blur()
+                    setOpenCategory(category.id)
+                  }}
                 />
               ))}
             </div>
 
-            {CATEGORIES.map((category) => (
-              <CategoryDetailDialog
-                key={category.id}
-                category={category}
-                data={data}
-                open={openCategory === category.id}
-                onOpenChange={(open) =>
-                  setOpenCategory(open ? category.id : null)
-                }
-              />
-            ))}
+            {openCategory != null &&
+              (() => {
+                const category = CATEGORIES.find((c) => c.id === openCategory)
+                if (!category) return null
+                return (
+                  <CategoryDetailDialog
+                    key={category.id}
+                    category={category}
+                    data={data}
+                    open
+                    onOpenChange={(open) =>
+                      setOpenCategory(open ? category.id : null)
+                    }
+                  />
+                )
+              })()}
           </>
         )}
       </div>

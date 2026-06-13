@@ -12,8 +12,8 @@ import {GarbageCancel, type MatchSettings, PieceRandomizer, RotationSystem,} fro
 
 const PIECE_TYPES = Object.values(TetrominoType)
 
-const log = (msg: string, data?: unknown) =>
-  console.log(`[TetrisGame] ${msg}`, data ?? '')
+const log = (_msg: string, _data?: unknown) => {
+}
 
 const LINES_PER_LEVEL = 10
 
@@ -49,6 +49,7 @@ export class TetrisGame {
   private garbageHoleCol = -1
   private lockDelayStart: number | null = null
   private lockResetCount = 0
+  private lowestRow = 0
   private lastRotated = false
   private lastKickIndex = 0
   private b2bChain = 0
@@ -76,8 +77,11 @@ export class TetrisGame {
 
     if (this.canMove(this.currentPiece, 1, 0)) {
       this.currentPiece.row += 1
-      this.lockDelayStart = null
-      this.lockResetCount = 0
+      if (this.currentPiece.row > this.lowestRow) {
+        this.lowestRow = this.currentPiece.row
+        this.lockDelayStart = null
+        this.lockResetCount = 0
+      }
     } else {
       if (this.lockDelayStart === null) {
         this.lockDelayStart = Date.now()
@@ -194,6 +198,9 @@ export class TetrisGame {
     this.backToBack = state.b2bChain > 0
     this.outgoingGarbage = 0
     this.pendingGarbage = []
+    this.lockDelayStart = null
+    this.lockResetCount = 0
+    this.lowestRow = this.currentPiece.row
   }
 
   /** Extra next pieces beyond the visible preview, for client-side prediction. */
@@ -204,7 +211,7 @@ export class TetrisGame {
   /** Milliseconds between gravity ticks for the current level or custom override. */
   getTickInterval(): number {
     const g = this.getEffectiveGravity()
-    if (g >= 20) return 1
+    if (g >= 3) return 1
     if (g <= 0) return 60000
     // Use level-based curve only when gravity is default and gincrease is off.
     if (this.settings.gincrease === 0 && this.settings.gravity === 1) {
@@ -219,7 +226,7 @@ export class TetrisGame {
     const elapsedSeconds = (Date.now() - this.gameStartTime) / 1000
     const marginSeconds = this.settings.gmargin / 60
     const increase = this.settings.gincrease * Math.max(0, elapsedSeconds - marginSeconds)
-    return Math.min(20, this.settings.gravity + increase)
+    return Math.min(3, this.settings.gravity + increase)
   }
 
   /* ------------------------------------------------------------------ */
@@ -243,6 +250,7 @@ export class TetrisGame {
 
       rotationSystem: RotationSystem.SRS,
       hold: true,
+      infiniteHold: false,
       nextCount: 5,
       bag: PieceRandomizer.SEVEN_BAG,
       forbidInitialSZ: false,
@@ -297,8 +305,9 @@ export class TetrisGame {
     return PIECE_TYPES[Math.floor(this.rng() * PIECE_TYPES.length)]
   }
 
-  private randomBag(): TetrominoType[] {
-    const bag = [...PIECE_TYPES]
+  private randomBag(copies = 1): TetrominoType[] {
+    const bag: TetrominoType[] = []
+    for (let c = 0; c < copies; c++) bag.push(...PIECE_TYPES)
     for (let i = bag.length - 1; i > 0; i--) {
       const j = Math.floor(this.rng() * (i + 1))
       ;[bag[i], bag[j]] = [bag[j], bag[i]]
@@ -309,11 +318,17 @@ export class TetrisGame {
   private refillNextTypes(): void {
     const minimumSize = Math.max(this.settings.nextCount + 1, 1)
     while (this.nextTypes.length < minimumSize) {
-      this.nextTypes.push(
-        ...(this.settings.bag === PieceRandomizer.SEVEN_BAG
-          ? this.randomBag()
-          : [this.randomType()]),
-      )
+      switch (this.settings.bag) {
+        case PieceRandomizer.SEVEN_BAG:
+          this.nextTypes.push(...this.randomBag())
+          break
+        case PieceRandomizer.FOURTEEN_BAG:
+          this.nextTypes.push(...this.randomBag(2))
+          break
+        case PieceRandomizer.RANDOM:
+          this.nextTypes.push(this.randomType())
+          break
+      }
     }
   }
 
@@ -354,6 +369,7 @@ export class TetrisGame {
     this.canHold = true
     this.lockDelayStart = null
     this.lockResetCount = 0
+    this.lowestRow = this.currentPiece.row
     this.lastRotated = false
 
     const blocked = this.collides(this.currentPiece)
@@ -526,19 +542,8 @@ export class TetrisGame {
       3: [0, 2],
     }
 
-    const backPairs: Record<number, [number, number]> = {
-      0: [2, 3],
-      1: [0, 2],
-      2: [0, 1],
-      3: [1, 3],
-    }
-
     const [fi, fj] = frontPairs[rotation] ?? [0, 1]
-    const [bi, bj] = backPairs[rotation] ?? [2, 3]
-
     const frontBothFilled = filled[fi] && filled[fj]
-    const backBothFilled = filled[bi] && filled[bj]
-
     const isMiniShape = !frontBothFilled
 
     if (!isMiniShape) {
@@ -667,9 +672,10 @@ export class TetrisGame {
     const nextType = this.heldType ?? this.takeNextType()
     this.heldType = currentType
     this.currentPiece = this.spawnPiece(nextType)
-    this.canHold = false
+    if (!this.settings.infiniteHold) this.canHold = false
     this.lockDelayStart = null
     this.lockResetCount = 0
+    this.lowestRow = this.currentPiece.row
     this.lastRotated = false
 
     if (this.collides(this.currentPiece)) {
@@ -729,7 +735,6 @@ export class TetrisGame {
   private lockAndSpawn(): boolean {
     if (this.canMove(this.currentPiece, 1, 0)) {
       this.lockDelayStart = null
-      this.lockResetCount = 0
       return true
     }
     log(

@@ -1,14 +1,16 @@
 import {
+  BadRequestException,
+  Body,
   Controller,
   Get,
+  NotFoundException,
   Param,
+  Patch,
   Post,
-  Body,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
-  Res,
-  BadRequestException,
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { diskStorage } from 'multer'
@@ -20,12 +22,20 @@ import * as speakeasy from 'speakeasy'
 import { UsersService } from './users.service'
 import { AuthGuard, UserId } from '../auth/auth.guard'
 import {
+  ChangeEmailDto,
+  ChangePasswordDto,
   ProfilePictureDto,
   UpdateGameControlsDto,
   UpdateTetrisHandlingSettingsDto,
   VerifyTwoFaDto,
 } from './dto'
 import { v4 as uuid } from 'uuid'
+import {
+  detectProfilePictureMimeType,
+  isAllowedProfilePictureMimeType,
+  MAX_PROFILE_PICTURE_SIZE,
+  validateProfilePictureFile,
+} from './profile-picture-upload'
 
 @Controller()
 @UseGuards(AuthGuard)
@@ -46,6 +56,7 @@ export class UsersController {
       tetrisHandlingSettings: this.usersService.normalizeTetrisHandlingSettings(
         user.tetrisHandlingSettings,
       ),
+      userType: user.userType,
     }
   }
 
@@ -93,11 +104,15 @@ export class UsersController {
           cb(null, UsersService.UPLOAD_DIR)
         },
       }),
+      limits: {
+        fileSize: MAX_PROFILE_PICTURE_SIZE,
+        files: 1,
+      },
       fileFilter: (_req, file, cb) => {
-        if (file.mimetype && !file.mimetype.startsWith('image/')) {
+        if (!isAllowedProfilePictureMimeType(file.mimetype)) {
           return cb(
             new BadRequestException(
-              'Invalid file type. Only images are allowed',
+              'Invalid file type. Allowed formats: JPEG, PNG, GIF, and WebP',
             ),
             false,
           )
@@ -113,25 +128,40 @@ export class UsersController {
     if (!file) {
       throw new BadRequestException('No file uploaded')
     }
-    const user = await this.usersService.getUserByid(userId)
 
-    if (
-      user.profilePictureId &&
-      (await this.usersService.existUserProfilePictureInFs(
-        user.profilePictureId,
-      ))
-    ) {
-      await fs.unlink(path.join(UsersService.UPLOAD_DIR, user.profilePictureId))
-    }
+    let storedFilePath: string | null = null
+    try {
+      await validateProfilePictureFile(file)
+      const user = await this.usersService.getUserByid(userId)
+      const newFileId = uuid()
+      storedFilePath = path.join(UsersService.UPLOAD_DIR, newFileId)
+      await fs.rename(file.path, storedFilePath)
 
-    const newFileId = uuid()
-    await fs.rename(file.path, path.join(UsersService.UPLOAD_DIR, newFileId))
-    console.log(`Profile picture uploaded with ID: ${newFileId}`)
+      await this.usersService.updateProfilePictureId(user.id, newFileId)
 
-    await this.usersService.updateProfilePictureId(user.id, newFileId)
-    return {
-      message: 'Profile picture uploaded successfully',
-      profilePictureId: newFileId,
+      if (
+        user.profilePictureId &&
+        (await this.usersService.existUserProfilePictureInFs(
+          user.profilePictureId,
+        ))
+      ) {
+        await fs
+          .rm(path.join(UsersService.UPLOAD_DIR, user.profilePictureId), {
+            force: true,
+          })
+          .catch(() => undefined)
+      }
+
+      return {
+        message: 'Profile picture uploaded successfully',
+        profilePictureId: newFileId,
+      }
+    } catch (error) {
+      await Promise.allSettled([
+        fs.rm(file.path, { force: true }),
+        ...(storedFilePath ? [fs.rm(storedFilePath, { force: true })] : []),
+      ])
+      throw error
     }
   }
 
@@ -144,10 +174,23 @@ export class UsersController {
     try {
       await fs.access(filepath)
     } catch {
-      throw new BadRequestException('Profile picture not found')
+      throw new NotFoundException('Profile picture not found')
     }
 
     res.setHeader('Cache-Control', 'public, max-age=600')
+    const handle = await fs.open(filepath, 'r')
+    const header = Buffer.alloc(12)
+    let bytesRead = 0
+    try {
+      ;({ bytesRead } = await handle.read(header, 0, header.length, 0))
+    } finally {
+      await handle.close()
+    }
+    const mimeType =
+      detectProfilePictureMimeType(header.subarray(0, bytesRead)) ??
+      'application/octet-stream'
+    res.setHeader('Content-Type', mimeType)
+    res.setHeader('X-Content-Type-Options', 'nosniff')
     const stream = createReadStream(filepath)
     stream.pipe(res)
   }
@@ -163,6 +206,29 @@ export class UsersController {
     @UserId() requesterId: string,
   ) {
     return this.usersService.getPublicProfile(id, requesterId)
+  }
+
+  @Patch('users/me/email')
+  async changeEmail(@UserId() userId: string, @Body() body: ChangeEmailDto) {
+    await this.usersService.changeEmail(
+      userId,
+      body.newEmail,
+      body.currentPassword,
+    )
+    return { message: 'Email updated successfully' }
+  }
+
+  @Patch('users/me/password')
+  async changePassword(
+    @UserId() userId: string,
+    @Body() body: ChangePasswordDto,
+  ) {
+    await this.usersService.changePassword(
+      userId,
+      body.currentPassword,
+      body.newPassword,
+    )
+    return { message: 'Password updated successfully' }
   }
 
   @Post('users/toggleTheme')

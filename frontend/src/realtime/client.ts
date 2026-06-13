@@ -6,6 +6,8 @@ import type { InputAction } from '@transcendence/shared'
 type ClientToServerEvents = {
   'dm.join': (body: { withUserId: string }) => void
   'dm.leave': (body: { withUserId: string }) => void
+  'dm.typing': (body: { withUserId: string }) => void
+  'room.chat.typing': (body: { roomId: string }) => void
   'room.join': (
     body: { roomId: string },
     callback: (res: { ok: boolean; error?: string }) => void,

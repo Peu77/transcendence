@@ -2,12 +2,8 @@ import { createRoute, Link, useRouter } from '@tanstack/react-router'
 import { AppRoute } from '@/routes/app/layout.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
-import {
-  ArrowLeftIcon,
-  ExternalLinkIcon,
-  GithubIcon,
-  ShieldCheckIcon,
-} from 'lucide-react'
+import { ArrowLeftIcon, ExternalLinkIcon, ShieldCheckIcon } from 'lucide-react'
+import { GithubIcon } from '@/components/ui/github-icon.tsx'
 
 const TEAM = [
   {
@@ -21,12 +17,12 @@ const TEAM = [
     avatar: 'https://avatars.githubusercontent.com/u/60301119?v=4',
   },
   {
-    name: 'Jonas G\u00f6tz',
+    name: 'Jonas Götz',
     github: 'JonasGoetz01',
     avatar: 'https://avatars.githubusercontent.com/u/65551807?v=4',
   },
   {
-    name: 'Konrad M\u00fchlbauer',
+    name: 'Konrad Mühlbauer',
     github: 'Komu211',
     avatar: 'https://avatars.githubusercontent.com/u/75761278?v=4',
   },
@@ -126,7 +122,7 @@ const About = () => {
         </div>
 
         {/* Legal links */}
-        <h2 className="mb-4 text-xl font-bold text-foreground">Legal</h2>
+        <h2 className="mb-4 mt-8 text-xl font-bold text-foreground">Legal</h2>
         <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Link
             to="/privacy"

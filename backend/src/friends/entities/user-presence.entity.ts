@@ -11,6 +11,8 @@ export enum PresenceStatus {
   ONLINE = 'online',
   OFFLINE = 'offline',
   AWAY = 'away',
+  IN_ROOM = 'in-room',
+  IN_GAME = 'in-game',
 }
 
 @Entity({ name: 'user_presence' })

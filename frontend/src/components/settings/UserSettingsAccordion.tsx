@@ -7,10 +7,14 @@ import {
   CardTitle,
 } from '@/components/ui/card.tsx'
 import { Label } from '@/components/ui/label.tsx'
+import { Input } from '@/components/ui/input.tsx'
+import { Button } from '@/components/ui/button.tsx'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { CameraIcon, Loader2Icon } from 'lucide-react'
 import { toast } from 'sonner'
-import type { User } from '@/api/user.ts'
+import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { changeEmail, changePassword, type User } from '@/api/user.ts'
 
 type UserSettingsAccordionProps = {
   user: User
@@ -23,6 +27,30 @@ export const UserSettingsAccordion = ({
   isUploading,
   onUpload,
 }: UserSettingsAccordionProps) => {
+  const queryClient = useQueryClient()
+
+  const [emailForm, setEmailForm] = useState({ newEmail: '', currentPassword: '' })
+  const [emailError, setEmailError] = useState('')
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+
+  const emailMutation = useMutation({
+    mutationFn: () => changeEmail(emailForm.newEmail, emailForm.currentPassword),
+    onSuccess: () => {
+      toast.success('Email updated successfully')
+      setEmailForm({ newEmail: '', currentPassword: '' })
+      queryClient.invalidateQueries({ queryKey: ['user'] })
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to update email'),
+  })
+
+  const passwordMutation = useMutation({
+    mutationFn: () => changePassword(passwordForm.currentPassword, passwordForm.newPassword),
+    onSuccess: () => {
+      toast.success('Password updated successfully')
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to update password'),
+  })
   const compressImage = async (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -81,8 +109,9 @@ export const UserSettingsAccordion = ({
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file')
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please select a JPEG, PNG, GIF, or WebP image')
       return
     }
 
@@ -128,13 +157,120 @@ export const UserSettingsAccordion = ({
               id="avatar-upload"
               type="file"
               className="hidden"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/gif,image/webp"
               onChange={handleFileChange}
               disabled={isUploading}
             />
           </div>
         </CardContent>
       </Card>
+
+      {user.userType === 'email' && (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Change Email</CardTitle>
+              <CardDescription>Current email: {user.email}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form
+                className="flex flex-col gap-3"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailForm.newEmail)) {
+                    setEmailError('Please enter a valid email address')
+                    return
+                  }
+                  setEmailError('')
+                  emailMutation.mutate()
+                }}
+              >
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="new-email">New email</Label>
+                  <Input
+                    id="new-email"
+                    type="text"
+                    value={emailForm.newEmail}
+                    onChange={(e) => {
+                      setEmailForm((f) => ({ ...f, newEmail: e.target.value }))
+                      setEmailError('')
+                    }}
+                    required
+                  />
+                  {emailError && <p className="text-sm text-destructive">{emailError}</p>}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="email-current-password">Current password</Label>
+                  <Input
+                    id="email-current-password"
+                    type="password"
+                    value={emailForm.currentPassword}
+                    onChange={(e) => setEmailForm((f) => ({ ...f, currentPassword: e.target.value }))}
+                    required
+                  />
+                </div>
+                <Button type="submit" disabled={emailMutation.isPending} className="self-end">
+                  {emailMutation.isPending ? 'Saving…' : 'Update email'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Change Password</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form
+                className="flex flex-col gap-3"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+                    toast.error('Passwords do not match')
+                    return
+                  }
+                  passwordMutation.mutate()
+                }}
+              >
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="current-password">Current password</Label>
+                  <Input
+                    id="current-password"
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm((f) => ({ ...f, currentPassword: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="new-password">New password</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm((f) => ({ ...f, newPassword: e.target.value }))}
+                    minLength={8}
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <Label htmlFor="confirm-password">Confirm new password</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+                    required
+                  />
+                </div>
+                <Button type="submit" disabled={passwordMutation.isPending} className="self-end">
+                  {passwordMutation.isPending ? 'Saving…' : 'Update password'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <TwoFactorAuth user={user} />
     </div>

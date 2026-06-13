@@ -13,7 +13,6 @@ import { UserSettingsAccordion } from '@/components/settings/UserSettingsAccordi
 import { GameControlsAccordion } from '@/components/settings/GameControlsAccordion.tsx'
 import { TetrisHandlingAccordion } from '@/components/settings/TetrisHandlingAccordion.tsx'
 import { PublicApiSettingsAccordion } from '@/components/settings/PublicApiSettingsAccordion.tsx'
-import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 
 const Settings = () => {
   const { data: user } = useGetUser()
@@ -35,7 +34,7 @@ const Settings = () => {
         <h1 className="text-3xl font-bold">Settings</h1>
       </div>
 
-      <ScrollArea className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 overflow-y-auto hide-scrollbar">
         <Accordion type="multiple">
           <AccordionItem value="user-settings">
             <AccordionTrigger>User settings</AccordionTrigger>
@@ -66,7 +65,7 @@ const Settings = () => {
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-      </ScrollArea>
+      </div>
     </div>
   )
 }

@@ -12,10 +12,10 @@ import { toast } from 'sonner'
 import {
   type DirectMessage,
   type Friend,
+  FRIENDS_QUERY_KEYS,
   getDirectMessages,
   markDirectMessagesSeen,
   sendDirectMessage,
-  FRIENDS_QUERY_KEYS,
 } from '@/api/friends.ts'
 import { ProfileImage } from '@/components/app/profileImage.tsx'
 import { Button } from '@/components/ui/button.tsx'
@@ -24,8 +24,14 @@ import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { useDmRoom, useLiveEvent } from '@/realtime/hooks.ts'
 import { userStore } from '@/store/userStore.ts'
 import { useNavigate } from '@tanstack/react-router'
-import { Gamepad2Icon } from 'lucide-react'
+import { useStore } from '@tanstack/react-store'
+import { CheckCheckIcon, CheckIcon, Gamepad2Icon, SendIcon } from 'lucide-react'
 import { useMatchInvite } from '@/hooks/use-match-invite.ts'
+import {
+  friendsOverlayStore,
+  setFriendsOverlayIsOpen,
+} from '@/store/friendsOverlayStore.tsx'
+import { useDmTypingIndicator } from '@/hooks/use-typing-indicator.ts'
 
 let dmSendSound: HTMLAudioElement | null = null
 let dmReceiveSound: HTMLAudioElement | null = null
@@ -37,7 +43,6 @@ function getDmReceiveSound() {
   if (!dmReceiveSound) dmReceiveSound = new Audio('/sounds/message_receive.mp3')
   return dmReceiveSound
 }
-import { setFriendsOverlayIsOpen } from '@/store/friendsOverlayStore.tsx'
 
 function dedupeById<T extends { id: string }>(items: T[]): T[] {
   const seen = new Set<string>()
@@ -57,8 +62,12 @@ export const DMPanel = (props: {
 }) => {
   const qc = useQueryClient()
   const navigate = useNavigate()
+  const isOverlayOpen = useStore(friendsOverlayStore, (s) => s.isOpen)
 
   useDmRoom(props.friend.id)
+  const { isTyping: friendIsTyping, emitTyping } = useDmTypingIndicator(
+    props.friend.id,
+  )
 
   const goToRoom = useCallback(
     async (roomId: string) => {
@@ -126,6 +135,12 @@ export const DMPanel = (props: {
       })
     },
   })
+
+  useEffect(() => {
+    if (isOverlayOpen) {
+      markSeenMutation.mutate()
+    }
+  }, [isOverlayOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadOlderMutation = useMutation({
     mutationFn: async () => {
@@ -291,50 +306,94 @@ export const DMPanel = (props: {
     }
   }, [messages])
 
+  const formatTime = (date: string) =>
+    new Intl.DateTimeFormat(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date))
+
   const messagesContent = (() => {
+    const myId = userStore.state?.id
     if (dmQuery.isLoading)
-      return <div className="text-muted-foreground">Loading…</div>
+      return (
+        <div className="flex h-full items-center justify-center text-muted-foreground">
+          Loading…
+        </div>
+      )
     if (messages.length === 0)
-      return <div className="text-muted-foreground">No messages yet.</div>
+      return (
+        <div className="flex h-full items-center justify-center text-muted-foreground">
+          No messages yet.
+        </div>
+      )
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         {loadOlderMutation.isPending && (
           <div className="text-center text-xs text-muted-foreground">
             Loading older messages…
           </div>
         )}
-        {messages.map((m) => (
-          <div key={m.id} className="flex flex-col">
-            <div className="text-xs text-muted-foreground">
-              {new Date(m.createdAt).toLocaleString()}
-            </div>
-            {m.type === 'match_invite' ? (
-              <div className="flex flex-col gap-2 rounded-md border border-sidebar-border/70 bg-background/40 p-2">
-                <div className="wrap-break-word font-medium">{m.content}</div>
-                {m.senderId === props.friend.id ? (
-                  <Button
-                    size="sm"
-                    disabled={!m.roomId}
-                    onClick={() => m.roomId && goToRoom(m.roomId)}
-                  >
-                    Join match
-                  </Button>
+        {messages.map((m) => {
+          const isMine = m.senderId === myId
+          return (
+            <div
+              key={m.id}
+              className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`relative max-w-[80%] rounded-lg px-3 py-1.5 text-sm shadow-sm ${
+                  isMine
+                    ? 'bg-primary text-primary-foreground rounded-br-none'
+                    : 'bg-muted text-foreground rounded-bl-none'
+                }`}
+              >
+                {m.type === 'match_invite' ? (
+                  <div className="flex flex-col gap-1.5">
+                    <div className="wrap-break-word font-medium">
+                      {m.content}
+                    </div>
+                    {m.senderId === props.friend.id ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={!m.roomId}
+                        onClick={() => m.roomId && goToRoom(m.roomId)}
+                      >
+                        Join match
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={!m.roomId}
+                        onClick={() => m.roomId && goToRoom(m.roomId)}
+                      >
+                        Go to your match
+                      </Button>
+                    )}
+                  </div>
                 ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={!m.roomId}
-                    onClick={() => m.roomId && goToRoom(m.roomId)}
-                  >
-                    Go to your match
-                  </Button>
+                  <div className="break-words">{m.content}</div>
                 )}
+                <div
+                  className={`mt-0.5 flex items-center gap-1 text-[10px] ${
+                    isMine
+                      ? 'justify-end text-primary-foreground/60'
+                      : 'justify-start text-muted-foreground'
+                  }`}
+                >
+                  <span>{formatTime(m.createdAt)}</span>
+                  {isMine &&
+                    (m.seen ? (
+                      <CheckCheckIcon className="size-3.5 text-primary-foreground" />
+                    ) : (
+                      <CheckIcon className="size-3.5 text-primary-foreground/80" />
+                    ))}
+                </div>
               </div>
-            ) : (
-              <div className="break-words">{m.content}</div>
-            )}
-          </div>
-        ))}
+            </div>
+          )
+        })}
       </div>
     )
   })()
@@ -361,7 +420,9 @@ export const DMPanel = (props: {
       })
 
       if (msg.senderId !== userStore.state?.id) {
-        markSeenMutation.mutate()
+        if (friendsOverlayStore.state.isOpen) {
+          markSeenMutation.mutate()
+        }
         const sound = getDmReceiveSound()
         sound.currentTime = 0
         sound.play().catch(() => {})
@@ -374,6 +435,24 @@ export const DMPanel = (props: {
   )
 
   useLiveEvent('dm.created', handleDmCreated)
+
+  const handleDmSeen = useCallback(
+    (event: { byUserId: string; friendUserId: string }) => {
+      if (event.byUserId !== props.friend.id) return
+      qc.setQueryData(queryKey, (prev: any) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          messages: (prev.messages ?? []).map((m: DirectMessage) =>
+            m.senderId === userStore.state?.id ? { ...m, seen: true } : m,
+          ),
+        }
+      })
+    },
+    [props.friend.id, qc, queryKey],
+  )
+
+  useLiveEvent('dm.seen', handleDmSeen)
 
   return (
     <div className="h-full flex flex-col p-3 bg-input/20">
@@ -419,6 +498,12 @@ export const DMPanel = (props: {
         <div className="p-2">{messagesContent}</div>
       </ScrollArea>
 
+      {friendIsTyping && (
+        <div className="mt-1 text-xs text-muted-foreground animate-pulse">
+          {props.friend.username} is typing...
+        </div>
+      )}
+
       <form
         className="mt-3 flex gap-2"
         onSubmit={(e) => {
@@ -428,7 +513,11 @@ export const DMPanel = (props: {
       >
         <Input
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value)
+            if (e.target.value.trim()) emitTyping()
+          }}
+          maxLength={500}
           placeholder="Type a message…"
         />
         <Button
@@ -442,8 +531,14 @@ export const DMPanel = (props: {
         >
           <Gamepad2Icon />
         </Button>
-        <Button type="submit" silent={true} disabled={sendMutation.isPending}>
-          Send
+        <Button
+          type="submit"
+          size="icon-sm"
+          silent={true}
+          disabled={sendMutation.isPending}
+          aria-label="Send message"
+        >
+          <SendIcon className="size-4" />
         </Button>
       </form>
     </div>

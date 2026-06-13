@@ -26,8 +26,11 @@ const registerSchema = z
       .min(2, 'Username must be at least 2 characters')
       .max(8, 'Username must be at most 8 characters'),
     email: z.email('Please enter a valid email'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
-    confirmPassword: z.string().min(6, 'Confirm your password'),
+    password: z
+      .string()
+      .min(6, 'Password must be at least 6 characters')
+      .max(128),
+    confirmPassword: z.string().min(6, 'Confirm your password').max(128),
   })
   .refine((v) => v.password === v.confirmPassword, {
     path: ['confirmPassword'],

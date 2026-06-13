@@ -9,6 +9,9 @@ export type LiveEventName =
   | 'friendship.deleted'
   | 'presence.updated'
   | 'dm.created'
+  | 'dm.typing'
+  | 'dm.seen'
+  | 'room.chat.typing'
   | 'user.blocked'
   | 'rooms.updated'
 
@@ -47,6 +50,21 @@ export interface PresenceUpdatedEvent {
   status: PresenceStatus
   lastSeenAt: string | null
   updatedAt: string
+}
+
+export interface DmTypingEvent {
+  userId: string
+}
+
+export interface RoomTypingEvent {
+  roomId: string
+  userId: string
+  username: string
+}
+
+export interface DmSeenEvent {
+  byUserId: string
+  friendUserId: string
 }
 
 export interface DirectMessageCreatedEvent {

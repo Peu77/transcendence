@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -12,6 +12,8 @@ import { useTetrisInput } from '@/hooks/use-tetris-input.ts'
 import { playBlockPlacedSound } from '@/hooks/use-block-placed-sound.ts'
 import { useGameMusic } from '@/hooks/use-game-music.ts'
 import { type GamePhase, normalizeGameControls } from './room-game.ts'
+import { updateMyPresence } from '@/api/friends.ts'
+import { freezePresence, unfreezePresence } from '@/presence/useMyPresence.ts'
 
 export function useRoomGame(
   roomId: string,
@@ -51,9 +53,23 @@ export function useRoomGame(
     setTimeout(() => navigate({ to: '/app/room' }).catch(console.error), 150)
   }, [socket, roomId, navigate, setChatOpen])
 
+  useEffect(() => {
+    freezePresence()
+    updateMyPresence({ status: 'in-room' }).catch(() => {})
+    return () => {
+      unfreezePresence()
+      updateMyPresence({ status: 'online' }).catch(() => {})
+    }
+  }, [])
+
   const setPhase = useCallback((phase: GamePhase) => {
     gamePhaseRef.current = phase
     setGamePhase(phase)
+    if (phase === 'countdown' || phase === 'playing') {
+      updateMyPresence({ status: 'in-game' }).catch(() => {})
+    } else {
+      updateMyPresence({ status: 'in-room' }).catch(() => {})
+    }
   }, [])
 
   useLiveEvent('game.countdown', (data) => {
@@ -141,15 +157,19 @@ export function useRoomGame(
     },
   })
 
-  const handleStartGame = useCallback(() => {
-    if (!socket) return
+  const handleStartGame = useCallback(
+    (onError?: () => void) => {
+      if (!socket) return
 
-    socket.emit('game.start', { roomId }, (res) => {
-      if (!res.ok) {
-        toast.error(res.error || 'Failed to start game')
-      }
-    })
-  }, [socket, roomId])
+      socket.emit('game.start', { roomId }, (res) => {
+        if (!res.ok) {
+          toast.error(res.error || 'Failed to start game')
+          onError?.()
+        }
+      })
+    },
+    [socket, roomId],
+  )
 
   const handleBackToLobby = useCallback(() => {
     setPhase('lobby')

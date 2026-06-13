@@ -115,7 +115,7 @@ export class DamageSettingsDto {
 export class UpdateMatchSettingsDto {
   @IsNumber()
   @Min(0)
-  @Max(20)
+  @Max(3)
   gravity!: number
 
   @IsNumber()
@@ -143,6 +143,9 @@ export class UpdateMatchSettingsDto {
 
   @IsBoolean()
   hold!: boolean
+
+  @IsBoolean()
+  infiniteHold!: boolean
 
   @IsNumber()
   @Min(0)

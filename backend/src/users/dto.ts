@@ -1,4 +1,17 @@
-import { IsNotEmpty, IsObject, IsString, IsUUID } from 'class-validator'
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+  ValidateNested,
+} from 'class-validator'
+import { Type } from 'class-transformer'
 import { GameControlAction } from './user.entity'
 
 export class ProfilePictureDto {
@@ -12,12 +25,99 @@ export class VerifyTwoFaDto {
   code!: string
 }
 
+export class GameControlsDto {
+  @IsString()
+  @MaxLength(50)
+  [GameControlAction.LEFT]!: string;
+
+  @IsString()
+  @MaxLength(50)
+  [GameControlAction.RIGHT]!: string;
+
+  @IsString()
+  @MaxLength(50)
+  [GameControlAction.ROTATE_CW]!: string;
+
+  @IsString()
+  @MaxLength(50)
+  [GameControlAction.ROTATE_CCW]!: string;
+
+  @IsString()
+  @MaxLength(50)
+  [GameControlAction.ROTATE_180]!: string;
+
+  @IsString()
+  @MaxLength(50)
+  [GameControlAction.SOFT_DROP]!: string;
+
+  @IsString()
+  @MaxLength(50)
+  [GameControlAction.HARD_DROP]!: string;
+
+  @IsString()
+  @MaxLength(50)
+  [GameControlAction.HOLD]!: string;
+
+  @IsString()
+  @MaxLength(50)
+  [GameControlAction.TOGGLE_CHAT]!: string
+}
+
 export class UpdateGameControlsDto {
   @IsObject()
-  controls!: Record<GameControlAction, string>
+  @ValidateNested()
+  @Type(() => GameControlsDto)
+  controls!: GameControlsDto
+}
+
+export class TetrisHandlingSettingsDto {
+  @IsNumber()
+  @Min(0)
+  @Max(1000)
+  arr!: number
+
+  @IsNumber()
+  @Min(0)
+  @Max(1000)
+  das!: number
+
+  @IsNumber()
+  @Min(0)
+  @Max(1000)
+  dcd!: number
+
+  @IsNumber()
+  @Min(0)
+  @Max(1000)
+  sdf!: number
 }
 
 export class UpdateTetrisHandlingSettingsDto {
   @IsObject()
-  settings!: Record<string, number>
+  @ValidateNested()
+  @Type(() => TetrisHandlingSettingsDto)
+  settings!: TetrisHandlingSettingsDto
+}
+
+export class ChangeEmailDto {
+  @IsEmail()
+  @MaxLength(255)
+  newEmail!: string
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  currentPassword!: string
+}
+
+export class ChangePasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  currentPassword!: string
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  newPassword!: string
 }

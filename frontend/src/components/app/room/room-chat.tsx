@@ -7,6 +7,7 @@ import { useLiveEvent } from '@/realtime/hooks.ts'
 import { useLiveSocket } from '@/realtime/useRealtimeStore.ts'
 import type { RoomChatMessageEvent } from '@/realtime/events.ts'
 import { cn } from '@/lib/utils.ts'
+import { useRoomTypingIndicator } from '@/hooks/use-typing-indicator.ts'
 
 let sendSound: HTMLAudioElement | null = null
 let receiveSound: HTMLAudioElement | null = null
@@ -44,6 +45,10 @@ export function RoomChat({
   const [draftMessage, setDraftMessage] = useState('')
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const { typingUsers, emitTyping } = useRoomTypingIndicator(
+    roomId,
+    currentUserId,
+  )
 
   useLiveEvent(
     'room.chat.message',
@@ -104,7 +109,7 @@ export function RoomChat({
 
       <div
         ref={scrollRef}
-        className="min-h-0 flex-1 space-y-3 overflow-y-auto py-6"
+        className="min-h-0 flex-1 space-y-1.5 overflow-y-auto py-6 hide-scrollbar"
       >
         {messages.length === 0 ? (
           <pre className="flex flex-col h-full items-center justify-center p-4 text-center text-xl uppercase tracking-wide text-muted-foreground">
@@ -117,23 +122,34 @@ export function RoomChat({
             return (
               <div
                 key={message.id}
-                className={cn('flex flex-col gap-1', isMine && 'items-end')}
+                className={cn('flex', isMine ? 'justify-end' : 'justify-start')}
               >
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="font-semibold text-foreground/80">
-                    {message.senderInfo.username}
-                  </span>
-                  <span>{formatMessageTime(message.createdAt)}</span>
-                </div>
                 <div
                   className={cn(
-                    'max-w-[85%] border px-3 py-2 text-sm leading-relaxed shadow-sm text-wrap wrap-break-word clip-pixel-corners-btn',
+                    'relative max-w-[80%] rounded-lg px-3 py-1.5 text-sm shadow-sm',
                     isMine
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-border bg-muted text-foreground',
+                      ? 'bg-primary text-primary-foreground rounded-br-none'
+                      : 'bg-muted text-foreground rounded-bl-none',
                   )}
                 >
-                  {message.content}
+                  {!isMine && (
+                    <div className="mb-0.5 text-[11px] font-semibold text-foreground/70">
+                      {message.senderInfo.username}
+                    </div>
+                  )}
+                  <div className="break-words wrap-break-word">
+                    {message.content}
+                  </div>
+                  <div
+                    className={cn(
+                      'mt-0.5 flex items-center gap-1 text-[10px]',
+                      isMine
+                        ? 'justify-end text-primary-foreground/60'
+                        : 'justify-start text-muted-foreground',
+                    )}
+                  >
+                    <span>{formatMessageTime(message.createdAt)}</span>
+                  </div>
                 </div>
               </div>
             )
@@ -141,14 +157,29 @@ export function RoomChat({
         )}
       </div>
 
+      {typingUsers.length > 0 && (
+        <div className="px-1 pb-1 text-xs text-muted-foreground animate-pulse">
+          {typingUsers.length === 1
+            ? `${typingUsers[0]} is typing...`
+            : typingUsers.length === 2
+              ? `${typingUsers[0]} and ${typingUsers[1]} are typing...`
+              : `${typingUsers[0]} and ${typingUsers.length - 1} others are typing...`}
+        </div>
+      )}
+
       <form
         onSubmit={handleSubmit}
         className="flex gap-3 border-t border-border/70 pt-5"
       >
         <Input
+          id="chat-message"
+          name="chat-message"
           ref={inputRef}
           value={draftMessage}
-          onChange={(e) => setDraftMessage(e.target.value)}
+          onChange={(e) => {
+            setDraftMessage(e.target.value)
+            if (e.target.value.trim()) emitTyping()
+          }}
           maxLength={500}
           placeholder="Type a message..."
         />

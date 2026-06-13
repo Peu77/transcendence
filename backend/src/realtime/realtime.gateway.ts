@@ -69,7 +69,7 @@ function parseCookie(cookieHeader: string | undefined): Record<string, string> {
 @WebSocketGateway({
   namespace: REALTIME_NAMESPACE,
   cors: {
-    origin: process.env.CORS_ORIGIN ?? 'https://localhost',
+    origin: process.env.CORS_ORIGIN ?? 'https://localhost:8443',
     credentials: true,
   },
 })
@@ -265,6 +265,42 @@ export class RealtimeGateway
 
     await client.leave(dmRoom(me, body.withUserId))
     return { ok: true }
+  }
+
+  @SubscribeMessage('dm.typing')
+  handleDmTyping(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { withUserId: string },
+  ) {
+    const me: string | undefined = client.data.userId
+    if (!me) return
+    if (!body?.withUserId) return
+
+    client.to(dmRoom(me, body.withUserId)).emit('dm.typing', { userId: me })
+  }
+
+  @SubscribeMessage('room.chat.typing')
+  handleRoomChatTyping(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { roomId: string },
+  ) {
+    const me: string | undefined = client.data.userId
+    if (!me) return
+    if (!body?.roomId) return
+
+    try {
+      const room = this.roomService.getRoom(body.roomId)
+      const user = room.users.find((u) => u.id === me)
+      if (!user) return
+
+      client.to(gameRoom(body.roomId)).emit('room.chat.typing', {
+        roomId: body.roomId,
+        userId: me,
+        username: user.username,
+      })
+    } catch {
+      // room doesn't exist or user not in it — ignore
+    }
   }
 
   /* ---------------------------------------------------------------- */

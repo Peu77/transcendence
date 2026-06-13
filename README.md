@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by `eebert, jgoetz, cgerling, tpaesch`.*
+*This project has been created as part of the 42 curriculum by `eebert, jgotz, cgerling, kmuhlbau, tpaesch`.*
 
 ---
 
@@ -37,7 +37,7 @@ A competitive, real-time multiplayer Tetris platform built as the final Common C
 |---|---|---|
 | `eebert` | **Product Owner** · Developer | Defines product vision and priorities. Validates completed work. Led backend infrastructure, auth, friends/chat system, public API, and monitoring setup. |
 | `tpaesch` | **Project Manager / Scrum Master** · Developer | Organized meetings, tracked progress, managed blockers. Led profile system, achievements/gamification, and UI/UX improvements. |
-| `jgoetz` | **Technical Lead / Architect** · Developer | Defined the technical architecture and stack. Enforced code quality and reviewed critical changes. Led the Tetris game engine and multiplayer game logic. |
+| `jgotz` | **Technical Lead / Architect** · Developer | Defined the technical architecture and stack. Enforced code quality and reviewed critical changes. Led the Tetris game engine and multiplayer game logic. |
 | `cgerling` | Developer | Implemented core Tetris mechanics refinements (piece rotations, T-spin detection, gravity, game feel). |
 | `kmuhlbau` | Developer | Co-implemented Prometheus + Grafana monitoring. |
 
@@ -60,9 +60,9 @@ A competitive, real-time multiplayer Tetris platform built as the final Common C
 ### Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/) installed
-- Ports `80` and `443` available on your machine
+- Port `8443` available on your machine
 
-### Setup
+### Setup & Run
 
 1. **Clone the repository:**
    ```bash
@@ -70,28 +70,23 @@ A competitive, real-time multiplayer Tetris platform built as the final Common C
    cd transcendence
    ```
 
-2. **Configure environment variables:**
+2. **Build and start everything:**
    ```bash
-   make setup
+   make
    ```
-   This copies `.env.example` files to the correct locations (`frontend/.env` and `backend/.env`) and configures the database host for Docker. Review the generated files and fill in any required values (e.g., GitHub OAuth credentials).
+   This generates SSL certificates, copies `.env.example` files to the correct locations, prompts for GitHub OAuth
+   credentials, and starts all containers (frontend, backend, PostgreSQL, Nginx, Prometheus, Grafana).
 
-3. **Start the application:**
-   ```bash
-   make up
-   ```
-   This builds and starts all containers (frontend, backend, PostgreSQL, Nginx, Prometheus, Grafana).
+3. **Access the app:**
+   - Application: **`https://localhost:8443`** (HTTPS, self-signed cert — accept the browser warning)
+   - Grafana dashboard and alerts: **`http://localhost:3001`**
 
-4. **Access the app:**
-   - Application: **`https://localhost`** (HTTPS, self-signed cert — accept the browser warning)
-   - Grafana dashboard: **`http://localhost:3000`**
-
-5. **Stop the application:**
+4. **Stop the application:**
    ```bash
    make down
    ```
 
-6. **Full reset** (wipes database and volumes):
+5. **Full reset** (wipes database and volumes):
    ```bash
    make reset
    ```
@@ -100,6 +95,12 @@ A competitive, real-time multiplayer Tetris platform built as the final Common C
 
 - The game screen (solo mode and multiplayer rooms) requires a desktop browser and a minimum viewport of 800×600 px. The rest of the application is fully responsive.
 - A default profile picture is assigned automatically if no avatar is uploaded.
+- Grafana provisions backend availability, HTTP 5xx rate, CPU, and heap alerts automatically. Set `GRAFANA_ALERT_WEBHOOK_URL` before `make up` to deliver notifications:
+  ```bash
+  export GRAFANA_ALERT_WEBHOOK_URL=https://example.com/your-webhook
+  make up
+  ```
+  Without this variable, alerts are still evaluated and visible in Grafana, but webhook delivery uses the local development placeholder.
 
 ---
 
@@ -148,7 +149,9 @@ A `shared/` TypeScript package contains the `TetrisGame` class used verbatim by 
 
 ### Architecture decisions
 
-- **Client-side prediction with server reconciliation:** The game server is authoritative, but the local player's inputs are applied immediately on the client for zero-latency feel. On every server tick the client reconciles by snapping to server state and replaying unacknowledged inputs. See [`docs/client-side-prediction.md`](docs/client-side-prediction.md) for a full technical write-up.
+- **Client-side prediction with server reconciliation:** The game server is authoritative, but the local player's inputs
+  are applied immediately on the client for zero-latency feel. On every server tick the client reconciles by snapping to
+  server state and replaying unacknowledged inputs.
 - **Monorepo with a shared package:** Sharing game logic avoids the classic "server says one thing, client renders another" class of bugs.
 - **NestJS + Socket.IO gateway:** NestJS's module system made it straightforward to co-locate the WebSocket gateway with the HTTP controllers, sharing guards, services, and dependency injection.
 
@@ -449,7 +452,7 @@ Emil was the backbone of the backend and owned the majority of the infrastructur
 
 Theo owned project coordination: organized meetings, maintained the GitHub issue board, and kept the team unblocked. On the product side he built and iterated the profile system (public profile dialogs, shared-match charts, friendship visualizations, the #1 crown on the leaderboard), the entire achievements and gamification system (25+ achievements across multiple categories, animated popup notifications, deduplication via localStorage, achievement baseline seeding), and numerous UX improvements (mobile-responsive friends overlay and DM panel, unblock flow, heart badge for friends in the lobby, "Accept Friend Request" fix for mutual-request edge case).
 
-### Jonas (`jgoetz`) — Technical Lead & Developer
+### Jonas (`jgotz`) — Technical Lead & Developer
 
 Jonas defined the project's technical architecture and was the primary author of the Tetris game engine in the shared package (`TetrisGame`). He implemented the SRS+ rotation system, the multiplayer game server loop, the client-side prediction and server reconciliation system (the project's most technically complex feature), the synchronized piece queue, the garbage attack system, and the B2B/combo mechanics. He also co-built the multiplayer room game frontend and the match invite flow from DMs. Jonas enforced code quality across the codebase and reviewed all critical pull requests.
 
