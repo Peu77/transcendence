@@ -425,7 +425,6 @@ users ────────────────────────�
 | Web-based game | Major | 2 | Full Tetris implementation in the browser: SRS+ rotations, T-spins, hold, ghost piece, combos, B2B | Jonas, Charlotte |
 | Remote players | Major | 2 | Two or more players on separate computers play in real-time; client-side prediction eliminates perceived latency | Jonas, Emil |
 | Advanced chat features | Minor | 1 | Block users from messaging, match invites from DM, profile access from chat, persistent history, read receipts, typing indicators | Emil, Theo, Jonas |
-| Game customization options | Minor | 1 | Configurable gravity, lock delay, queue size, blowback percentage per room or solo session | Jonas, Charlotte |
 | Gamification system | Minor | 1 | Achievements (25+), XP/level system, leaderboard, animated unlock notifications with deduplication | Theo |
 
 ### DevOps — 2 pts
@@ -433,6 +432,13 @@ users ────────────────────────�
 | Module | Type | Points | Implementation | Authors |
 |---|---|---|---|---|
 | Monitoring with Prometheus and Grafana | Major | 2 | Prometheus scrapes the NestJS `/metrics` endpoint; Grafana dashboards show request rates, response latency, and system health | Konrad, Emil |
+
+
+### Modules of choice
+
+| Module | Type | Points | Implementation | Authors |
+|---|---|---|---|---|
+| Implementing a Soundpack | Minor | 1 | Add a soundpack for buttons, music in gameplay, unique sounds for win and loose as well as chat. | Jonas |
 
 ---
 

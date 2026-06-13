@@ -69,8 +69,7 @@ export function useGetUser() {
     queryFn: async () => {
       const user = await axios.get<User>('/users/me')
       return user.data
-    },
-    retry: false,
+    }
   })
 }
 

@@ -109,8 +109,9 @@ export const UserSettingsAccordion = ({
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file')
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please select a JPEG, PNG, GIF, or WebP image')
       return
     }
 
@@ -156,7 +157,7 @@ export const UserSettingsAccordion = ({
               id="avatar-upload"
               type="file"
               className="hidden"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/gif,image/webp"
               onChange={handleFileChange}
               disabled={isUploading}
             />
