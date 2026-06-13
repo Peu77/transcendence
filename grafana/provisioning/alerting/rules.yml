@@ -2,100 +2,194 @@ apiVersion: 1
 
 groups:
   - orgId: 1
-    name: System Health
+    name: Backend health
     folder: Alerts
     interval: 1m
     rules:
-      - uid: high-cpu-alert
-        title: High CPU Usage
+      - uid: backend-down
+        title: Backend is down
         condition: threshold
         for: 2m
-        noDataState: NoData
+        noDataState: Alerting
         execErrState: Alerting
         labels:
-          severity: warning
+          service: transcendence-backend
+          severity: critical
         annotations:
-          summary: "CPU usage above 90%"
-          description: "Node.js process CPU has been above 90% for more than 5 minutes."
+          summary: "Prometheus cannot scrape the backend"
+          description: "The backend metrics target has been unavailable for at least 2 minutes."
         data:
-          - refId: cpu
+          - refId: backend_up
             datasourceUid: prometheus
             relativeTimeRange:
               from: 300
               to: 0
             model:
-              expr: rate(process_cpu_user_seconds_total[2m]) * 100
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: up{job="backend"}
               instant: true
-              refId: cpu
+              refId: backend_up
           - refId: threshold
-            datasourceUid: "-100"
-            relativeTimeRange:
-              from: 300
-              to: 0
+            datasourceUid: "__expr__"
             model:
               conditions:
                 - evaluator:
-                    params:
-                      - 90
-                    type: gt
+                    params: [1]
+                    type: lt
                   operator:
                     type: and
                   query:
-                    params:
-                      - cpu
+                    params: [backend_up]
                   reducer:
                     type: last
                   type: query
               datasource:
                 type: __expr__
-                uid: "-100"
-              expression: cpu
+                uid: "__expr__"
+              expression: backend_up
               refId: threshold
               type: threshold
 
-      - uid: high-memory-alert
-        title: High Heap Memory Usage
+      - uid: backend-high-5xx-rate
+        title: High HTTP 5xx error rate
+        condition: threshold
+        for: 5m
+        noDataState: OK
+        execErrState: Alerting
+        labels:
+          service: transcendence-backend
+          severity: critical
+        annotations:
+          summary: "More than 5% of backend requests are failing"
+          description: "The HTTP 5xx response rate has remained above 5% for at least 5 minutes."
+        data:
+          - refId: error_rate
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 600
+              to: 0
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: 100 * sum(rate(http_requests_total{status_code=~"5.."}[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 0.001)
+              instant: true
+              refId: error_rate
+          - refId: threshold
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evaluator:
+                    params: [5]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [error_rate]
+                  reducer:
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: "__expr__"
+              expression: error_rate
+              refId: threshold
+              type: threshold
+
+      - uid: backend-high-cpu
+        title: High backend CPU usage
         condition: threshold
         for: 5m
         noDataState: NoData
         execErrState: Alerting
         labels:
+          service: transcendence-backend
           severity: warning
         annotations:
-          summary: "Heap memory usage above 90%"
-          description: "Node.js heap memory has been above 90% for more than 5 minutes."
+          summary: "Backend CPU usage is above 90%"
+          description: "The Node.js process has used more than 90% of one CPU core for at least 5 minutes."
         data:
-          - refId: memory
+          - refId: cpu_usage
             datasourceUid: prometheus
             relativeTimeRange:
-              from: 300
+              from: 600
               to: 0
             model:
-              expr: nodejs_heap_size_used_bytes / nodejs_heap_size_total_bytes * 100
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: 100 * rate(process_cpu_user_seconds_total{job="backend"}[5m])
               instant: true
-              refId: memory
+              refId: cpu_usage
           - refId: threshold
-            datasourceUid: "-100"
-            relativeTimeRange:
-              from: 300
-              to: 0
+            datasourceUid: "__expr__"
             model:
               conditions:
                 - evaluator:
-                    params:
-                      - 90
+                    params: [90]
                     type: gt
                   operator:
                     type: and
                   query:
-                    params:
-                      - memory
+                    params: [cpu_usage]
                   reducer:
                     type: last
                   type: query
               datasource:
                 type: __expr__
-                uid: "-100"
-              expression: memory
+                uid: "__expr__"
+              expression: cpu_usage
+              refId: threshold
+              type: threshold
+
+      - uid: backend-high-heap
+        title: High backend heap usage
+        condition: threshold
+        for: 5m
+        noDataState: NoData
+        execErrState: Alerting
+        labels:
+          service: transcendence-backend
+          severity: warning
+        annotations:
+          summary: "Backend heap usage is above 90%"
+          description: "The Node.js heap has remained above 90% utilization for at least 5 minutes."
+        data:
+          - refId: heap_usage
+            datasourceUid: prometheus
+            relativeTimeRange:
+              from: 600
+              to: 0
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: 100 * nodejs_heap_size_used_bytes{job="backend"} / nodejs_heap_size_total_bytes{job="backend"}
+              instant: true
+              refId: heap_usage
+          - refId: threshold
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evaluator:
+                    params: [90]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [heap_usage]
+                  reducer:
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: "__expr__"
+              expression: heap_usage
               refId: threshold
               type: threshold
