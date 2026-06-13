@@ -109,7 +109,7 @@ export function RoomChat({
 
       <div
         ref={scrollRef}
-        className="min-h-0 flex-1 space-y-1.5 overflow-y-auto py-6"
+        className="min-h-0 flex-1 space-y-1.5 overflow-y-auto py-6 hide-scrollbar"
       >
         {messages.length === 0 ? (
           <pre className="flex flex-col h-full items-center justify-center p-4 text-center text-xl uppercase tracking-wide text-muted-foreground">
