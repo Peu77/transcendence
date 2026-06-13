@@ -55,10 +55,10 @@ export function useRoomGame(
 
   useEffect(() => {
     freezePresence()
-    void updateMyPresence({ status: 'in-room' })
+    updateMyPresence({ status: 'in-room' }).catch(() => {})
     return () => {
       unfreezePresence()
-      void updateMyPresence({ status: 'online' })
+      updateMyPresence({ status: 'online' }).catch(() => {})
     }
   }, [])
 
@@ -66,9 +66,9 @@ export function useRoomGame(
     gamePhaseRef.current = phase
     setGamePhase(phase)
     if (phase === 'countdown' || phase === 'playing') {
-      void updateMyPresence({ status: 'in-game' })
+      updateMyPresence({ status: 'in-game' }).catch(() => {})
     } else {
-      void updateMyPresence({ status: 'in-room' })
+      updateMyPresence({ status: 'in-room' }).catch(() => {})
     }
   }, [])
 
@@ -157,16 +157,19 @@ export function useRoomGame(
     },
   })
 
-  const handleStartGame = useCallback((onError?: () => void) => {
-    if (!socket) return
+  const handleStartGame = useCallback(
+    (onError?: () => void) => {
+      if (!socket) return
 
-    socket.emit('game.start', { roomId }, (res) => {
-      if (!res.ok) {
-        toast.error(res.error || 'Failed to start game')
-        onError?.()
-      }
-    })
-  }, [socket, roomId])
+      socket.emit('game.start', { roomId }, (res) => {
+        if (!res.ok) {
+          toast.error(res.error || 'Failed to start game')
+          onError?.()
+        }
+      })
+    },
+    [socket, roomId],
+  )
 
   const handleBackToLobby = useCallback(() => {
     setPhase('lobby')
