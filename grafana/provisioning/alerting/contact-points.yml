@@ -2,13 +2,11 @@ apiVersion: 1
 
 contactPoints:
   - orgId: 1
-    name: default-contact
+    name: alert-webhook
     receivers:
-      # TODO: Add a permanent reciever
-      # For quick testing, grab a free URL from https://webhook.site
-      - uid: default-webhook
+      - uid: alert-webhook
         type: webhook
         settings:
-          url: placeholder_url
+          url: $GRAFANA_ALERT_WEBHOOK_URL
           httpMethod: POST
         disableResolveMessage: false

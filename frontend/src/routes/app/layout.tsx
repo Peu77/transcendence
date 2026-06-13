@@ -1,6 +1,12 @@
 import { Spinner } from '@/components/ui/spinner.tsx'
 import { useGetUser } from '@/api/user.ts'
-import { createRoute, Link, Outlet, useNavigate, useLocation } from '@tanstack/react-router'
+import {
+  createRoute,
+  Link,
+  Outlet,
+  useNavigate,
+  useLocation,
+} from '@tanstack/react-router'
 import { rootRoute } from '@/main.tsx'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
@@ -10,6 +16,7 @@ import { FriendsOverlay } from '@/components/app/friends/friendsOverlay.tsx'
 import { AchievementNotificationOverlay } from '@/components/app/achievementNotification.tsx'
 import { RealtimeMount } from '@/realtime'
 import { useMyPresence } from '@/presence/useMyPresence'
+import { RealtimeStatus } from '@/components/app/realtime-status.tsx'
 
 const AppLayout = () => {
   const userQuery = useGetUser()
@@ -52,6 +59,7 @@ const AppLayout = () => {
       <FriendsOverlay />
       <AchievementNotificationOverlay />
       <Navbar />
+      <RealtimeStatus />
       <div className="flex-1 min-h-0 overflow-hidden relative flex flex-col">
         <div className="flex-1 min-h-0">
           <Outlet />
@@ -64,7 +72,10 @@ const AppLayout = () => {
             >
               Privacy Policy
             </Link>
-            <Link to="/terms" className="hover:text-foreground transition-colors">
+            <Link
+              to="/terms"
+              className="hover:text-foreground transition-colors"
+            >
               Terms of Service
             </Link>
             <span>&copy; {new Date().getFullYear()} Transcendence</span>

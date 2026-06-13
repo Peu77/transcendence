@@ -4,7 +4,7 @@ import { createLiveSocket } from './client'
 
 export type RealtimeState = {
   socket: LiveSocket
-  status: 'disconnected' | 'connecting' | 'connected'
+  status: 'disconnected' | 'connecting' | 'reconnecting' | 'connected'
 }
 
 const socket = createLiveSocket()
@@ -25,10 +25,24 @@ export function ensureRealtimeWired() {
   })
 
   socket.on('disconnect', () => {
-    realtimeStore.setState((s) => ({ ...s, status: 'disconnected' }))
+    realtimeStore.setState((s) => ({
+      ...s,
+      status: socket.active ? 'reconnecting' : 'disconnected',
+    }))
   })
 
   socket.on('connect_error', () => {
+    realtimeStore.setState((s) => ({
+      ...s,
+      status: socket.active ? 'reconnecting' : 'disconnected',
+    }))
+  })
+
+  socket.io.on('reconnect_attempt', () => {
+    realtimeStore.setState((s) => ({ ...s, status: 'reconnecting' }))
+  })
+
+  socket.io.on('reconnect_failed', () => {
     realtimeStore.setState((s) => ({ ...s, status: 'disconnected' }))
   })
 }

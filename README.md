@@ -84,7 +84,7 @@ A competitive, real-time multiplayer Tetris platform built as the final Common C
 
 4. **Access the app:**
    - Application: **`https://localhost`** (HTTPS, self-signed cert — accept the browser warning)
-   - Grafana dashboard: **`http://localhost:3000`**
+   - Grafana dashboard and alerts: **`http://localhost:3001`**
 
 5. **Stop the application:**
    ```bash
@@ -100,6 +100,12 @@ A competitive, real-time multiplayer Tetris platform built as the final Common C
 
 - The game screen (solo mode and multiplayer rooms) requires a desktop browser and a minimum viewport of 800×600 px. The rest of the application is fully responsive.
 - A default profile picture is assigned automatically if no avatar is uploaded.
+- Grafana provisions backend availability, HTTP 5xx rate, CPU, and heap alerts automatically. Set `GRAFANA_ALERT_WEBHOOK_URL` before `make up` to deliver notifications:
+  ```bash
+  export GRAFANA_ALERT_WEBHOOK_URL=https://example.com/your-webhook
+  make up
+  ```
+  Without this variable, alerts are still evaluated and visible in Grafana, but webhook delivery uses the local development placeholder.
 
 ---
 
