@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button.tsx'
 import { FieldSeparator } from '@/components/ui/field.tsx'
-import { GithubIcon } from 'lucide-react'
+import { GithubIcon } from '@/components/ui/github-icon.tsx'
 import { env } from '@/env.ts'
 import { type FormEvent, useEffect, useState } from 'react'
 import { verifyTwoFaLogin } from '@/api/twofa.ts'
@@ -222,7 +222,7 @@ export default function Login() {
 
             <Button asChild className="flex gap-1" variant="secondary">
               <Link to={env.VITE_BACKEND_GITHUB_OAUTH_URL}>
-                <GithubIcon size="18" />
+                <GithubIcon className="size-4.5" />
                 github
               </Link>
             </Button>
