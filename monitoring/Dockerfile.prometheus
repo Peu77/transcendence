@@ -1,0 +1,29 @@
+FROM prom/prometheus:latest
+
+USER root
+
+# Copy scrape config from backend/
+COPY backend/prometheus.yml /etc/prometheus/prometheus.yml
+
+# Inline entrypoint that patches URLs for Railway at startup
+RUN printf '#!/bin/sh\n\
+set -e\n\
+BACKEND_TARGET="${BACKEND_TARGET:-backend.railway.internal:4000}"\n\
+sed -i \\\n\
+  -e "s|scheme: https|scheme: http|" \\\n\
+  -e "/tls_config:/d" \\\n\
+  -e "/ca_file:.*/d" \\\n\
+  -e "s|backend:4000|${BACKEND_TARGET}|" \\\n\
+  /etc/prometheus/prometheus.yml\n\
+exec /bin/prometheus \\\n\
+  --config.file=/etc/prometheus/prometheus.yml \\\n\
+  --storage.tsdb.path=/prometheus \\\n\
+  --storage.tsdb.retention.time="${RETENTION_TIME:-7d}" \\\n\
+  --web.listen-address="0.0.0.0:${PORT:-9090}"\n' > /entrypoint.sh \
+  && chmod +x /entrypoint.sh
+
+USER nobody
+
+EXPOSE 9090
+
+ENTRYPOINT ["/entrypoint.sh"]

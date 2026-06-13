@@ -1,0 +1,24 @@
+FROM grafana/grafana:latest
+
+USER root
+
+# Copy provisioning configs and dashboards
+COPY grafana/provisioning /etc/grafana/provisioning
+COPY grafana/dashboards /etc/grafana/dashboards
+
+# Inline entrypoint that patches URLs for Railway at startup
+RUN printf '#!/bin/sh\n\
+set -e\n\
+PROMETHEUS_URL="${PROMETHEUS_URL:-http://prometheus.railway.internal:9090}"\n\
+sed -i \\\n\
+  -e "s|url: https://prometheus:9090|url: ${PROMETHEUS_URL}|" \\\n\
+  -e "/tlsSkipVerify:.*/d" \\\n\
+  /etc/grafana/provisioning/datasources/prometheus.yml\n\
+exec /run.sh\n' > /entrypoint.sh \
+  && chmod +x /entrypoint.sh
+
+USER grafana
+
+EXPOSE 3000
+
+ENTRYPOINT ["/entrypoint.sh"]
