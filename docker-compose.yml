@@ -3,7 +3,7 @@ services:
     image: nginx:alpine
     container_name: transcendence-nginx
     ports:
-      - "443:443"
+      - "8443:8443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/custom.conf:ro
       - ./ssl:/certs:ro
